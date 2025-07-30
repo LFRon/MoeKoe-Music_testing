@@ -71,6 +71,15 @@
                             </ul>
                         </div>
                     </div>
+                    <!-- 歌手歌曲排序选择 -->
+                    <div v-if="isArtist" class="sort-selector">
+                        <button class="sort-btn" :class="{ 'active': artistSortType === 'hot' }" @click="changeArtistSort('hot')">
+                            热门
+                        </button>
+                        <button class="sort-btn" :class="{ 'active': artistSortType === 'new' }" @click="changeArtistSort('new')">
+                            最新
+                        </button>
+                    </div>
                     <button class="view-mode-btn" @click="toggleViewMode" :title="viewMode === 'list' ? '切换到网格视图' : '切换到列表视图'">
                         <i class="fas" :class="viewMode === 'list' ? 'fa-th' : 'fa-list'"></i>
                     </button>
@@ -216,6 +225,7 @@ const songs = ref([]);
 // 排序状态
 const sortField = ref('');
 const sortOrder = ref('asc');
+const artistSortType = ref('hot'); // 歌手歌曲排序类型：hot(热门) 或 new(最新)
 
 // 判断是否全选
 const isAllSelected = computed(() => {
@@ -301,7 +311,7 @@ const fetchArtistSongs = async () => {
     try {
         const firstPageResponse = await get('/artist/audios', {
             id: route.query.singerid,
-            sort: 'hot',
+            sort: artistSortType.value,
             page: currentPage,
             pagesize: pageSize.value
         });
@@ -336,7 +346,7 @@ const fetchArtistSongs = async () => {
         try {
             const response = await get('/artist/audios', {
                 id: route.query.singerid,
-                sort: 'hot',
+                sort: artistSortType.value,
                 page: currentPage,
                 pagesize: pageSize.value
             });
@@ -781,6 +791,15 @@ const toggleViewMode = () => {
     viewMode.value = viewMode.value === 'list' ? 'grid' : 'list';
     localStorage.setItem('trackViewMode', viewMode.value);
 };
+
+// 切换歌手歌曲排序方式
+const changeArtistSort = (sortType) => {
+    if (artistSortType.value !== sortType) {
+        artistSortType.value = sortType;
+        // 重新获取歌手歌曲
+        fetchArtistSongs();
+    }
+};
 </script>
 
 <style scoped>
@@ -1020,6 +1039,37 @@ const toggleViewMode = () => {
 
 .batch-actions-menu li:hover {
     background-color: #f0f0f0;
+}
+
+/* 排序选择器样式 */
+.sort-selector {
+    display: flex;
+    border: 1px solid var(--secondary-color);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.sort-btn {
+    background-color: transparent;
+    border: none;
+    padding: 5px 15px;
+    cursor: pointer;
+    color: var(--text-color);
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.sort-btn:not(:last-child) {
+    border-right: 1px solid var(--secondary-color);
+}
+
+.sort-btn:hover {
+    background-color: rgba(var(--primary-color-rgb), 0.1);
+}
+
+.sort-btn.active {
+    background-color: var(--primary-color);
+    color: white;
 }
 
 .search-input {

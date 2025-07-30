@@ -25,11 +25,29 @@ export function createWindow() {
     const windowWidth = Math.min(1200, screenWidth * 0.8);
     const windowHeight = Math.min(938, screenHeight * 0.9);
     const lastWindowState = store.get('windowState') || {};
+    
+    let x = lastWindowState.x;
+    let y = lastWindowState.y;
+    let width = lastWindowState.width || windowWidth;
+    let height = lastWindowState.height || windowHeight;
+    
+    width = Math.min(width, screenWidth);
+    height = Math.min(height, screenHeight);
+    
+    const isValidPosition = x !== undefined && y !== undefined && 
+                           x >= 0 && x <= screenWidth && 
+                           y >= 0 && y <= screenHeight;
+    
+    if (!isValidPosition) {
+        x = Math.floor((screenWidth - width) / 2);
+        y = Math.floor((screenHeight - height) / 2);
+    }
+    
     mainWindow = new BrowserWindow({
-        width: lastWindowState.width || windowWidth,
-        height: lastWindowState.height || windowHeight,
-        x: lastWindowState.x || Math.floor((screenWidth - windowWidth) / 2),
-        y: lastWindowState.y || Math.floor((screenHeight - windowHeight) / 2),
+        width: width,
+        height: height,
+        x: x,
+        y: y,
         minWidth: 890,
         minHeight: 750,
         show: savedConfig?.startMinimized === 'on' ? false : true,
@@ -84,6 +102,11 @@ export function createWindow() {
     });
 
     mainWindow.on('close', (event) => {
+        const savedConfig = store.get('settings');
+        if(savedConfig?.minimizeToTray === 'off'){
+            app.isQuitting = true;
+            app.quit();
+        }
         if (!app.isQuitting) {
             event.preventDefault();
             mainWindow.hide();
@@ -111,16 +134,23 @@ export function createLyricsWindow() {
         x: Math.floor((screenWidth - windowWidth) / 2),
         y: screenHeight - windowHeight
     };
+    
+    const savedLyricsSize = store.get('lyricsWindowSize') || {
+        width: windowWidth,
+        height: windowHeight
+    };
 
     lyricsWindow = new BrowserWindow({
-        width: windowWidth,
-        height: windowHeight,
+        width: savedLyricsSize.width,
+        height: savedLyricsSize.height,
         x: savedLyricsPosition.x,
         y: savedLyricsPosition.y,
+        minWidth: 800,
+        minHeight: 200,
         alwaysOnTop: true,
         frame: false,
         transparent: true,
-        resizable: false,
+        resizable: true,
         skipTaskbar: true,
         hasShadow: false,
         webPreferences: {
@@ -133,13 +163,18 @@ export function createLyricsWindow() {
             zoomFactor: 1.0
         }
     });
+    
+    lyricsWindow.on('resize', () => {
+        const [width, height] = lyricsWindow.getSize();
+        store.set('lyricsWindowSize', { width, height });
+    });
     mainWindow.lyricsWindow = lyricsWindow;
     lyricsWindow.on('closed', () => {
         mainWindow.lyricsWindow = null;
     });
     if (isDev) {
         lyricsWindow.loadURL('http://localhost:8080/#/lyrics');
-        lyricsWindow.webContents.openDevTools();
+        lyricsWindow.webContents.openDevTools({ mode: 'detach' });
     } else {
         lyricsWindow.loadFile(path.join(__dirname, '../dist/index.html'), {
             hash: 'lyrics'
@@ -179,7 +214,7 @@ export function createTray(mainWindow, title = '') {
         return tray;
     }
     const trayIconPath = isDev
-        ? path.join(__dirname, '../build/icons/tray-icon.png')
+        ? (process.platform === 'win32' ? path.join(__dirname, '../build/icons/tray-icon.ico') : path.join(__dirname, '../build/icons/tray-icon.png'))
         : ((process.platform === 'win32') ? path.join(process.resourcesPath, 'icons', 'tray-icon.ico') : path.join(process.resourcesPath, 'icons', 'tray-icon.png'));
 
     tray = new Tray(trayIconPath);
@@ -398,6 +433,7 @@ export function startApiServer() {
 
         apiProcess.stderr.on('data', (data) => {
             log.error(`API 错误: ${data}`);
+            reject(data);
         });
 
         apiProcess.on('close', (code) => {

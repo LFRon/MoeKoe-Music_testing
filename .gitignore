@@ -17,6 +17,7 @@ test
 bin/*
 
 # Editor directories and files
+.codebuddy/*
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -27,3 +28,6 @@ bin/*
 *.sln
 *.sw?
 dev-dist/*
+pnpm-lock.yaml
+pnpm-workspace.yaml
+vite.config.js*
