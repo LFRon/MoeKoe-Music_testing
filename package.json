@@ -126,7 +126,7 @@
     "linux": {
       "icon": "build/icons/linux_256x256.png",
       "target": [
-        "tar.xz"
+        "AppImage"
       ],
       "category": "Utility",
       "artifactName": "${productName}.${ext}"
