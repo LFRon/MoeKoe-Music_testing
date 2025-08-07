@@ -115,7 +115,7 @@
 
 需在环境变量(VITE_APP_API_URL)中填写自己的API地址
 
-## ⚙️ 开发
+## ⚙️ 如何开发并导出安装包
 
 1. 克隆本仓库
 
@@ -143,9 +143,9 @@ npm run build
   npm run electron:build:win [默认 NSIS 安装包]
   ```
   -	Linux: 
-  ```sh
-  npm run electron:build:linux [默认 AppImage 格式]
-  ```
+    -	x86-64 架构: `npm run electron:build:linux [仅生成 AppImage 安装包]`
+    -	ARM64 架构: `npm run electron:build:linux-aarch64 [仅生成 AppImage 安装包]`
+
   -	macOS: 
   ```sh
   npm run electron:build:macos [默认 macOS 双架构]
@@ -153,100 +153,6 @@ npm run build
 
 
 更多命令请查看 `package.json` 文件 `scripts` 
-
-## 👷‍♂️ 编译客户端
-
-如果在 Release 页面没有找到适合你的设备的安装包的话，你可以根据下面的步骤来打包自己的客户端。
-
-1. 安装 [Node.js](https://nodejs.org/en/)，并确保 `Node.js` 版本 >= 18.0.0。
-
-2. 使用 `git clone https://github.com/iAJue/MoeKoeMusic.git` 克隆本仓库到本地。
-
-3. 使用 `npm install` 安装项目依赖。
-4. 编译API服务端
-    - Windows:
-        ```sh
-        npm run build:api:win
-        ```
-    - Linux:
-        ```sh
-        npm run build:api:linux
-        ```
-    - macOS:
-      ```sh
-      npm run build:api:macos
-      ```
-
-5. 选择下列的命令来打包适合的你的安装包，打包出来的文件在 `/dist_electron` 目录下。了解更多信息可访问 [electron-builder 文档](https://www.electron.build/cli)
-
-
-#### 1. 打包 macOS 平台
-   - 通用的 macOS 包（Intel 和 Apple Silicon 双架构）：
-   ```
-   npm run electron:build -- --mac --universal
-   ```
-   - 仅 Intel 架构：
-   ```
-   npm run electron:build -- --mac --x64
-   ```
-   - 仅 Apple Silicon 架构：
-   ```
-   npm run electron:build -- --mac --arm64
-   ```
-
-
-#### 2. 打包 Windows 平台
-
-   - 默认 NSIS 安装包（适合大多数 Windows 用户）：
-   ```
-   npm run electron:build -- --win
-   ```
-   - 为 Windows 创建 EXE 文件和 Squirrel 安装包：
-   ```
-   npm run electron:build -- --win --ia32 --x64 --arm64 --target squirrel
-   ```
-       - --ia32 为 32 位 Windows 架构。
-       - --x64 为 64 位 Windows 架构。
-       - --arm64 为 ARM Windows 架构（Surface 等设备）。
-
-   - 为 Windows 生成便携式的 EXE 文件（免安装）：
-   ```
-   npm run electron:build -- --win --portable
-   ```
-#### 3. 打包 Linux 平台
-   - 默认 AppImage 格式（适用于大多数 Linux 发行版）：
-
-   ```
-   npm run electron:build -- --linux
-   ```
-   - snap（适用于 Ubuntu 和支持 snap 的发行版）：
-   ```
-   npm run electron:build -- --linux --target snap
-   ```
-   - 	deb（适用于 Debian/Ubuntu 系列）：
-   ```
-   npm run electron:build -- --linux --target deb
-   ```
-   - rpm（适用于 Red Hat/Fedora 系列）：
-   ```
-   npm run electron:build -- --linux --target rpm
-   ```
-   - ARM64架构(ARM v8+): 
-   ```
-   npm run build:api:linux-aarch64 //编译API
-   npm run electron:build:linux-aarch64 //编译主程序
-   ```
-
-#### 4. 打包所有平台
-
-  如果需要同时生成 Windows、macOS 和 Linux 的安装包，可以使用以下命令：
-  ```
-  npm run electron:build -- -mwl
-  ```
-
-#### 5. 自定义编译设置
-
-您可以根据需要添加其他选项来进一步自定义打包，例如指定 x64 和 arm64 架构，或选择不同的目标格式。
 
 ## ⭐ 支持项目
 
