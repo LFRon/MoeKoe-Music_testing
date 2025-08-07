@@ -1,7 +1,6 @@
 // src/services/request.js
 import axios from 'axios';
 import { MoeAuthStore } from '../stores/store';
-import { ElMessage } from 'element-plus';
 
 // 创建一个 axios 实例
 const httpClient = axios.create({
@@ -42,14 +41,14 @@ httpClient.interceptors.response.use(
             if (error.response?.data?.data) {
                 console.error(error.response.data.data);
             } else {
-                ElMessage.error('服务器错误,请稍后再试!');
+                $message.error('服务器错误,请稍后再试!');
             }
         } else if (error.request) {
             console.error('No response received:', error.request);
-            ElMessage.error('服务器未响应,请稍后再试!');
+            $message.error('服务器未响应,请稍后再试!');
         } else {
             console.error('Error:', error.message);
-            ElMessage.error('请求错误,请稍后再试!');
+            $message.error('请求错误,请稍后再试!');
         }
         return Promise.reject(error);
     }

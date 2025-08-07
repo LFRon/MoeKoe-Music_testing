@@ -76,7 +76,7 @@
   "huo-qu-yin-le-shi-bai": "獲取音樂失敗",
   "li-ji-deng-lu": "立即登入",
   "lie-biao-xun-huan": "清單循環",
-  "meng-yin-cheng-nuo-bu-hui-bao-cun-ni-de-ren-he-zhang-hao-xin-xi-dao-yun-duan-ni-de-mi-ma-hui-zai-ben-di-jin-hang-jia-mi-hou-zai-chuan-shu-dao-ku-gou-guan-fang-meng-yin-bing-fei-ku-gou-guan-fang-wang-zhan-shu-ru-zhang-hao-xin-xi-qian-qing-shen-zhong-kao-lv-er-wei-ma-sao-ma-hou-xu-yao-deng-dai-ji-fen-zhong-cai-hui-deng-lu-cheng-gong": "萌音 承諾不會將你的任何帳號資訊保存到雲端。\n你的密碼會在本地加密後再傳送到酷狗官方。\n萌音並非酷狗官方網站，輸入帳號資訊前請慎重考慮,二維碼掃碼後需要等待幾分鐘才會登入成功.",
+  "login-tips": "萌音 承諾不會將你的任何帳號資訊保存到雲端。\n你的密碼會在本地加密後再傳送到酷狗官方。\n萌音並非酷狗官方網站，輸入帳號資訊前請慎重考慮,非所有帳號都支持帳號密碼登錄.",
   "mian-ze-sheng-ming": "免責聲明",
   "ni-huan-mei-you-tian-jia-ge-quo-kuai-qu-tian-jia-ba": "你還沒加歌曲哦，快去添加吧！",
   "qing-shi-yong-ku-gou-sao-miao-er-wei-ma-deng-lu": "請使用酷狗掃描二維碼登錄",

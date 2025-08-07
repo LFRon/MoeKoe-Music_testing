@@ -66,9 +66,8 @@ const removeSongFromQueue = (index) => {
 const playQueueItem = (item) => {
     console.log('[QueueList] 点击播放队列中的歌曲:', item.name);
     showQueue.value = false; // 点击后关闭播放队列面板
-    
     if (item.isCloud) {
-        emit('addCloudMusicToQueue', item.hash, item.name, item.author, item.timeLength);
+        emit('addCloudMusicToQueue', item.hash, item.name, item.author, item.timeLength, item.img);
     } else {
         emit('addSongToQueue', item.hash, item.name, item.img, item.author);
     }

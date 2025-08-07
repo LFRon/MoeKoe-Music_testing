@@ -59,7 +59,12 @@
                         </div>
                     </li>
                 </ul>
-                <el-empty v-else :description="t('zhe-li-shi-mo-du-mei-you')" />
+                <div v-else class="empty-container">
+                    <div class="empty-image">
+                        <img src="/assets/images/empty.png" alt="暂无数据" />
+                    </div>
+                    <div class="empty-description">{{ t('zhe-li-shi-mo-du-mei-you') }}</div>
+                </div>
             </div>
         </div>
 
@@ -114,13 +119,18 @@
                 </div>
             </div>
         </div>
-        <el-empty v-if="
+        <div v-if="
         (selectedCategory == 0 && userPlaylists.length === 0) || 
         (selectedCategory == 1 && collectedPlaylists.length === 0) || 
         (selectedCategory == 2 && collectedAlbums.length === 0) || 
         (selectedCategory == 3 && followedArtists.length === 0) || 
         (selectedCategory == 4 && collectedFriends.length === 0)"
-            :description="t('zhe-li-shi-mo-du-mei-you')" />
+            class="empty-container">
+            <div class="empty-image">
+                <img src="/assets/images/empty.png" alt="暂无数据" />
+            </div>
+            <div class="empty-description">{{ t('zhe-li-shi-mo-du-mei-you') }}</div>
+        </div>
     </div>
 </template>
 
@@ -389,6 +399,18 @@ const getVip = async () => {
     transition: background-image 1s ease-in-out;
 }
 
+.profile-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.6) 100%);
+    border-radius: 15px;
+    z-index: 1;
+}
+
 .profile-info {
     display: flex;
     align-items: flex-end;
@@ -421,7 +443,6 @@ const getVip = async () => {
 .user-name-row {
     display: flex;
     align-items: center;
-    gap: 10px;
     margin-bottom: 2px;
 }
 
@@ -730,5 +751,34 @@ const getVip = async () => {
     position: absolute;
     top: 32%;
     left: 29%;
+}
+
+/* 空状态容器样式 */
+.empty-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 0;
+    width: 100%;
+}
+
+.empty-image {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.empty-image img {
+    width: 200px;
+    height: 200px;
+    opacity: 0.6;
+}
+
+.empty-description {
+    color: #909399;
+    font-size: 14px;
+    text-align: center;
+    margin-left: 60px;
 }
 </style>

@@ -48,7 +48,7 @@
   "qing-shu-ru-mi-ma": "请输入密码",
   "you-xiang-deng-lu": "账号登录",
   "er-wei-ma": "二维码",
-  "meng-yin-cheng-nuo-bu-hui-bao-cun-ni-de-ren-he-zhang-hao-xin-xi-dao-yun-duan-ni-de-mi-ma-hui-zai-ben-di-jin-hang-jia-mi-hou-zai-chuan-shu-dao-ku-gou-guan-fang-meng-yin-bing-fei-ku-gou-guan-fang-wang-zhan-shu-ru-zhang-hao-xin-xi-qian-qing-shen-zhong-kao-lv-er-wei-ma-sao-ma-hou-xu-yao-deng-dai-ji-fen-zhong-cai-hui-deng-lu-cheng-gong": "萌音 承诺不会保存你的任何账号信息到云端。你的密码会在本地进行加密后再传输到酷狗官方。萌音并非酷狗官方网站，输入账号信息前请慎重考虑,二维码扫码后需要等待几分钟才会登录成功.",
+  "login-tips": "萌音 承诺不会保存你的任何账号信息到云端。你的密码会在本地进行加密后再传输到酷狗官方。萌音并非酷狗官方网站，输入账号信息前请慎重考虑,非所有账号都支持账号密码登录.",
   "shi-yong-yan-zheng-ma-deng-lu": "使用验证码登录.",
   "shou-ji-hao-deng-lu": "手机号登录",
   "sao-ma-deng-lu": "扫码登录",

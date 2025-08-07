@@ -1,4 +1,4 @@
-import { app, ipcMain, globalShortcut, dialog, Notification, shell, session } from 'electron';
+import { app, ipcMain, globalShortcut, dialog, Notification, shell, session, powerSaveBlocker } from 'electron';
 import {
     createWindow, createTray, createTouchBar, startApiServer,
     stopApiServer, registerShortcut,
@@ -12,6 +12,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 let mainWindow = null;
+let blockerId = null;
 const store = new Store();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -86,6 +87,10 @@ if (settings?.gpuAcceleration === 'on') {
     app.commandLine.appendSwitch('disable-gpu-compositing');
 }
 
+if (settings?.preventAppSuspension === 'on') {
+    blockerId = powerSaveBlocker.start('prevent-display-sleep');
+}
+
 if (settings?.highDpi === 'on') {
     app.commandLine.appendSwitch('high-dpi-support', '1');
     app.commandLine.appendSwitch('force-device-scale-factor', settings?.dpiScale || '1');
@@ -100,6 +105,9 @@ app.on('before-quit', () => {
     if (mainWindow && !mainWindow.isMaximized()) {
         const windowBounds = mainWindow.getBounds();
         store.set('windowState', windowBounds);
+    }
+    if (blockerId !== null) {
+        powerSaveBlocker.stop(blockerId);
     }
     stopApiServer();
     apiService.stop();

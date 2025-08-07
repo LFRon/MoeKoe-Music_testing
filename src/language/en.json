@@ -78,7 +78,7 @@
   "huo-qu-yin-le-shi-bai": "Failed to get music",
   "li-ji-deng-lu": "Log in now",
   "lie-biao-xun-huan": "List loop",
-  "meng-yin-cheng-nuo-bu-hui-bao-cun-ni-de-ren-he-zhang-hao-xin-xi-dao-yun-duan-ni-de-mi-ma-hui-zai-ben-di-jin-hang-jia-mi-hou-zai-chuan-shu-dao-ku-gou-guan-fang-meng-yin-bing-fei-ku-gou-guan-fang-wang-zhan-shu-ru-zhang-hao-xin-xi-qian-qing-shen-zhong-kao-lv-er-wei-ma-sao-ma-hou-xu-yao-deng-dai-ji-fen-zhong-cai-hui-deng-lu-cheng-gong": "MoeKoe promises not to save any of your account information in the cloud. \nYour password will be encrypted locally and then transmitted to Kugou official. \nMengyin is not the official website of Kugou. Please consider carefully before entering your account information. After scanning the QR code, you will need to wait a few minutes for successful login.",
+  "login-tips": "MoeKoe promises not to save any of your account information in the cloud. \nYour password will be encrypted locally and then transmitted to Kugou official. \nMengyin is not the official website of Kugou. Please consider carefully before entering your account information. Not all accounts support account password login.",
   "mian-ze-sheng-ming": "Disclaimer",
   "ni-huan-mei-you-tian-jia-ge-quo-kuai-qu-tian-jia-ba": "You haven't added a song yet, go ahead and add it!",
   "qing-shi-yong-ku-gou-sao-miao-er-wei-ma-deng-lu": "Please use Kugou to scan the QR code to log in",

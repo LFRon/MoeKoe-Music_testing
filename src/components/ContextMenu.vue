@@ -22,7 +22,6 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { get } from '../utils/request';
-import { ElMessage } from 'element-plus';
 import { MoeAuthStore } from '../stores/store';
 import i18n from '@/utils/i18n';
 import { share } from '@/utils/utils';
@@ -59,7 +58,7 @@ const fetchPlaylists = async () => {
             playlists.value = playlistResponse.data.info.filter(playlist => playlist.list_create_userid === MoeAuth.UserInfo.userid);
         }
     } catch (error) {
-        ElMessage.error(i18n.global.t('huo-qu-ge-dan-shi-bai'));
+        $message.error(i18n.global.t('huo-qu-ge-dan-shi-bai'));
     }
 };
 
@@ -75,9 +74,9 @@ const addToPlaylist = async (listid, song) => {
     try {
         await get(`/playlist/tracks/add?listid=${listid}&data=${encodeURIComponent(song.OriSongName.replace(',', ''))}|${song.FileHash}`);
         hideContextMenu();
-        ElMessage.success(i18n.global.t('cheng-gong-tian-jia-dao-ge-dan'));
+        $message.success(i18n.global.t('cheng-gong-tian-jia-dao-ge-dan'));
     } catch (error) {
-        ElMessage.error(i18n.global.t('tian-jia-dao-ge-dan-shi-bai'))
+        $message.error(i18n.global.t('tian-jia-dao-ge-dan-shi-bai'))
     }
 };
 // 取消收藏功能
@@ -86,9 +85,9 @@ const cancel = async () => {
         await get(`/playlist/tracks/del?listid=${listId.value}&fileids=${contextSong.value.fileid}`);
         emit('songRemoved', contextSong.value.fileid);
         hideContextMenu();
-        ElMessage.success(i18n.global.t('cheng-gong-qu-xiao-shou-cang'));
+        $message.success(i18n.global.t('cheng-gong-qu-xiao-shou-cang'));
     } catch (error) {
-        ElMessage.error(i18n.global.t('qu-xiao-shou-cang-shi-bai'))
+        $message.error(i18n.global.t('qu-xiao-shou-cang-shi-bai'))
     }
 };
 
@@ -101,7 +100,7 @@ const emit = defineEmits(['songRemoved']);
 const addToNext = async (song) => {
     let songNameParts = song?.OriSongName.split(' - ');
     props.playerControl.addToNext(song.FileHash, songNameParts[1], song.cover, songNameParts[0], song.timeLength);
-    ElMessage.success(i18n.global.t('tian-jia-cheng-gong'))
+    $message.success(i18n.global.t('tian-jia-cheng-gong'))
     hideContextMenu();
 };
 

@@ -500,7 +500,6 @@
 
 /* 歌词界面的时间提示样式 */
 .lyrics-screen .time-tooltip {
-    background-color: rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(4px);
 }
 
@@ -582,4 +581,38 @@
     transform: translateX(-50%);
     border: 6px solid transparent;
     border-top-color: var(--background-color);;
+}
+
+.close-btn {
+  cursor: pointer;
+  font-size: 24px;
+  color: #fff;
+  opacity: 0.8;
+  transition: opacity 0.3s;
+}
+
+.close-btn:hover {
+  opacity: 1;
+}
+
+.lyrics-mode-btn {
+  cursor: pointer;
+  font-size: 20px;
+  color: #fff;
+  opacity: 0.8;
+  transition: opacity 0.3s;
+  position: absolute;
+  right: 20px;
+  top: 10px;
+}
+
+.lyrics-mode-btn:hover {
+  opacity: 1;
+}
+
+.line.romanized {
+  font-size: 0.9em;
+  opacity: 0.9;
+  margin-top: 5px;
+  color: #e3e3e3b1;
 }

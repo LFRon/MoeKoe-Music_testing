@@ -169,7 +169,6 @@ import { ref, onMounted, watch, onBeforeUnmount, computed } from 'vue';
 import { RecycleScroller } from 'vue3-virtual-scroller';
 import ContextMenu from '../components/ContextMenu.vue';
 import PlaylistSelectModal from '../components/PlaylistSelectModal.vue';
-import { ElMessage } from 'element-plus';
 import { get } from '../utils/request';
 import { useRoute, useRouter } from 'vue-router';
 import { MoeAuthStore } from '../stores/store';
@@ -543,7 +542,7 @@ const toggleFavorite = async (id) => {
                 );
                 localStorage.setItem('collectedPlaylists', JSON.stringify(newCollectedPlaylists));
                 isPlaylistFavorited.value = false;
-                ElMessage.success('取消收藏成功');
+                $message.success('取消收藏成功');
             }
         } else {
             const response = await get('/playlist/add', { 
@@ -561,12 +560,12 @@ const toggleFavorite = async (id) => {
                 currentPlaylists.push(newPlaylist);
                 localStorage.setItem('collectedPlaylists', JSON.stringify(currentPlaylists));
                 isPlaylistFavorited.value = true;
-                ElMessage.success('收藏成功');
+                $message.success('收藏成功');
             }
         }
         localStorage.setItem('t', Date.now());
     } catch (error) {
-        ElMessage.error(isPlaylistFavorited.value ? t('qu-xiao-shou-cang-shi-bai') : t('shou-cang-shi-bai'));
+        $message.error(isPlaylistFavorited.value ? t('qu-xiao-shou-cang-shi-bai') : t('shou-cang-shi-bai'));
     }
 };
 
@@ -691,7 +690,7 @@ const appendSelectedToQueue = async () => {
     if (selectedTracks.value.length === 0) return;
     const selectedSongs = selectedTracks.value.map(index => filteredTracks.value[index]);
     await props.playerControl.addPlaylistToQueue(selectedSongs, true);
-    ElMessage.success('添加到播放列表成功');
+    $message.success('添加到播放列表成功');
     isBatchMenuVisible.value = false;
 };
 
@@ -724,9 +723,9 @@ const removeSelectedFromPlaylist = async () => {
             });
             filteredTracks.value = tracks.value;
             selectedTracks.value = [];
-            ElMessage.success('歌曲已从歌单中移除');
+            $message.success('歌曲已从歌单中移除');
         } catch (err) {
-            ElMessage.error('移除歌曲失败');
+            $message.error('移除歌曲失败');
             return;
         }
     }

@@ -1,6 +1,6 @@
 {
   "name": "moekoemusic",
-  "version": "1.4.9",
+  "version": "1.5.0",
   "homepage": "https://github.com/iAJue/MoeKoeMusic",
   "main": "electron/main.js",
   "scripts": {
@@ -126,7 +126,8 @@
     "linux": {
       "icon": "build/icons/linux_256x256.png",
       "target": [
-        "AppImage"
+        "AppImage",
+        "deb"
       ],
       "category": "Utility",
       "artifactName": "${productName}.${ext}"
@@ -144,7 +145,7 @@
     "@vitejs/plugin-vue": "^6.0.1",
     "@vue/compiler-sfc": "^3.5.18",
     "cross-env": "^10.0.0",
-    "electron": "^37.2.4",
+    "electron": "^37.2.6",
     "electron-builder": "^26.0.12",
     "npm-run-all": "^4.1.5",
     "vite": "^7.0.6",
@@ -157,7 +158,6 @@
     "electron-log": "^5.4.2",
     "electron-store": "^10.1.0",
     "electron-updater": "^6.6.2",
-    "element-plus": "^2.10.4",
     "pinia": "^3.0.3",
     "pinia-plugin-persistedstate": "^4.4.1",
     "tree-kill": "^1.2.2",

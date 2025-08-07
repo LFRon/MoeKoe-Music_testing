@@ -238,7 +238,7 @@ onUpdated(() => {
 const recommend = async () => {
     const response = await get('/everyday/recommend');
     if (response.status == 1) {
-        songs.value = response.data.song_list;
+        songs.value = response.data.song_list.sort(() => Math.random() - 0.5);
     }
     isLoading.value = false;
 }

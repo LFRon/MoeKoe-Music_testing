@@ -7,6 +7,7 @@ export default function useLyricsHandler(t) {
     const showLyrics = ref(false);
     const scrollAmount = ref(null);
     const SongTips = ref(t('zan-wu-ge-ci'));
+    const lyricsMode = ref('translation'); // 'translation' 翻译模式 或 'romanization' 音译模式
     let currentLineIndex = 0;
 
     // 显示/隐藏歌词
@@ -28,8 +29,9 @@ export default function useLyricsHandler(t) {
     };
 
     // 获取歌词
-    const getLyrics = async (hash, settings) => {
+    const getLyrics = async (hash) => {
         try {
+            const settings = JSON.parse(localStorage.getItem('settings') || '{}');
             if (!showLyrics.value &&
                 (settings?.desktopLyrics === 'off' && settings?.apiMode === 'off')) {
                 return;
@@ -59,16 +61,36 @@ export default function useLyricsHandler(t) {
     // 解析歌词
     const parseLyrics = (text, parseTranslation = true) => {
         let translationLyrics = [];
+        let romanizationLyrics = [];
         const lines = text.split('\n');
-
         try {
             const languageLine = lines.find(line => line.match(/\[language:(.*)\]/));
             if (parseTranslation && languageLine) {
                 const languageCode = languageLine.slice(10, -2);
                 if (languageCode) {
-                    const languageData = JSON.parse(atob(languageCode));
-                    const translation = languageData?.content?.find(section => section.type === 1);
-                    translationLyrics = translation?.lyricContent || [];
+                    try {
+                        // 确保 languageCode 是有效的 Base64 编码
+                        // 替换可能导致 Base64 解码失败的字符
+                        const cleanedCode = languageCode.replace(/[^A-Za-z0-9+/=]/g, '');
+                        // 添加缺失的填充字符
+                        const paddedCode = cleanedCode.padEnd(cleanedCode.length + (4 - cleanedCode.length % 4) % 4, '=');
+                        const decodedData = atob(paddedCode);
+                        const languageData = JSON.parse(decodedData);
+
+                        // 获取翻译歌词 (type === 1)
+                        const translation = languageData?.content?.find(section => section.type === 1);
+                        if (translation?.lyricContent) {
+                            translationLyrics = translation.lyricContent;
+                        }
+                        
+                        // 获取音译歌词 (type === 0)
+                        const romanization = languageData?.content?.find(section => section.type === 0);
+                        if (romanization?.lyricContent) {
+                            romanizationLyrics = romanization.lyricContent;
+                        }
+                    } catch (decodeError) {
+                        console.warn('[LyricsHandler] Base64 解码失败:', decodeError);
+                    }
                 }
             }
         } catch (error) {
@@ -126,14 +148,32 @@ export default function useLyricsHandler(t) {
             }
         });
 
+        // 添加翻译歌词
         if (translationLyrics.length) {
             parsedLyrics.forEach((line, index) => {
-                if (translationLyrics[index] && translationLyrics[index][0])
+                if (translationLyrics[index] && translationLyrics[index][0]) {
                     line.translated = translationLyrics[index][0];
+                }
+            });
+        }
+
+        // 添加音译歌词
+        if (romanizationLyrics.length) {
+            parsedLyrics.forEach((line, index) => {
+                if (romanizationLyrics[index]) {
+                    // 将音译歌词数组合并为一个字符串
+                    line.romanized = romanizationLyrics[index].join('');
+                }
             });
         }
 
         lyricsData.value = parsedLyrics;
+    };
+
+    // 切换歌词显示模式（翻译/音译）
+    const toggleLyricsMode = () => {
+        lyricsMode.value = lyricsMode.value === 'translation' ? 'romanization' : 'translation';
+        return lyricsMode.value;
     };
 
     // 居中显示第一行歌词
@@ -294,11 +334,13 @@ export default function useLyricsHandler(t) {
         showLyrics,
         scrollAmount,
         SongTips,
+        lyricsMode,
         toggleLyrics,
         getLyrics,
         highlightCurrentChar,
         resetLyricsHighlight,
         getCurrentLineText,
         scrollToCurrentLine,
+        toggleLyricsMode
     };
-} 
+}

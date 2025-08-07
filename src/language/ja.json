@@ -77,7 +77,7 @@
   "huo-qu-yin-le-shi-bai": "音楽の取得に失敗しました",
   "li-ji-deng-lu": "今すぐログインしてください",
   "lie-biao-xun-huan": "リストループ",
-  "meng-yin-cheng-nuo-bu-hui-bao-cun-ni-de-ren-he-zhang-hao-xin-xi-dao-yun-duan-ni-de-mi-ma-hui-zai-ben-di-jin-hang-jia-mi-hou-zai-chuan-shu-dao-ku-gou-guan-fang-meng-yin-bing-fei-ku-gou-guan-fang-wang-zhan-shu-ru-zhang-hao-xin-xi-qian-qing-shen-zhong-kao-lv-er-wei-ma-sao-ma-hou-xu-yao-deng-dai-ji-fen-zhong-cai-hui-deng-lu-cheng-gong": "MoeKoe は、アカウント情報をクラウドに保存しないことを約束します。\nあなたのパスワードはローカルで暗号化され、Kugou 株式会社に送信されます。 \nMengyin は Kugou の株式会社 Web サイトではありません。QR コードをスキャンした後、ログインが成功するまで数分間待つ必要がありますので、アカウント情報を入力する前に慎重に検討してください。",
+  "login-tips": "MoeKoe は、アカウント情報をクラウドに保存しないことを約束します。\nあなたのパスワードはローカルで暗号化され、Kugou 株式会社に送信されます。 \nMengyin は Kugou の株式会社 Web サイトではありません。アカウント情報を入力する前に慎重に検討してください。すべてのアカウントがアカウントパスワードログインをサポートしているわけではありません",
   "mian-ze-sheng-ming": "免責事項",
   "ni-huan-mei-you-tian-jia-ge-quo-kuai-qu-tian-jia-ba": "まだ曲を追加していませんので、追加してください。",
   "qing-shi-yong-ku-gou-sao-miao-er-wei-ma-deng-lu": "Kugou を使用して QR コードをスキャンしてログインしてください",

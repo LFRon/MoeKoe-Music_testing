@@ -48,6 +48,9 @@
                             </ul>
                         </div>
                     </div>
+                    <button class="view-mode-btn" @click="toggleListMode" :title="listMode === 'list' ? '切换到网格视图' : '切换到列表视图'">
+                        <i class="fas" :class="listMode === 'list' ? 'fa-th' : 'fa-list'"></i>
+                    </button>
                     <input type="text" v-model="searchQuery" @keyup.enter="searchTracks" :placeholder="t('sou-suo-ge-qu')" class="search-input" />
                 </div>
             </div>
@@ -72,23 +75,35 @@
                 </div>
             </div>
 
-            <RecycleScroller ref="recycleScrollerRef" :items="filteredTracks" :item-size="50" class="track-list" key-field="hash">
+            <RecycleScroller ref="recycleScrollerRef" :items="filteredTracks" :item-size="listMode === 'list' ? 50 : 70" class="track-list" key-field="hash">
                 <template #default="{ item, index }">
                     <div class="li" :key="item.hash"
-                        @click="batchSelectionMode ? selectTrack(index, $event) : playSong(item.hash, item.name, item.author, item.timelen)"
-                        :class="{ 'selected': selectedTracks.includes(index) }">
+                        :class="{ 'cover-view': listMode === 'grid', 'selected': selectedTracks.includes(index) }"
+                        @click="batchSelectionMode ? selectTrack(index, $event) : playSong(item.hash, item.name, item.author, item.timelen, item.cover)">
+                        
+                        <!-- 复选框或序号 -->
                         <div class="track-checkbox" v-if="batchSelectionMode">
                             <input type="checkbox" :checked="selectedTracks.includes(index)" @click.stop="selectTrack(index, $event)">
                         </div>
                         <div class="track-number" v-else>{{ index + 1 }}</div>
+
+                        <!-- 网格模式封面 -->
+                        <div class="track-cover" v-if="listMode === 'grid'">
+                            <img :src="item.cover || './assets/images/ico.png'" alt="Cover">
+                            <div class="track-cover-overlay" :class="{ 'playing': props.playerControl?.currentSong.hash == item.hash }">
+                                <i :class="props.playerControl?.currentSong.hash == item.hash ? 'fas fa-music' : 'fas fa-play'"></i>
+                            </div>
+                        </div>
+
+                        <!-- 歌曲信息 -->
                         <div class="track-title" :title="item.name">{{ item.name }}
-                            <span v-if="item.isHQ" class="icon sq-icon">HQ</span>
-                            <span v-else-if="item.isSQ" class="icon sq-icon">SQ</span>
+                            <span v-if="item.qualityInfo" class="icon" :class="item.qualityInfo.class">{{ item.qualityInfo.text }}</span>
                         </div>
                         <div class="track-artist" :title="item.author">{{ item.author }}</div>
                         <div class="track-size" :title="item.filesize">{{ item.filesize }}</div>
                         <div class="track-timelen">
-                            <button v-if="props.playerControl?.currentSong.hash == item.hash" class="queue-play-btn fas fa-music"></button>
+                            <button v-if="props.playerControl?.currentSong.hash == item.hash && listMode === 'list'" 
+                                class="queue-play-btn fas fa-music"></button>
                             {{ $formatMilliseconds(item.timelen) }}
                         </div>
                     </div>
@@ -107,7 +122,6 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import { RecycleScroller } from 'vue3-virtual-scroller';
-import { ElMessage } from 'element-plus';
 import { get } from '../utils/request';
 import { useRouter } from 'vue-router';
 import { MoeAuthStore } from '../stores/store';
@@ -144,6 +158,9 @@ let lastSelectedIndex = -1;
 // 排序状态
 const sortField = ref('');
 const sortOrder = ref('asc');
+
+// 列表模式状态
+const listMode = ref(localStorage.getItem('cloudDriveListMode') || 'list');
 
 // 判断是否全选
 const isAllSelected = computed(() => {
@@ -215,7 +232,7 @@ const fetchCloudTracks = async () => {
             }
         }
     } catch (error) {
-        ElMessage.error(t('ge-qu-shu-ju-cuo-wu'));
+        $message.error(t('ge-qu-shu-ju-cuo-wu'));
         console.error('获取云盘歌曲失败:', error);
     } finally {
         loading.value = false;
@@ -240,20 +257,43 @@ const fetchCloudPage = async (page) => {
     return [];
 };
 
+// 获取音质信息
+const getQualityInfo = (bitrate) => {
+    switch(bitrate) {
+        case 3:
+            return { text: 'HQ', class: 'hq-icon' };
+        case 4:
+            return { text: 'SQ', class: 'sq-icon' };
+        case 5:
+            return { text: 'HR', class: 'hr-icon' };
+        default:
+            return null;
+    }
+};
+
 // 格式化歌曲列表数据
 const formatTrackList = (songList) => {
-    return songList.map(track => ({
-        hash: track.hash || '',
-        OriSongName: track.filename || '',
-        name: track.name,
-        author: track.author_name || '云盘音乐',
-        album: track.album_name || '云盘音乐',
-        timelen: track.timelen || 0,
-        isSQ: track.bitrate >= 1,
-        isHQ: track.bitrate >= 2,
-        filesize: formatStorageSize(track.size) || 0,
-        bitrate: track.bitrate || 0
-    }));
+    return songList.map(track => {
+        const qualityInfo = getQualityInfo(track.bitrate || 0);
+        return {
+            hash: track.hash || '',
+            OriSongName: track.filename || '',
+            name: track.name,
+            author: track.author_name || '云盘音乐',
+            album: track.album_name || '云盘音乐',
+            timelen: track.timelen || 0,
+            qualityInfo: qualityInfo,
+            filesize: formatStorageSize(track.size) || 0,
+            bitrate: track.bitrate || 0,
+            cover: track?.album_info?.sizable_cover?.replace("{size}", 480) || track?.authors?.[0]?.sizable_avatar?.replace("{size}", 480)
+        };
+    });
+};
+
+// 切换列表模式
+const toggleListMode = () => {
+    listMode.value = listMode.value === 'list' ? 'grid' : 'list';
+    localStorage.setItem('cloudDriveListMode', listMode.value);
 };
 
 // 格式化存储空间大小
@@ -274,9 +314,9 @@ const searchTracks = () => {
 };
 
 // 播放歌曲
-const playSong = async (hash, name, author, timeLength) => {
+const playSong = async (hash, name, author, timeLength, cover) => {
     name = name && name.includes(' - ') ? name.split(' - ')[1] : name;
-    props.playerControl.addCloudMusicToQueue(hash, name, author, timeLength);
+    props.playerControl.addCloudMusicToQueue(hash, name, author, timeLength, cover);
 };
 
 // 添加整个播放列表到队列
@@ -300,7 +340,7 @@ const addPlaylistToQueue = async (event, append = false) => {
 };
 
 const uploadMusic = () => {
-    ElMessage.info('上传功能正在开发中...');
+    $message.info('上传功能正在开发中...');
 };
 
 // 滚动到当前播放歌曲
@@ -388,7 +428,7 @@ const appendSelectedToQueue = async () => {
     if (selectedTracks.value.length === 0) return;
     const selectedSongs = selectedTracks.value.map(index => filteredTracks.value[index]);
     await props.playerControl.addCloudPlaylistToQueue(selectedSongs, true);
-    ElMessage.success(t('tian-jia-dao-bo-fang-lie-biao-cheng-gong'));
+    $message.success(t('tian-jia-dao-bo-fang-lie-biao-cheng-gong'));
     isBatchMenuVisible.value = false;
 };
 
@@ -397,7 +437,7 @@ const deleteSelectedFromCloud = async () => {
     if (selectedTracks.value.length === 0) return;
     const result = await window.$modal.confirm(t('que-ren-shan-chu-yun-pan-ge-qu'));
     if (result) {
-        ElMessage.info('删除功能正在开发中...');
+        $message.info('删除功能正在开发中...');
         
         // selectedTracks.value.sort((a, b) => b - a).forEach(index => {
         //     filteredTracks.value.splice(index, 1);
@@ -407,7 +447,7 @@ const deleteSelectedFromCloud = async () => {
         // });
         // filteredTracks.value = [...tracks.value];
         // selectedTracks.value = [];
-        // ElMessage.success(t('shan-chu-cheng-gong'));
+        // $message.success(t('shan-chu-cheng-gong'));
     }
     isBatchMenuVisible.value = false;
 };
@@ -785,8 +825,19 @@ const getSortIconClass = (field) => {
     color: #ff6d00;
 }
 
-.sq-icon {
+.hq-icon {
     color: #0094ff;
+    border-color: #0094ff;
+}
+
+.sq-icon {
+    color: #00c853;
+    border-color: #00c853;
+}
+
+.hr-icon {
+    color: #ff6d00;
+    border-color: #ff6d00;
 }
 
 .queue-play-btn {
@@ -968,5 +1019,123 @@ const getSortIconClass = (field) => {
 
 .track-list-header-row:hover {
     background-color: rgba(var(--primary-color-rgb), 0.15);
+}
+
+/* 视图模式切换按钮 */
+.view-mode-btn {
+    background-color: transparent;
+    border: 1px solid var(--secondary-color);
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-color);
+    width: 36px;
+    height: 31px;
+    transition: all 0.3s ease;
+}
+
+.view-mode-btn:hover {
+    background-color: rgba(var(--primary-color-rgb), 0.1);
+}
+
+.view-mode-btn i {
+    font-size: 16px;
+}
+
+/* 网格视图样式 */
+.li.cover-view {
+    height: 60px;
+    padding: 5px 10px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    border-radius: 5px;
+}
+
+.li.cover-view:hover {
+    background-color: var(--background-color);
+}
+
+.track-cover {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    margin-right: 15px;
+    overflow: hidden;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.track-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.li.cover-view:hover .track-cover img {
+    transform: scale(1.05);
+}
+
+.track-cover-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 20px;
+}
+
+.li.cover-view:hover .track-cover-overlay {
+    opacity: 1;
+}
+
+.track-cover-overlay.playing {
+    opacity: 1;
+}
+
+/* 调整封面视图下的其他元素样式 */
+.li.cover-view .track-title {
+    flex: 2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.li.cover-view .track-artist {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 10px;
+}
+
+.li.cover-view .track-size {
+    flex: 0.5;
+    text-align: center;
+}
+
+.li.cover-view .track-timelen {
+    width: 95px;
+    text-align: right;
+}
+
+.li.cover-view .track-checkbox,
+.li.cover-view .track-number {
+    margin-right: 10px;
+    width: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 </style>

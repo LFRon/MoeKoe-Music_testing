@@ -331,23 +331,6 @@ html.dark .queue-popup .queue-play-btn {
     background-color: transparent !important;
     border: none !important;
 }
-
-html.dark .el-card{
-    background-color: #1d1d1d;
-    border: none;
-}
-
-html.dark .el-card .el-input__wrapper{
-    background-color: #2a2a2a;
-    color: #e1e1e1;
-    box-shadow: none;
-}
-html.dark .el-card .el-segmented{
-    background-color: #363636;
-}
-html.dark .el-card .el-button {
-    border: none;
-}
 html.dark .modal-content{
     color: #e1e1e1;
 }
@@ -506,4 +489,110 @@ html.dark .batch-actions-menu{
 html.dark .batch-actions-menu li:hover{
     background-color: #2a2a2a;
     border-radius: 5px;
+}
+
+/* 登录页面暗黑模式样式 */
+html.dark .login-page {
+    background-color: #121212;
+}
+
+html.dark .login-container {
+    background-color: #1d1d1d;
+    border: 1px solid #333;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+}
+
+html.dark h2 {
+    color: #e1e1e1;
+}
+
+html.dark .form-input {
+    background-color: #2a2a2a;
+    border-color: #444;
+    color: #e1e1e1;
+}
+
+html.dark .form-input:focus {
+    border-color: var(--primary-color);
+    background-color: #333;
+}
+
+html.dark .clear-button {
+    color: #777;
+}
+
+html.dark .clear-button:hover {
+    color: #aaa;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+html.dark .segmented-control {
+    border-color: #444;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+html.dark .segmented-button {
+    background: #2a2a2a;
+    color: #aaa;
+}
+
+html.dark .segmented-button:not(:last-child)::after {
+    background-color: #444;
+}
+
+html.dark .segmented-button:hover:not(.active) {
+    background-color: #333;
+    color: #e1e1e1;
+}
+
+html.dark .segmented-button.active {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+html.dark .disclaimer {
+    background-color: #2a2a2a;
+    border-top-color: #444;
+    color: #aaa;
+}
+
+html.dark .qr-login p {
+    color: #aaa;
+}
+
+html.dark .qr-code {
+    border-color: #444;
+    background-color: #2a2a2a;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+html.dark .empty-container {
+    background-color: #2a2a2a;
+    border-color: #444;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+html.dark .empty-text {
+    color: #aaa;
+}
+
+html.dark .register-link {
+    color: #aaa;
+}
+
+html.dark .register-link a:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+html.dark .primary-button, 
+html.dark .append-button {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+html.dark .primary-button:hover:not(:disabled), 
+html.dark .append-button:hover:not(:disabled) {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+html.dark .primary-button:active:not(:disabled) {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }

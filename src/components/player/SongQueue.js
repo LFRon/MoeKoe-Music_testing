@@ -109,7 +109,7 @@ export default function useSongQueue(t, musicQueueStore) {
     };
 
     // 添加云盘歌曲到播放列表
-    const addCloudMusicToQueue = async (hash, name, author, timeLength, isReset = true) => {
+    const addCloudMusicToQueue = async (hash, name, author, timeLength, cover, isReset = true) => {
         const currentSongHash = currentSong.value.hash;
         if (typeof window !== 'undefined' && typeof window.electron !== 'undefined') {
             window.electron.ipcRenderer.send('set-tray-title', name + ' - ' + author);
@@ -120,6 +120,7 @@ export default function useSongQueue(t, musicQueueStore) {
             currentSong.value.author = author;
             currentSong.value.name = name;
             currentSong.value.hash = hash;
+            currentSong.value.img = cover;
 
             console.log('[SongQueue] 获取云盘歌曲:', hash, name);
 
@@ -150,8 +151,9 @@ export default function useSongQueue(t, musicQueueStore) {
                 hash: hash,
                 name: name,
                 author: author,
+                img: cover,
                 timeLength: timeLength || 0,
-                url: response.data.url.replace('http://', 'https://'),
+                url: response.data.url,
                 isCloud: true
             };
 

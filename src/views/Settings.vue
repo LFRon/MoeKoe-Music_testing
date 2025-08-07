@@ -143,6 +143,7 @@ const selectedSettings = ref({
     touchBar: { displayText: t('guan-bi'), value: 'off' },
     autoStart: { displayText: t('guan-bi'), value: 'off' },
     startMinimized: { displayText: t('guan-bi'), value: 'off' },
+    preventAppSuspension: { displayText: t('guan-bi'), value: 'off' },
 });
 
 // 设置分区配置
@@ -250,6 +251,12 @@ const settingSections = computed(() => [
             {
                 key: 'startMinimized',
                 label: '启动时最小化'
+            },
+            {
+                key: 'preventAppSuspension',
+                label: '阻止系统休眠',
+                showRefreshHint: true,
+                refreshHintText: t('zhong-qi-hou-sheng-xiao')
             },
             {
                 key: 'apiMode',
@@ -443,6 +450,13 @@ const selectionTypeMap = {
             { displayText: t('da-kai'), value: 'on' },
             { displayText: t('guan-bi'), value: 'off' }
         ]
+    },
+    preventAppSuspension: {
+        title: '阻止系统休眠',
+        options: [
+            { displayText: t('da-kai'), value: 'on' },
+            { displayText: t('guan-bi'), value: 'off' }
+        ]
     }
 };
 
@@ -454,7 +468,8 @@ const showRefreshHint = ref({
     gpuAcceleration: false,
     highDpi: false,
     font: false,
-    touchBar: false
+    touchBar: false,
+    preventAppSuspension: false
 });
 
 const openSelection = (type) => {
@@ -471,7 +486,7 @@ const openSelection = (type) => {
 };
 
 const selectOption = (option) => {
-    const electronFeatures = ['desktopLyrics', 'gpuAcceleration', 'minimizeToTray', 'highDpi', 'nativeTitleBar', 'touchBar', 'autoStart', 'startMinimized'];
+    const electronFeatures = ['desktopLyrics', 'gpuAcceleration', 'minimizeToTray', 'highDpi', 'nativeTitleBar', 'touchBar', 'autoStart', 'startMinimized', 'preventAppSuspension'];
     if (!isElectron() && electronFeatures.includes(selectionType.value)) {
         window.$modal.alert(t('fei-ke-hu-duan-huan-jing-wu-fa-qi-yong'));
         return;
@@ -510,12 +525,15 @@ const selectOption = (option) => {
         'desktopLyrics': () => {
             const action = option.value === 'on' ? 'display-lyrics' : 'close-lyrics';
             window.electron.ipcRenderer.send('desktop-lyrics-action', action);
+        },
+        'preventAppSuspension': () => {
+            showRefreshHint.value.preventAppSuspension = true;
         }
     };
     actions[selectionType.value]?.();
     saveSettings();
     if(selectionType.value != 'apiMode') closeSelection();
-    const refreshHintTypes = ['lyricsBackground', 'lyricsFontSize', 'gpuAcceleration', 'highDpi', 'apiMode', 'touchBar'];
+    const refreshHintTypes = ['lyricsBackground', 'lyricsFontSize', 'gpuAcceleration', 'highDpi', 'apiMode', 'touchBar', 'preventAppSuspension'];
     if (refreshHintTypes.includes(selectionType.value)) {
         showRefreshHint.value[selectionType.value] = true;
     }

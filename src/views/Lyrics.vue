@@ -220,17 +220,17 @@ const startDrag = (event) => {
 const checkMousePosition = (event) => {
     if (isLocked.value) {
         // 检查鼠标是否在歌词文本上或控制按钮上
-        const isMouseOnLyrics = event.target.closest('.lyrics-content') !== null
+        // const isMouseOnLyrics = event.target.closest('.lyrics-content') !== null
         const isMouseInControls = event.target.closest('.controls-overlay') !== null || event.target.closest('.lock-button') !== null
         
         // 当鼠标在歌词文本上或者在控制按钮上时，显示控制按钮
-        if (isMouseOnLyrics || isMouseInControls) {
+        if (isMouseInControls) {
             document.querySelector('.controls-overlay')?.classList.add('show-locked-controls')
         } else {
             document.querySelector('.controls-overlay')?.classList.remove('show-locked-controls')
         }
         
-        window.electron.ipcRenderer.send('set-ignore-mouse-events', !(isMouseInControls || isMouseOnLyrics))
+        window.electron.ipcRenderer.send('set-ignore-mouse-events', !(isMouseInControls))
         return
     }
     
