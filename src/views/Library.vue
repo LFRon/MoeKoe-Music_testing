@@ -86,6 +86,13 @@
                         <p>(*/ω＼*)</p>
                     </div>
                 </div>
+                <div v-if="selectedCategory === 0 && !isLoading" class="music-card create-playlist-button" @click="goToLocalMusic">
+                    <img :src="`./assets/images/local-music.png`" class="album-image" />
+                    <div class="album-info">
+                        <h3>本地音乐</h3>
+                        <p>(〃'▽'〃)</p>
+                    </div>
+                </div>
                 <div class="music-card"
                     v-for="(item, index) in (selectedCategory === 0 ? userPlaylists : selectedCategory === 1 ? collectedPlaylists : collectedAlbums)"
                     :key="index">
@@ -315,6 +322,10 @@ const createPlaylist = async () => {
 
 const goToCloudDrive= () => {
     router.push('/CloudDrive');
+}
+
+const goToLocalMusic= () => {
+    router.push('/LocalMusic');
 }
 
 const goToArtistDetail = (artist) => {

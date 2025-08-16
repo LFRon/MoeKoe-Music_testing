@@ -74,7 +74,7 @@
 
     <!-- 播放队列 -->
     <QueueList :current-song="currentSong" @add-song-to-queue="onQueueSongAdd"
-        @add-cloud-music-to-queue="onQueueCloudSongAdd" ref="queueList" />
+        @add-cloud-music-to-queue="onQueueCloudSongAdd" @add-local-music-to-queue="onQueueLocalSongAdd" ref="queueList" />
 
     <!-- 全屏歌词界面 -->
     <transition name="slide-up">
@@ -233,7 +233,7 @@ const updateCurrentTime = throttle(() => {
     }
 
     const savedConfig = JSON.parse(localStorage.getItem('settings') || '{}');
-    if (audio && lyricsData.value.length) {
+    if (audio && (lyricsData.value.length || isLyrics === false)) {
         if (savedConfig?.lyricsAlign != lyricsAlign.value) lyricsAlign.value = savedConfig.lyricsAlign;
 
         highlightCurrentChar(audio.currentTime, !lyricsFlag.value);
@@ -262,6 +262,7 @@ const updateCurrentTime = throttle(() => {
             }
         }
     } else if (isElectron() && (savedConfig?.desktopLyrics === 'on' || savedConfig?.apiMode === 'on')) {
+        if(isLyrics === false) return;
         getCurrentLyrics();
     }
 
@@ -284,7 +285,7 @@ const { currentPlaybackModeIndex, currentPlaybackMode, playedSongsStack, current
 const mediaSession = useMediaSession();
 
 const songQueue = useSongQueue(t, musicQueueStore);
-const { currentSong, NextSong, addSongToQueue, addCloudMusicToQueue, addToNext, getPlaylistAllSongs, addPlaylistToQueue, addCloudPlaylistToQueue } = songQueue;
+const { currentSong, NextSong, addSongToQueue, addCloudMusicToQueue, addLocalMusicToQueue, addLocalPlaylistToQueue, addToNext, getPlaylistAllSongs, addPlaylistToQueue, addCloudPlaylistToQueue } = songQueue;
 
 // 添加自动切换定时器引用
 let autoSwitchTimer = null;
@@ -334,8 +335,11 @@ const restoreLyricsScroll = throttle(() => {
 }, 1000);
 
 // 获取歌词的节流函数
-const getCurrentLyrics = throttle(() => {
-    if (currentSong.value.hash) getLyrics(currentSong.value.hash);
+let isLyrics;
+const getCurrentLyrics = throttle(async() => {
+    if (currentSong.value.hash) {
+        isLyrics = await getLyrics(currentSong.value.hash);
+    }
 }, 1000);
 
 // 计算属性
@@ -409,6 +413,7 @@ const playSong = async (song) => {
 
         // 清空歌词数据
         lyricsData.value = [];
+        if(song?.isLocal) return;
         // 保存当前歌曲到本地存储
         localStorage.setItem('current_song', JSON.stringify(currentSong.value));
 
@@ -447,6 +452,9 @@ const togglePlayPause = async () => {
                     console.log('[PlayerControl] 云音乐没有URL，重新获取');
                     addCloudMusicToQueue(song.hash, song.name, song.author, song.timeLength, song.img);
                     return;
+                }else if(song.isLocal){
+                    console.log('[PlayerControl] 本地音乐没有URL，重新获取');
+                    addLocalMusicToQueue(song);
                 } else {
                     console.log('[PlayerControl] 歌曲没有URL，重新获取');
                     addSongToQueue(song.hash, song.name, song.img, song.author);
@@ -547,6 +555,8 @@ const playSongFromQueue = async (direction) => {
                 targetSong.img,
                 false // 不重置播放位置，只获取URL
             );
+        } else if (targetSong.isLocal) {
+            result = await addLocalMusicToQueue(targetSong, false);
         } else {
             result = await addSongToQueue(
                 targetSong.hash,
@@ -828,6 +838,7 @@ onMounted(() => {
 
             // 如果有URL，恢复播放源
             if (savedSong.url) {
+                if(savedSong.isLocal) return;
                 console.log('[PlayerControl] 从缓存恢复音频源:', savedSong.url);
                 audio.src = savedSong.url;
             } else {
@@ -953,6 +964,52 @@ defineExpose({
         }
         return result;
     },
+    addLocalMusicToQueue: async (localSong) => {
+        clearAutoSwitchTimer();
+
+        console.log('[PlayerControl] 外部调用addLocalMusicToQueue:', localSong.name);
+        audio.pause();
+        playing.value = false;
+        
+        const result = await addLocalMusicToQueue(localSong);
+        if (result && result.song) {
+            await playSong(result.song);
+            console.log('[PlayerControl] 本地音乐播放成功:', localSong.name);
+            return { song: result.song };
+        } else {
+            console.error('[PlayerControl] 播放本地音乐失败');
+            return { error: true };
+        }
+    },
+    addLocalPlaylistToQueue: async (localSongs, append = false) => {
+        console.log('[PlayerControl] 外部调用addLocalPlaylistToQueue:', localSongs.length, '首歌曲');
+        
+        const queueSongs = await addLocalPlaylistToQueue(localSongs, append);
+        
+        // 如果不是追加模式，自动播放第一首
+        if (!append && queueSongs.length > 0) {
+            let songIndex = 0;
+            
+            // 如果是随机播放模式，则随机选择一首歌曲
+            if (currentPlaybackModeIndex.value == 0) {
+                songIndex = Math.floor(Math.random() * queueSongs.length);
+                console.log('[PlayerControl] 随机模式下添加本地歌单后随机播放:', queueSongs[songIndex].name);
+            } else {
+                console.log('[PlayerControl] 添加本地歌单后自动播放第一首:', queueSongs[0].name);
+            }
+            
+            clearAutoSwitchTimer();
+            audio.pause();
+            playing.value = false;
+            
+            const result = await addLocalMusicToQueue(queueSongs[songIndex]);
+            if (result && result.song) {
+                await playSong(result.song);
+            }
+        }
+        
+        return queueSongs;
+    },
     getPlaylistAllSongs,
     addPlaylistToQueue: async (info, append = false) => {
         const songs = await addPlaylistToQueue(info, append);
@@ -1056,6 +1113,21 @@ const onQueueCloudSongAdd = async (hash, name, author, timeLength, cover) => {
         await playSong(result.song);
     } else if (result && result.shouldPlayNext) {
         console.log('[PlayerControl] 云盘歌曲无法播放');
+        handleAutoSwitch();
+    }
+};
+
+const onQueueLocalSongAdd = async (item) => {
+    clearAutoSwitchTimer();
+    audio.pause();
+    playing.value = false;
+    
+    console.log('[PlayerControl] 从播放队列收到addLocalMusicToQueue事件:', item.name);
+    const result = await addLocalMusicToQueue(item);
+    if (result && result.song) {
+        await playSong(result.song);
+    } else if (result && result.shouldPlayNext) {
+        console.log('[PlayerControl] 本地音乐无法播放');
         handleAutoSwitch();
     }
 };

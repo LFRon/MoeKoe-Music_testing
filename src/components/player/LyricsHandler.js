@@ -37,22 +37,23 @@ export default function useLyricsHandler(t) {
                 return;
             }
 
+            console.log('[LyricsHandler] 请求歌词……');
             const lyricSearchResponse = await get(`/search/lyric?hash=${hash}`);
             if (lyricSearchResponse.status !== 200 || lyricSearchResponse.candidates.length === 0) {
                 SongTips.value = t('zan-wu-ge-ci');
-                return;
+                return false;
             }
 
             // 明确指定使用KRC格式
             const lyricResponse = await get(`/lyric?id=${lyricSearchResponse.candidates[0].id}&accesskey=${lyricSearchResponse.candidates[0].accesskey}&fmt=krc&decode=true`);
             if (lyricResponse.status !== 200) {
                 SongTips.value = t('huo-qu-ge-ci-shi-bai');
-                return;
+                return false;
             }
-            console.log('[LyricsHandler] 请求歌词……');
             parseLyrics(lyricResponse.decodeContent, settings?.lyricsTranslation === 'on');
             originalLyrics.value = lyricResponse.decodeContent;
             centerFirstLine();
+            return true;
         } catch (error) {
             SongTips.value = t('huo-qu-ge-ci-shi-bai');
         }
@@ -74,7 +75,7 @@ export default function useLyricsHandler(t) {
                         const cleanedCode = languageCode.replace(/[^A-Za-z0-9+/=]/g, '');
                         // 添加缺失的填充字符
                         const paddedCode = cleanedCode.padEnd(cleanedCode.length + (4 - cleanedCode.length % 4) % 4, '=');
-                        const decodedData = atob(paddedCode);
+                        const decodedData = decodeURIComponent(escape(atob(paddedCode)));
                         const languageData = JSON.parse(decodedData);
 
                         // 获取翻译歌词 (type === 1)

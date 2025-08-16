@@ -126,7 +126,8 @@
     "linux": {
       "icon": "build/icons/linux_256x256.png",
       "target": [
-        "AppImage"
+        "AppImage",
+        "deb"
       ],
       "category": "Utility",
       "artifactName": "${productName}.${ext}"
@@ -144,10 +145,9 @@
     "@vitejs/plugin-vue": "^6.0.1",
     "@vue/compiler-sfc": "^3.5.18",
     "cross-env": "^10.0.0",
-    "electron": "^37.2.6",
     "electron-builder": "^26.0.12",
     "npm-run-all": "^4.1.5",
-    "vite": "^7.0.6",
+    "vite": "^7.1.2",
     "vite-plugin-pwa": "^1.0.2",
     "vue-loader": "^17.4.2",
     "wait-on": "^8.0.4"
@@ -155,10 +155,12 @@
   "dependencies": {
     "electron-is-dev": "^3.0.1",
     "electron-log": "^5.4.2",
+    "electron-nightly": "^39.0.0-nightly.20250814",
     "electron-store": "^10.1.0",
     "electron-updater": "^6.6.2",
+    "music-metadata": "^11.8.2",
     "pinia": "^3.0.3",
-    "pinia-plugin-persistedstate": "^4.4.1",
+    "pinia-plugin-persistedstate": "^4.5.0",
     "tree-kill": "^1.2.2",
     "vue": "^3.5.18",
     "vue-i18n": "^11.1.11",

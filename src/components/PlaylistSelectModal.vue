@@ -53,6 +53,10 @@ const validateUserAndSong = () => {
         window.$modal.alert('云盘音乐不支持添加到歌单');
         return false;
     }
+    if(props.currentSong.isLocal){
+        window.$modal.alert('本地音乐不支持添加到歌单');
+        return false;
+    }
     return true;
 };
 
