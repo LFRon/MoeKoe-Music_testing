@@ -235,12 +235,13 @@ APIソースコードは[MakcRe/KuGouMusicApi](https://github.com/MakcRe/KuGouMu
 
 ## 🖼️ スクリーンショット
 
-![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/1.png)
 ![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/2.png)
 ![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/3.png)
 ![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/4.png)
 ![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/5.png)
 ![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/6.png)
+![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/7.png)
+![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/8.png)
 
 
 ## 🗓️ スター履歴

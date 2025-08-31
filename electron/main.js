@@ -5,6 +5,7 @@ import {
     playStartupSound, createLyricsWindow, setThumbarButtons,
     registerProtocolHandler, sendHashAfterLoad
 } from './appServices.js';
+import { initializeExtensions, cleanupExtensions } from './extensions.js';
 import { setupAutoUpdater } from './updater.js';
 import apiService from './apiService.js';
 import Store from 'electron-store';
@@ -47,6 +48,7 @@ app.on('ready', () => {
             apiService.init(mainWindow);
             registerProtocolHandler(mainWindow);
             sendHashAfterLoad(mainWindow);
+            initializeExtensions();
         } catch (error) {
             console.log('初始化应用时发生错误:', error);
             createTray(null);
@@ -111,6 +113,7 @@ app.on('before-quit', () => {
     }
     stopApiServer();
     apiService.stop();
+    cleanupExtensions();
 });
 // 关闭所有窗口
 app.on('window-all-closed', () => {

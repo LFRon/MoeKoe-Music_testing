@@ -12,18 +12,50 @@ html.dark .settings-page {
     background-color: #121212;
 }
 
+html.dark .settings-sidebar {
+    background-color: #1a1a1a;
+    border-right-color: #333;
+}
+
+html.dark .sidebar-item {
+    color: #e1e1e1;
+}
+
+html.dark .sidebar-item:hover:not(.active) {
+    background-color: #2a2a2a;
+}
+
+html.dark .sidebar-item.active {
+    background-color: rgba(255, 105, 180, 0.15);
+    color: var(--primary-color);
+}
+
 html.dark .setting-section h3 {
     color: #e1e1e1;
+    border-bottom-color: #333;
 }
 
-html.dark .setting-item {
-    border-bottom-color: #333;
+html.dark .setting-card {
+    background-color: #1d1d1d;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+html.dark .setting-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+html.dark .setting-card-header {
     color: #e1e1e1;
 }
 
-html.dark .setting-control {
+html.dark .setting-card-value {
     background-color: #2a2a2a;
     color: #e1e1e1;
+    border: 1px solid #333;
+}
+
+html.dark .refresh-hint {
+    color: #ff6b6b;
 }
 
 html.dark .modal-content {
@@ -596,3 +628,4 @@ html.dark .append-button:hover:not(:disabled) {
 html.dark .primary-button:active:not(:disabled) {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
+

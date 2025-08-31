@@ -236,12 +236,13 @@ API原始程式碼來自[MakcRe/KuGouMusicApi](https://github.com/MakcRe/KuGouMu
 
 ## 🖼️  截圖
 
-![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/1.png)
 ![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/2.png)
 ![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/3.png)
 ![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/4.png)
 ![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/5.png)
 ![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/6.png)
+![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/7.png)
+![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/8.png)
 
 ## 🗓️ Star 歷史
 

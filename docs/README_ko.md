@@ -240,13 +240,13 @@ API 소스 코드는 [MakcRe/KuGouMusicApi](https://github.com/MakcRe/KuGouMusic
 
 ## 🖼️ 캡처
 
-![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/1.png)
 ![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/2.png)
 ![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/3.png)
 ![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/4.png)
 ![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/5.png)
 ![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/6.png)
-
+![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/7.png)
+![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/8.png)
 
 ## 🗓️ 스타 히스토리
 

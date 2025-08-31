@@ -1,19 +1,50 @@
 <template>
     <div class="settings-page">
-        <section v-for="(section, sectionIndex) in settingSections" :key="sectionIndex" class="setting-section">
-            <h3>{{ section.title }}</h3>
-            <div v-for="(item, itemIndex) in section.items" :key="itemIndex"
-                 class="setting-item" @click="item.action ? item.action() : openSelection(item.key)">
-                <span>{{ item.label }}
-                    <span v-if="item.showRefreshHint && showRefreshHint[item.key]" class="refresh-hint">
-                        {{ item.refreshHintText }}
-                    </span>
-                </span>
-                <div class="setting-control">
-                    <span>{{ item.icon }}{{ item.customText || selectedSettings[item.key]?.displayText }}</span>
+        <div class="settings-sidebar">
+            <div v-for="(section, sectionIndex) in settingSections" :key="sectionIndex" 
+                 class="sidebar-item" 
+                 :class="{ active: activeTab === sectionIndex }"
+                 @click="activeTab = sectionIndex">
+                <i :class="getSectionIcon(section.title)"></i>
+                <span>{{ section.title }}</span>
+            </div>
+        </div>
+        
+        <div class="settings-content">
+            <div v-for="(section, sectionIndex) in settingSections" :key="sectionIndex" 
+                 class="setting-section" 
+                 v-show="activeTab === sectionIndex">
+                <h3>{{ section.title }}</h3>
+                <ExtensionManager v-if="section.title === '插件'" />
+                <div v-else class="settings-cards">
+                    <div v-for="(item, itemIndex) in section.items" :key="itemIndex"
+                        class="setting-card" @click="item.action ? item.action() : openSelection(item.key)">
+                        <div class="setting-card-header">
+                            <i :class="getItemIcon(item.key)"></i>
+                            <span>{{ item.label }}</span>
+                            <span v-if="item.showRefreshHint && showRefreshHint[item.key]" class="refresh-hint">
+                                {{ item.refreshHintText }}
+                            </span>
+                        </div>
+                        <div class="setting-card-value">
+                            <span>{{ item.icon }}{{ item.customText || selectedSettings[item.key]?.displayText }}</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </section>
+
+            <div class="reset-settings-container">
+                <button @click="openResetConfirmation" class="reset-settings-button">
+                    <i class="fas fa-sync-alt"></i>
+                    恢复出厂设置
+                </button>
+            </div>
+            <div class="version-info">
+                <p>© MoeKoe Music</p>
+                <span v-if="appVersion">V{{ appVersion }} - {{ platform }}</span>
+            </div>
+        </div>
 
         <div v-if="isSelectionOpen" class="modal">
             <div class="modal-content">
@@ -94,17 +125,6 @@
                 </div>
             </div>
         </div>
-
-        <div class="reset-settings-container">
-            <button @click="openResetConfirmation" class="reset-settings-button">
-                <i class="fas fa-sync-alt"></i>
-                恢复出厂设置
-            </button>
-        </div>
-        <div class="version-info">
-            <p>© MoeKoe Music</p>
-            <span v-if="appVersion">V{{ appVersion }} - {{ platform }}</span>
-        </div>
     </div>
 </template>
 
@@ -112,12 +132,14 @@
 import { ref, onMounted, getCurrentInstance, onUnmounted, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { MoeAuthStore } from '../stores/store';
+import ExtensionManager from '@/components/ExtensionManager.vue';
 
 const MoeAuth = MoeAuthStore();
 const { t } = useI18n();
 const { proxy } = getCurrentInstance();
 const appVersion = ref('');
 const platform = ref('');
+const activeTab = ref(0);
 
 // 设置配置
 const selectedSettings = ref({
@@ -144,6 +166,7 @@ const selectedSettings = ref({
     autoStart: { displayText: t('guan-bi'), value: 'off' },
     startMinimized: { displayText: t('guan-bi'), value: 'off' },
     preventAppSuspension: { displayText: t('guan-bi'), value: 'off' },
+    networkMode: { displayText: '主网', value: 'mainnet' },
 });
 
 // 设置分区配置
@@ -226,6 +249,10 @@ const settingSections = computed(() => [
         ]
     },
     {
+        title: '插件',
+        items: []
+    },
+    {
         title: t('xi-tong'),
         items: [
             {
@@ -247,6 +274,12 @@ const settingSections = computed(() => [
             {
                 key: 'autoStart',
                 label: '开机自启动'
+            },
+            {
+                key: 'networkMode',
+                label: '网络环境',
+                showRefreshHint: true,
+                refreshHintText: '重启后生效'
             },
             {
                 key: 'startMinimized',
@@ -285,6 +318,47 @@ const settingSections = computed(() => [
         ]
     }
 ]);
+
+// 获取每个部分的图标
+const getSectionIcon = (title) => {
+    const iconMap = {
+        [t('jie-mian')]: 'fas fa-palette',
+        [t('sheng-yin')]: 'fas fa-volume-up',
+        [t('ge-ci')]: 'fas fa-music',
+        '插件': 'fas fa-puzzle-piece',
+        [t('xi-tong')]: 'fas fa-cog'
+    };
+    return iconMap[title] || 'fas fa-cog';
+};
+
+// 获取每个设置项的图标
+const getItemIcon = (key) => {
+    const iconMap = {
+        'language': 'fas fa-language',
+        'themeColor': 'fas fa-paint-brush',
+        'theme': 'fas fa-moon',
+        'nativeTitleBar': 'fas fa-window-maximize',
+        'font': 'fas fa-font',
+        'quality': 'fas fa-headphones',
+        'greetings': 'fas fa-comment',
+        'lyricsBackground': 'fas fa-image',
+        'lyricsFontSize': 'fas fa-text-height',
+        'desktopLyrics': 'fas fa-desktop',
+        'lyricsTranslation': 'fas fa-language',
+        'lyricsAlign': 'fas fa-align-center',
+        'gpuAcceleration': 'fas fa-microchip',
+        'highDpi': 'fas fa-expand',
+        'minimizeToTray': 'fas fa-window-minimize',
+        'autoStart': 'fas fa-power-off',
+        'startMinimized': 'fas fa-compress',
+        'preventAppSuspension': 'fas fa-clock',
+        'apiMode': 'fas fa-code',
+        'touchBar': 'fas fa-tablet-alt',
+        'shortcuts': 'fas fa-keyboard',
+        'pwa': 'fas fa-mobile-alt'
+    };
+    return iconMap[key] || 'fas fa-sliders-h';
+};
 
 const isSelectionOpen = ref(false);
 const selectionType = ref('');
@@ -457,6 +531,14 @@ const selectionTypeMap = {
             { displayText: t('da-kai'), value: 'on' },
             { displayText: t('guan-bi'), value: 'off' }
         ]
+    },
+    networkMode: {
+        title: '网络节点',
+        options: [
+            { displayText: '主网', value: 'mainnet' },
+            { displayText: '测试网', value: 'testnet' },
+            { displayText: '开发网', value: 'devnet' }
+        ]
     }
 };
 
@@ -469,7 +551,8 @@ const showRefreshHint = ref({
     highDpi: false,
     font: false,
     touchBar: false,
-    preventAppSuspension: false
+    preventAppSuspension: false,
+    networkMode: false
 });
 
 const openSelection = (type) => {
@@ -486,7 +569,7 @@ const openSelection = (type) => {
 };
 
 const selectOption = (option) => {
-    const electronFeatures = ['desktopLyrics', 'gpuAcceleration', 'minimizeToTray', 'highDpi', 'nativeTitleBar', 'touchBar', 'autoStart', 'startMinimized', 'preventAppSuspension'];
+    const electronFeatures = ['desktopLyrics', 'gpuAcceleration', 'minimizeToTray', 'highDpi', 'nativeTitleBar', 'touchBar', 'autoStart', 'startMinimized', 'preventAppSuspension', 'networkMode'];
     if (!isElectron() && electronFeatures.includes(selectionType.value)) {
         window.$modal.alert(t('fei-ke-hu-duan-huan-jing-wu-fa-qi-yong'));
         return;
@@ -528,12 +611,15 @@ const selectOption = (option) => {
         },
         'preventAppSuspension': () => {
             showRefreshHint.value.preventAppSuspension = true;
+        },
+        'networkMode': () => {
+            showRefreshHint.value.networkMode = true;
         }
     };
     actions[selectionType.value]?.();
     saveSettings();
     if(selectionType.value != 'apiMode') closeSelection();
-    const refreshHintTypes = ['lyricsBackground', 'lyricsFontSize', 'gpuAcceleration', 'highDpi', 'apiMode', 'touchBar', 'preventAppSuspension'];
+    const refreshHintTypes = ['lyricsBackground', 'lyricsFontSize', 'gpuAcceleration', 'highDpi', 'apiMode', 'touchBar', 'preventAppSuspension', 'networkMode'];
     if (refreshHintTypes.includes(selectionType.value)) {
         showRefreshHint.value[selectionType.value] = true;
     }
@@ -824,32 +910,116 @@ const installPWA = async () => {
 
 <style scoped>
 .settings-page {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    margin-bottom: -80px;
+}
+
+.settings-sidebar {
+    width: 220px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+    padding: 20px 0;
+    overflow-y: auto;
+}
+
+.sidebar-item {
+    padding: 12px 20px;
+    margin: 4px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.sidebar-item i {
+    margin-right: 12px;
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+}
+
+.sidebar-item.active {
+    background-color: var(--color-primary-light, rgba(255, 105, 180, 0.1));
+    color: var(--color-primary, #ff69b4);
+    font-weight: 500;
+}
+
+.sidebar-item:hover:not(.active) {
+    background-color: var(--hover-color, #efefef);
+}
+
+.settings-content {
+    flex: 1;
     padding: 20px;
-    font-family: Arial, sans-serif;
+    overflow-y: auto;
 }
 
 .setting-section {
-    margin-bottom: 30px;
+    animation: fadeIn 0.3s ease;
 }
 
 .setting-section h3 {
-    font-size: 18px;
-    font-weight: bold;
-    margin-bottom: 10px;
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color, #eaeaea);
 }
 
-.setting-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 15px 0;
-    border-bottom: 1px solid #eee;
+.settings-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.setting-card {
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
     cursor: pointer;
 }
 
-.setting-control {
-    background-color: #f5f5f5;
-    padding: 8px 16px;
-    border-radius: 8px;
+.setting-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.setting-card-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.setting-card-header i {
+    color: var(--color-primary, #ff69b4);
+    margin-right: 10px;
+    font-size: 16px;
+}
+
+.setting-card-value {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    border: 1px solid var(--border-color, #eaeaea);
+}
+
+.setting-card-value i {
+    color: #999;
+    font-size: 12px;
+}
+
+.refresh-hint {
+    color: #ff4d4f;
+    font-size: 12px;
+    margin-left: 8px;
 }
 
 .modal {
@@ -944,7 +1114,7 @@ const installPWA = async () => {
 .shortcut-modal-content {
     background: white;
     border-radius: 12px;
-    padding: 15px;
+    padding: 20px;
     width: 90%;
     max-width: 500px;
 }
@@ -957,13 +1127,15 @@ const installPWA = async () => {
 
 .shortcut-list {
     margin-bottom: 20px;
+    max-height: 60vh;
+    overflow-y: auto;
 }
 
 .shortcut-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 6px 0;
+    padding: 10px 0;
     border-bottom: 1px solid #eee;
 }
 
@@ -1032,15 +1204,36 @@ const installPWA = async () => {
     color: white;
 }
 
-.refresh-hint {
-    color: red;
-}
-
 .version-info {
     text-align: center;
     margin-top: 20px;
     font-size: 14px;
     color: #666;
+}
+
+.reset-settings-container {
+    display: flex;
+    justify-content: center;
+    margin: 30px 0 20px 0;
+}
+
+.reset-settings-button {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.reset-settings-button:hover {
+    background-color: #e53935;
 }
 
 .compatibility-option {
@@ -1125,27 +1318,6 @@ const installPWA = async () => {
     color: #666;
 }
 
-.reset-settings-container {
-    display: flex;
-    justify-content: center;
-    margin: 30px 0 20px 0;
-}
-
-.reset-settings-button {
-    background-color: #f44336;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 7px 17px;
-    font-size: 13px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.reset-settings-button:hover {
-    background-color: #e53935;
-}
 .api-settings-container {
     display: flex;
     flex-direction: column;

@@ -58,16 +58,27 @@ onUnmounted(() => {
 
 <style>
 :root {
-    /* 粉红色主色调 */
+    /* 粉红色主色调 - 用于主要按钮、强调元素 */
     --primary-color: #FF69B4;
-    /* 浅粉红色辅助色 */
+    /* 浅粉红色辅助色 - 用于次要按钮、提示信息 */
     --secondary-color: #FFB6C1;
+    /* 文本颜色 - 用于正文内容 */
     --text-color: #333;
-    /* 浅粉色背景 */
+    /* 浅粉色背景 - 用于页面主背景 */
     --background-color: #FFF0F5;
-    /* 高亮色 */
+    /* 次要背景色 - 用于卡片、侧边栏背景 */
+    --background-color-secondary: #FFE6F0;
+    /* 高亮色 - 用于交互元素如按钮、链接 */
     --color-primary: #ea33e4;
+    /* 高亮色的浅色版本 - 用于选中状态背景 */
+    --color-primary-light: rgba(255, 105, 180, 0.1);
+    /* 边框颜色 - 用于分隔线、边框 */
+    --border-color: #FFD9E6;
+    /* 悬停颜色 - 用于元素悬停状态 */
+    --hover-color: #FFE9F2;
+    /* 半透明背景 - 用于覆盖层、提示框 */
     --color-secondary-bg-for-transparent: rgba(209, 209, 214, 0.28);
+    /* 阴影颜色 - 用于卡片、弹窗阴影 */
     --color-box-shadow: rgba(255, 105, 180, 0.2);
 }
 

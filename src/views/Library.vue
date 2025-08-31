@@ -264,7 +264,7 @@ const getfollow = async () => {
 const getplaylist = async () => {
     try {
         const playlistResponse = await get('/user/playlist',{
-            pagesize:100,
+            pagesize:500,
             t: localStorage.getItem('t')
         });
         if (playlistResponse.status === 1) {
