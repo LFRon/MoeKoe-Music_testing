@@ -16,7 +16,40 @@
                 </div>
             </div>
             <div v-if="loginType === t('shou-ji-hao-deng-lu')">
-                <form @submit.prevent class="login-form">
+                <!-- 账号选择界面 -->
+                <div v-if="showAccountSelection" class="account-selection">
+                    <p class="selection-tip">该手机绑定多个账号，请选择要登录的账号</p>
+                    <div class="account-list">
+                        <div 
+                            v-for="account in accountList" 
+                            :key="account.userid"
+                            class="account-item"
+                            @click="selectAccount(account)"
+                        >
+                            <div class="account-avatar">
+                                <img :src="account.pic || './assets/images/profile.jpg'" :alt="account.nickname" />
+                            </div>
+                            <div class="account-info">
+                                <div class="account-name">{{ account.nickname || '未命名用户' }}</div>
+                                <div class="account-status">
+                                    <span class="svip-badge">Lv {{ account.p_grade }}</span>
+                                    <span class="user-level">UID：{{ account.userid }}</span>
+                                </div>
+                            </div>
+                            <div class="select-arrow">→</div>
+                        </div>
+                    </div>
+                    <button 
+                        type="button" 
+                        class="back-button" 
+                        @click="backToLogin"
+                    >
+                        返回登录
+                    </button>
+                </div>
+
+                <!-- 原登录表单 -->
+                <form v-else @submit.prevent class="login-form">
                     <div class="form-item" :class="{ 'has-error': phoneFormErrors.mobile }">
                         <div class="input-wrapper">
                             <input 
@@ -147,6 +180,9 @@ const phoneForm = reactive({
     code: ''
 });
 
+const showAccountSelection = ref(false);
+const accountList = ref([]);
+
 // 表单验证错误信息
 const phoneFormErrors = reactive({
     mobile: '',
@@ -257,7 +293,7 @@ const sendCaptcha = async () => {
     }
 };
 
-const phoneLogin = async () => {
+const phoneLogin = async (selectedUserId = null) => {
     if (!phoneForm.mobile) {
         $message.warning(t('qing-shu-ru-shou-ji-hao'));
         return;
@@ -268,15 +304,20 @@ const phoneLogin = async () => {
     }
     isPhoneLoginLoading.value = true;
     try {
-        const response = await get(`/login/cellphone?mobile=${phoneForm.mobile}&code=${phoneForm.code}`);
+        let url = `/login/cellphone?mobile=${phoneForm.mobile}&code=${phoneForm.code}`;
+        if (selectedUserId) {
+            url += `&userid=${selectedUserId}`;
+        }
+        const response = await get(url);
         if (response.status === 1) {
             MoeAuth.setData({ UserInfo: response.data });
             router.push(route.query.redirect || '/library');
             $message.success(t('deng-lu-cheng-gong'));
         }
     } catch (error) {
-        if (error.response.data?.data?.info_list) {
-            $message.error(t('zhan-bu-zhi-chi-duo-zhang-hao-ding-yi-shou-ji-deng-lu'));
+        if (error.response.data?.data?.info_list && !selectedUserId) {
+            accountList.value = error.response.data.data.info_list;
+            showAccountSelection.value = true;
         } else {
             $message.error(error.response.data?.data || t('deng-lu-shi-bai'));
         }
@@ -316,6 +357,18 @@ const getQrCode = async () => {
     } catch {
         $message.error(t('er-wei-ma-sheng-cheng-shi-bai'));
     }
+};
+
+// 选择账号登录
+const selectAccount = async (account) => {
+    isPhoneLoginLoading.value = true;
+    await phoneLogin(account.userid);
+};
+
+// 返回登录界面
+const backToLogin = () => {
+    showAccountSelection.value = false;
+    accountList.value = [];
 };
 
 // 检查二维码扫描状态
@@ -807,6 +860,169 @@ h2::after {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px var(--color-box-shadow);
 }
+
+/* 账号选择界面样式 */
+.account-selection {
+  text-align: center;
+  margin-top: 8px;
+}
+
+.account-selection h3 {
+  color: var(--text-color);
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+.selection-tip {
+  color: var(--text-color);
+  opacity: 0.7;
+  font-size: 13px;
+  margin-bottom: 20px;
+  line-height: 1.4;
+}
+
+.account-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.account-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.account-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--color-primary-light), transparent);
+  transition: all 0.6s;
+}
+
+.account-item:hover {
+  border-color: var(--primary-color);
+  background-color: var(--hover-color);
+  box-shadow: 0 4px 12px var(--color-box-shadow);
+  transform: translateY(-2px);
+}
+
+.account-item:hover::before {
+  left: 100%;
+}
+
+.account-item:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px var(--color-box-shadow);
+}
+
+.account-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  margin-right: 12px;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 2px solid var(--border-color);
+  transition: all 0.3s;
+}
+
+.account-item:hover .account-avatar {
+  border-color: var(--primary-color);
+  transform: scale(1.05);
+}
+
+.account-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.account-info {
+  flex: 1;
+  text-align: left;
+}
+
+.account-name {
+  font-weight: 600;
+  color: var(--text-color);
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.account-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.vip-badge {
+  background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 10px;
+}
+
+.svip-badge {
+  background: linear-gradient(45deg, var(--color-primary), var(--primary-color));
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 10px;
+}
+
+.user-level {
+  color: var(--text-color);
+  opacity: 0.6;
+  font-size: 11px;
+}
+
+.select-arrow {
+  color: var(--primary-color);
+  font-size: 18px;
+  font-weight: bold;
+  transition: all 0.3s;
+}
+
+.account-item:hover .select-arrow {
+  transform: translateX(4px);
+}
+
+.back-button {
+  width: 100%;
+  height: 40px;
+  background: var(--background-color-secondary);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.back-button:hover {
+  background: var(--hover-color);
+  color: var(--text-color);
+  border-color: var(--primary-color);
+}
+
 
 /* 响应式调整 */
 @media (max-width: 480px) {

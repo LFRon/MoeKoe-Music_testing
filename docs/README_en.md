@@ -24,7 +24,7 @@ An open-source, concise, and aesthetically pleasing third-party client for KuGou
   </p>
 </p>
 
-![images]( https://github.com/iAJue/MoeKoeMusic/raw/main/images/5.png )
+![images]( https://github.com/iAJue/MoeKoeMusic/raw/main/images/1.png )
 
 ## ❤️ Preface
 

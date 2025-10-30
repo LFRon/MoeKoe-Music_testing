@@ -1,6 +1,6 @@
 {
   "name": "moekoemusic",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "homepage": "https://github.com/iAJue/MoeKoeMusic",
   "main": "electron/main.js",
   "scripts": {
@@ -126,7 +126,8 @@
     "linux": {
       "icon": "build/icons/linux_256x256.png",
       "target": [
-        "AppImage"
+        "AppImage",
+        "deb"
       ],
       "category": "Utility",
       "artifactName": "${productName}.${ext}"

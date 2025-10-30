@@ -75,6 +75,7 @@
             <template v-if="lyrics.length">
                 <div class="lyrics-line">
                     <div class="lyrics-content" 
+                        ref="activeLyricsContentRef"
                         :style="currentLineStyle"
                         :class="{ 'hovering': isHovering && !isLocked }"
                     >
@@ -102,7 +103,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 
 let currentSongHash = ''
 
@@ -110,6 +111,7 @@ const isPlaying = ref(false)
 const isLocked = ref(false)
 const controlsOverlay = ref(null)
 const lyricsContainerRef = ref(null)
+const activeLyricsContentRef = ref(null)
 
 const currentTime = ref(0)
 const currentLineIndex = ref(0)
@@ -339,76 +341,140 @@ const containerStyle = computed(() => ({
     fontSize: `${fontSize.value}px`
 }))
 
-// 获取行高亮样式
-const getLineHighlightStyle = (lineIndex) => {
-    if (!lyrics.value[lineIndex] || !lyrics.value[lineIndex].characters || !lyrics.value[lineIndex].characters.length) {
-        return { color: defaultColor.value };
-    }
-    
+const computeHighlightMetrics = (lineIndex) => {
     const line = lyrics.value[lineIndex];
-    const characters = line.characters;
-    const text = line.text || '';
-    
-    // 获取整行的时间范围
-    const lineStartTime = characters[0].startTime;
-    const lineEndTime = characters[characters.length - 1].endTime;
-    const lineDuration = lineEndTime - lineStartTime;
-    
-    // 如果当前时间还没到这一行，不高亮
-    if (currentTime.value < lineStartTime) {
-        return { color: defaultColor.value };
-    }
-    
-    // 如果当前时间已经超过这一行的结束时间，完全高亮
-    if (currentTime.value >= lineEndTime) {
+    if (!line || !line.characters || !line.characters.length) {
         return {
-            background: `linear-gradient(to right, ${highlightColor.value} 0%, ${highlightColor.value} 100%)`,
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            color: 'transparent',
-            textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
-            fontWeight: 'bold',
+            style: { color: defaultColor.value },
+            progress: 0
         };
     }
-    
-    // 计算基于字符时间的高亮位置
+
+    const characters = line.characters;
+    const text = line.text || '';
+    const safeTextLength = Math.max(1, text.length);
+    const lineStartTime = characters[0].startTime;
+    const lineEndTime = characters[characters.length - 1].endTime;
+    const lineDuration = Math.max(1, lineEndTime - lineStartTime);
+
+    if (currentTime.value < lineStartTime) {
+        return {
+            style: { color: defaultColor.value },
+            progress: 0
+        };
+    }
+
+    if (currentTime.value >= lineEndTime) {
+        return {
+            style: {
+                background: `linear-gradient(to right, ${highlightColor.value} 0%, ${highlightColor.value} 100%)`,
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                color: 'transparent',
+                textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
+                fontWeight: 'bold',
+            },
+            progress: 1
+        };
+    }
+
     let charBasedPosition = 0;
     for (let i = 0; i < characters.length; i++) {
         const char = characters[i];
         const startTime = char.startTime;
         const endTime = char.endTime;
-        
+
         if (currentTime.value >= startTime && currentTime.value <= endTime) {
-            const progress = (currentTime.value - startTime) / (endTime - startTime);
-            const charWidth = 1 / text.length * 100;
-            charBasedPosition = (i / text.length * 100) + (progress * charWidth);
+            const charDuration = Math.max(1, (endTime - startTime));
+            const progress = (currentTime.value - startTime) / charDuration;
+            const charWidth = 100 / safeTextLength;
+            charBasedPosition = (i / safeTextLength * 100) + (progress * charWidth);
             break;
         }
-        
+
         if (currentTime.value > endTime) {
-            charBasedPosition = (i + 1) / text.length * 100;
+            charBasedPosition = ((i + 1) / safeTextLength) * 100;
         }
     }
-    
-    // 计算基于整行时间的高亮位置（作为补偿机制）
-    const lineProgress = (currentTime.value - lineStartTime) / lineDuration;
-    const lineBasedPosition = Math.min(100, lineProgress * 100);
-    
-    // 使用两种计算方式中较大的值，确保高亮不会太慢
-    let highlightPosition = Math.max(charBasedPosition, lineBasedPosition);
-    
-    // 确保高亮位置在合理范围内
+
+    const lineProgress = Math.min(1, Math.max(0, (currentTime.value - lineStartTime) / lineDuration));
+    let highlightPosition = Math.max(charBasedPosition, lineProgress * 100);
     highlightPosition = Math.max(0, Math.min(100, highlightPosition));
-    
+
     return {
-        background: `linear-gradient(to right, ${highlightColor.value} ${highlightPosition}%, ${defaultColor.value} ${highlightPosition}%)`,
-        backgroundClip: 'text',
-        WebkitBackgroundClip: 'text',
-        color: 'transparent',
-        textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
-        fontWeight: 'bold',
+        style: {
+            background: `linear-gradient(to right, ${highlightColor.value} ${highlightPosition}%, ${defaultColor.value} ${highlightPosition}%)`,
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            color: 'transparent',
+            textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
+            fontWeight: 'bold',
+        },
+        progress: highlightPosition / 100
     };
-}
+};
+
+const getLineHighlightStyle = (lineIndex) => computeHighlightMetrics(lineIndex).style;
+const getHighlightProgress = (lineIndex) => computeHighlightMetrics(lineIndex).progress;
+
+const updateActiveLineScroll = () => {
+    const activeIndex = displayedLines.value[0];
+    const containerEl = lyricsContainerRef.value;
+    const contentEl = activeLyricsContentRef.value;
+
+    if (activeIndex === undefined || !containerEl || !contentEl) {
+        return;
+    }
+
+    const activeLine = lyrics.value[activeIndex];
+    if (!activeLine) {
+        if (currentLineScrollX.value !== 0) currentLineScrollX.value = 0;
+        return;
+    }
+
+    const containerWidth = containerEl.clientWidth || 0;
+    const contentWidth = contentEl.scrollWidth || 0;
+    const overflow = contentWidth - containerWidth;
+
+    if (overflow <= 0) {
+        if (currentLineScrollX.value !== 0) currentLineScrollX.value = 0;
+        return;
+    }
+
+    const progress = Math.min(1, Math.max(0, getHighlightProgress(activeIndex)));
+
+    if (progress <= 0) {
+        if (currentLineScrollX.value !== 0) currentLineScrollX.value = 0;
+        return;
+    }
+
+    const targetOffset = -overflow * progress;
+    const clampedOffset = Math.max(-overflow, Math.min(0, targetOffset));
+
+    if (currentLineScrollX.value !== clampedOffset) {
+        currentLineScrollX.value = clampedOffset;
+    }
+};
+
+const scheduleActiveLineScroll = throttle(() => {
+    if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(updateActiveLineScroll);
+    } else {
+        updateActiveLineScroll();
+    }
+}, 50);
+
+watch([currentTime, currentLineIndex, () => displayedLines.value], () => {
+    scheduleActiveLineScroll();
+}, { immediate: true });
+
+watch(() => lyrics.value, () => {
+    scheduleActiveLineScroll();
+});
+
+watch(fontSize, () => {
+    scheduleActiveLineScroll();
+});
 </script>
 
 <style>
@@ -449,7 +515,7 @@ html {
     height: auto;
     transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
     transform: translateZ(0); 
-    margin: 8px; /* 移出事件和窗口缩放冲突，暂未解决*/
+    /* margin: 8px; 移出事件和窗口缩放冲突，暂未解决 */
     padding: 8px 0;
     overflow: hidden;
 }
@@ -469,8 +535,6 @@ html {
     width: 100%;
     transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
-
-
 
 .controls-overlay {
     opacity: 0;

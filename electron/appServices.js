@@ -322,7 +322,14 @@ export function createTray(mainWindow, title = '') {
             });
     }
     tray.on('click', () => {
-        mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
+        if (!mainWindow.isVisible()) {
+            mainWindow.show();
+        } else if (!mainWindow.isFocused()) {
+            mainWindow.show();
+            mainWindow.focus();
+        } else {
+            mainWindow.hide(); //大概率永远不会执行
+        }
     });
     tray.on('double-click', () => {
         mainWindow.show();

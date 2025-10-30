@@ -232,37 +232,55 @@ const updateCurrentTime = throttle(() => {
         progressWidth.value = (currentTime.value / audio.duration) * 100;
     }
 
+    // 更新SMTC位置状态
+    if (audio.duration && currentSong.value?.hash) {
+        mediaSession.updatePositionState(audio.currentTime, audio.duration, currentSpeed.value);
+    }
+
     const savedConfig = JSON.parse(localStorage.getItem('settings') || '{}');
-    if (audio && (lyricsData.value.length || isLyrics === false)) {
+    const hasLyricsData = Array.isArray(lyricsData.value) && lyricsData.value.length > 0;
+
+    if (audio) {
         if (savedConfig?.lyricsAlign != lyricsAlign.value) lyricsAlign.value = savedConfig.lyricsAlign;
 
-        highlightCurrentChar(audio.currentTime, !lyricsFlag.value);
+        if (hasLyricsData) {
+            highlightCurrentChar(audio.currentTime, !lyricsFlag.value);
+        }
+
         if (isElectron()) {
+            const desktopLyricsSource = hasLyricsData ? lyricsData.value : [];
+            const desktopLyricsPayload = JSON.parse(JSON.stringify(desktopLyricsSource));
+            const serverLyricsSource = hasLyricsData && originalLyrics.value ? originalLyrics.value : [];
+            const serverLyricsPayload = JSON.parse(JSON.stringify(serverLyricsSource));
+            const currentSongPayload = JSON.parse(JSON.stringify(currentSong.value ?? null));
+
             if (savedConfig?.desktopLyrics === 'on') {
                 window.electron.ipcRenderer.send('lyrics-data', {
                     currentTime: audio.currentTime,
-                    lyricsData: JSON.parse(JSON.stringify(lyricsData.value)),
-                    currentSongHash: currentSong.value.hash
+                    lyricsData: desktopLyricsPayload,
+                    currentSongHash: currentSong.value?.hash || ''
                 });
             }
             if (savedConfig?.apiMode === 'on') {
                 window.electron.ipcRenderer.send('server-lyrics', {
                     currentTime: audio.currentTime,
-                    lyricsData: JSON.parse(JSON.stringify(originalLyrics.value)),
-                    currentSong: JSON.parse(JSON.stringify(currentSong.value)),
+                    lyricsData: serverLyricsPayload,
+                    currentSong: currentSongPayload,
                     duration: audio.duration
                 });
             }
             if (window.electron.platform == 'darwin' && savedConfig?.touchBar == 'on') {
-                const currentLine = getCurrentLineText(audio.currentTime);
+                const currentLine = hasLyricsData ? getCurrentLineText(audio.currentTime) : '';
                 window.electron.ipcRenderer.send(
                     "update-current-lyrics",
                     currentLine
                 );
             }
         }
-    } else if (isElectron() && (savedConfig?.desktopLyrics === 'on' || savedConfig?.apiMode === 'on')) {
-        if(isLyrics === false) return;
+    }
+
+    if (!hasLyricsData && isElectron() && (savedConfig?.desktopLyrics === 'on' || savedConfig?.apiMode === 'on')) {
+        if (isLyrics === false) return;
         getCurrentLyrics();
     }
 
@@ -382,6 +400,10 @@ const playSong = async (song) => {
 
         try {
             mediaSession.changeMediaSession(currentSong.value);
+            // 更新SMTC位置状态
+            if (audio.duration) {
+                mediaSession.updatePositionState(audio.currentTime, audio.duration, currentSpeed.value);
+            }
             const playPromise = audio.play();
 
             if (playPromise !== undefined) {
@@ -820,6 +842,11 @@ const changePlaybackSpeed = (speed) => {
     currentSpeed.value = speed;
     setPlaybackRate(speed);
     showSpeedMenu.value = false;
+    
+    // 更新SMTC位置状态以反映新的播放速率
+    if (audio.duration && currentSong.value?.hash) {
+        mediaSession.updatePositionState(audio.currentTime, audio.duration, speed);
+    }
 };
 
 // 组件挂载
@@ -865,7 +892,26 @@ onMounted(() => {
     mediaSession.initMediaSession({
         togglePlayPause,
         playPrevious: () => playSongFromQueue('previous'),
-        playNext: () => playSongFromQueue('next')
+        playNext: () => playSongFromQueue('next'),
+        seekBackward: (seekOffset) => {
+            if (audio.currentTime > seekOffset) {
+                audio.currentTime -= seekOffset;
+            } else {
+                audio.currentTime = 0;
+            }
+        },
+        seekForward: (seekOffset) => {
+            if (audio.currentTime + seekOffset < audio.duration) {
+                audio.currentTime += seekOffset;
+            } else {
+                audio.currentTime = audio.duration;
+            }
+        },
+        seekTo: (seekTime) => {
+            if (seekTime >= 0 && seekTime <= audio.duration) {
+                audio.currentTime = seekTime;
+            }
+        }
     });
 
     // 设置系统媒体快捷键
@@ -896,6 +942,8 @@ onMounted(() => {
     audio.addEventListener('pause', () => {
         playing.value = false;
         console.log('[PlayerControl] 暂停事件');
+        // 暂停时清除SMTC位置状态
+        mediaSession.clearPositionState();
         if (isElectron()) window.electron.ipcRenderer.send('play-pause-action', playing.value, audio.currentTime);
     });
 

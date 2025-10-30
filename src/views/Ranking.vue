@@ -28,7 +28,7 @@
                         <i class="fas fa-play"></i>
                     </div>
                 </div>
-                <div class="song-list">
+                <div class="song-list" @scroll="handleScroll($event, rank.rankid)">
                     <div class="song-item" v-for="(song, sIndex) in rank.songs" :key="sIndex" @click="props.playerControl.addSongToQueue(song.deprecated.hash, song.songname, $getCover(song.trans_param.union_cover, 480), song.author_name)">
                         <div class="song-rank">
                             <span class="song-index" :class="{'top-three': sIndex < 3}">{{ sIndex + 1 }}</span>
@@ -52,6 +52,15 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <div v-if="rankPagination[rank.rankid]?.loading" class="loading-indicator">
+                        <div class="loading-spinner"></div>
+                        <span>加载中...</span>
+                    </div>
+                    
+                    <div v-else-if="!rankPagination[rank.rankid]?.hasMore && rank.songs?.length > 0" class="no-more-indicator">
+                        <span>已加载全部歌曲</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -65,8 +74,8 @@ import { get } from '../utils/request';
 const allRanks = ref([]);
 const displayedRanks = ref([]);
 const selectedRankIds = ref([]);
-const page = 1;
 const pagesize = 30;
+const rankPagination = ref({});
 
 const props = defineProps({
     playerControl: Object
@@ -76,17 +85,60 @@ const saveSelectedRanks = () => {
     localStorage.setItem('selectedRankIds', JSON.stringify(selectedRankIds.value));
 };
 
+const initRankPagination = (rankId) => {
+    if (!rankPagination.value[rankId]) {
+        rankPagination.value[rankId] = {
+            currentPage: 1,
+            loading: false,
+            hasMore: true
+        };
+    }
+};
+
+// 加载榜单歌曲数据
+const loadRankSongs = async (rankId, page = 1, append = false) => {
+    const pagination = rankPagination.value[rankId];
+    if (pagination.loading) return;
+    
+    pagination.loading = true;
+    
+    try {
+        const songsResponse = await get(`/rank/audio?rankid=${rankId}&page=${page}&pagesize=${pagesize}`);
+        if (songsResponse.status === 1) {
+            const newSongs = songsResponse.data.songlist || [];
+            const rank = displayedRanks.value.find(r => r.rankid === rankId);
+            
+            if (rank) {
+                if (append) {
+                    rank.songs = [...(rank.songs || []), ...newSongs];
+                } else {
+                    rank.songs = newSongs;
+                }
+            }
+            
+            // 如果返回的歌曲数量少于pagesize，说明没有更多数据了
+            if (newSongs.length < pagesize) {
+                pagination.hasMore = false;
+            }
+            
+            pagination.currentPage = page;
+        }
+    } catch (error) {
+        console.error('加载榜单歌曲失败:', error);
+    } finally {
+        pagination.loading = false;
+    }
+};
+
 // 加载指定的榜单
 const loadSelectedRanks = async (rankList, rankIds) => {
     for (const rankId of rankIds) {
         const rank = rankList.find(r => r.rankid === rankId);
         if (rank) {
             selectedRankIds.value.push(rank.rankid);
-            const songsResponse = await get(`/rank/audio?rankid=${rank.rankid}&page=${page}&pagesize=${pagesize}`);
-            if (songsResponse.status === 1) {
-                rank.songs = songsResponse.data.songlist;
-                displayedRanks.value.push(rank);
-            }
+            initRankPagination(rank.rankid);
+            displayedRanks.value.push(rank);
+            await loadRankSongs(rank.rankid, 1, false);
         }
     }
 };
@@ -97,11 +149,9 @@ const loadRandomRanks = async (rankList, count = 4) => {
     
     for (const rank of randomRanks) {
         selectedRankIds.value.push(rank.rankid);
-        const songsResponse = await get(`/rank/audio?rankid=${rank.rankid}&page=${page}&pagesize=${pagesize}`);
-        if (songsResponse.status === 1) {
-            rank.songs = songsResponse.data.songlist;
-            displayedRanks.value.push(rank);
-        }
+        initRankPagination(rank.rankid);
+        displayedRanks.value.push(rank);
+        await loadRankSongs(rank.rankid, 1, false);
     }
     saveSelectedRanks();
 };
@@ -112,14 +162,14 @@ const toggleRank = async (rank) => {
     
     if (index === -1 && selectedRankIds.value.length < 6) {
         selectedRankIds.value.push(rank.rankid);
-        const songsResponse = await get(`/rank/audio?rankid=${rank.rankid}&page=${page}&pagesize=${pagesize}`);
-        if (songsResponse.status === 1) {
-            rank.songs = songsResponse.data.songlist;
-            displayedRanks.value.push(rank);
-        }
+        initRankPagination(rank.rankid);
+        displayedRanks.value.push(rank);
+        await loadRankSongs(rank.rankid, 1, false);
     } else if (index !== -1) {
         selectedRankIds.value.splice(index, 1);
         displayedRanks.value = displayedRanks.value.filter(r => r.rankid !== rank.rankid);
+        // 清理分页状态
+        delete rankPagination.value[rank.rankid];
     }
     saveSelectedRanks();
 };
@@ -147,6 +197,26 @@ const playRankSongs = (songs) => {
             timelen: song.deprecated.duration
         }))
         props.playerControl.addPlaylistToQueue(newTracks);
+    }
+};
+
+// 处理滚动事件，实现无限滚动
+const handleScroll = (event, rankId) => {
+    const element = event.target;
+    const pagination = rankPagination.value[rankId];
+    
+    if (!pagination || pagination.loading || !pagination.hasMore) {
+        return;
+    }
+    
+    // 检查是否滚动到底部附近（距离底部50px时开始加载）
+    const scrollTop = element.scrollTop;
+    const scrollHeight = element.scrollHeight;
+    const clientHeight = element.clientHeight;
+    
+    if (scrollTop + clientHeight >= scrollHeight - 50) {
+        const nextPage = pagination.currentPage + 1;
+        loadRankSongs(rankId, nextPage, true);
     }
 };
 
@@ -482,6 +552,41 @@ onMounted(async () => {
     background: #f5f5f5;
 }
 
+.loading-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    color: #666;
+    font-size: 14px;
+    gap: 8px;
+}
+
+.loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.no-more-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    color: #999;
+    font-size: 13px;
+    border-top: 1px solid #f0f0f0;
+    margin-top: 8px;
+}
+
 @media (max-width: 1200px) {
     .ranking-list {
         grid-template-columns: repeat(2, 1fr);
@@ -490,7 +595,7 @@ onMounted(async () => {
     }
     
     .ranking-item {
-        height: auto;
+        height: 500px;
         min-height: 500px;
     }
     
@@ -530,6 +635,11 @@ onMounted(async () => {
     .ranking-list {
         gap: 10px;
         padding: 10px;
+        grid-template-columns: 1fr;
+    }
+    
+    .ranking-item {
+        height: 400px;
     }
     
     .rank-cover {
@@ -569,7 +679,6 @@ onMounted(async () => {
     }
 }
 
-/* 音符动画样式 */
 :global(.music-note) {
     position: fixed;
     color: #ff6b6b;

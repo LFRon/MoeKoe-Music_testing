@@ -138,6 +138,8 @@ defineExpose({
     list-style: none;
     padding: 0;
     margin: 15px 0;
+    max-height: 300px;
+    overflow-y: auto;
 }
 
 .playlist-select-list li {

@@ -604,7 +604,7 @@ const showContextMenu = (event, song) => {
 const scrollToItem = () => {
     const currentIndex = filteredTracks.value.findIndex(song => song.hash === props.playerControl.currentSong.hash);
     if (currentIndex !== -1) {
-        recycleScrollerRef.value.scrollToItem(currentIndex - 5, { behavior: 'smooth' });
+        recycleScrollerRef.value.scrollToItem(currentIndex - 3, { behavior: 'smooth' });
     }
 };
 
