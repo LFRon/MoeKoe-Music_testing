@@ -22,7 +22,7 @@
   </p>
 </p>
 
-![images](https://github.com/iAJue/MoeKoeMusic/raw/main/images/5.png)
+![images](https://github.com/LFRon/LFRon-File/raw/main/MoeKoe_Music/Home-Page.png)
 
 ## ❤️ 前言
 MoeKoe Music官方仓库链接: https://github.com/MoeKoeMusic/MoeKoeMusic
@@ -189,12 +189,10 @@ API 源代码来自 [MakcRe/KuGouMusicApi](https://github.com/MakcRe/KuGouMusicA
 
 ## 🖼️ 截图
 
-![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/1.png)
-![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/2.png)
-![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/3.png)
-![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/4.png)
-![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/5.png)
-![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/6.png)
+![image](https://github.com/LFRon/LFRon-File/raw/main/MoeKoe_Music/PHONK-1.png)
+![image](https://github.com/LFRon/LFRon-File/raw/main/MoeKoe_Music/Initial-D-1.png)
+![image](https://github.com/LFRon/LFRon-File/raw/main/MoeKoe_Music/Search-Page.png)
+![image](https://github.com/LFRon/LFRon-File/raw/main/MoeKoe_Music/MF-Ghost.png)
 
 
 ## 🗓️ Star History
