@@ -22,10 +22,10 @@
   </p>
 </p>
 
-![images](https://github.com/LFRon/LFRon-File/raw/main/MoeKoe_Music/Home-Page.png)
+![images](https://github.com/LFRon/LFRon-File/raw/main/MoeKoe_Music/MF-Ghost.png)
 
 ## ❤️ 前言
-MoeKoe Music官方仓库链接: https://github.com/MoeKoeMusic/MoeKoeMusic
+MoeKoe Music官方主仓库链接: https://github.com/MoeKoeMusic/MoeKoeMusic
 
 这是一个抢先测试主要特供给Linux发行版(其实只是在Linux上测试过)的代码分支,所有Node依赖全部升级至最新版本,使用Electron 39@beta版本,确保在Wayland下可以调用原生渲染能力而非走XWayland
 
@@ -188,6 +188,8 @@ API 源代码来自 [MakcRe/KuGouMusicApi](https://github.com/MakcRe/KuGouMusicA
 - [酷狗音乐](https://kugou.com/)
 
 ## 🖼️ 截图
+
+![image](https://github.com/LFRon/LFRon-File/raw/main/MoeKoe_Music/Home-Page.png)
 
 ![image](https://github.com/LFRon/LFRon-File/raw/main/MoeKoe_Music/PHONK-1.png)
 ![image](https://github.com/LFRon/LFRon-File/raw/main/MoeKoe_Music/Initial-D-1.png)
