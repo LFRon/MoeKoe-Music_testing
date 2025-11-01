@@ -22,7 +22,7 @@
   </p>
 </p>
 
-![images](https://github.com/LFRon/LFRon-File/raw/main/MoeKoe_Music/MF-Ghost.png)
+![images](https://github.com/LFRon/LFRon-File/raw/main/MoeKoe_Music/Initial-D-3.png)
 
 ## ❤️ 前言
 MoeKoe Music官方主仓库链接: https://github.com/MoeKoeMusic/MoeKoeMusic
