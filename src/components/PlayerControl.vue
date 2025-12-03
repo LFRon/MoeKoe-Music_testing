@@ -89,9 +89,21 @@
                 </div>
 
                 <div class="left-section">
-                    <div class="album-art-large">
-                        <img v-if="easterEggImage" :src="easterEggImage.src" :class="easterEggClass" alt="Easter Egg" />
-                        <img :src="currentSong?.img || './assets/images/!.png'" alt="Album Art" />
+                    <div class="album-art-container" @click="toggleCoverMode">
+                        <transition name="cover-fade" mode="out-in">
+                            <div v-if="coverMode === 'vinyl'" key="vinyl" class="vinyl-player">
+                                <!-- 唱片播放器模式 -->
+                                <div class="vinyl-disc" :class="{ 'rotating': playing }">
+                                    <img :src="currentSong?.img || './assets/images/!.png'" alt="Album Art" class="vinyl-cover" />
+                                </div>
+                                <div class="tonearm" :class="{ 'playing': playing }"></div>
+                            </div>
+                            <div v-else key="square" class="album-art-large">
+                                <!-- 普通封面模式 -->
+                                <img v-if="easterEggImage" :src="easterEggImage.src" :class="easterEggClass" alt="Easter Egg" />
+                                <img :src="currentSong?.img || './assets/images/!.png'" alt="Album Art" />
+                            </div>
+                        </transition>
                     </div>
                     <div class="song-details">
                         <div class="song-title">{{ currentSong?.name }}</div>
@@ -194,6 +206,7 @@ const lyricsFontSize = ref('24px');
 const lyricsAlign = ref('center');
 const lyricsBackground = ref('on');
 const sliderElement = ref(null);
+const coverMode = ref(localStorage.getItem('lyrics-cover-mode') || 'square');
 
 const isDragging = ref(false);
 const lyricsFlag = ref(false);
@@ -375,6 +388,12 @@ const hasMultiLyricsMode = computed(() => {
 // 切换歌词显示模式（翻译/音译）
 const switchLyricsMode = () => {
     toggleLyricsMode();
+};
+
+// 切换封面模式（正方形/唱片）
+const toggleCoverMode = () => {
+    coverMode.value = coverMode.value === 'square' ? 'vinyl' : 'square';
+    localStorage.setItem('lyrics-cover-mode', coverMode.value);
 };
 
 // 播放歌曲

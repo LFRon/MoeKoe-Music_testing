@@ -23,7 +23,7 @@ const cache = require('./util/apicache').middleware;
 
 const envPath = path.join(process.cwd(), '.env');
 if (fs.existsSync(envPath)) {
-  dotenv.config(envPath);
+  dotenv.config({path: envPath, quiet: true});
 }
 
 /**
@@ -69,7 +69,7 @@ async function consturctServer(moduleDefs) {
       res.set({
         'Access-Control-Allow-Credentials': true,
         'Access-Control-Allow-Origin': CORS_ALLOW_ORIGIN || req.headers.origin || '*',
-        'Access-Control-Allow-Headers': 'X-Requested-With,Content-Type,Cache-Control',
+        'Access-Control-Allow-Headers': 'X-Requested-With,Content-Type',
         'Access-Control-Allow-Methods': 'PUT,POST,GET,DELETE,OPTIONS',
         'Content-Type': 'application/json; charset=utf-8',
       });
@@ -95,9 +95,9 @@ async function consturctServer(moduleDefs) {
     const cookies = (req.headers.cookie || '').split(/;\s+|(?<!\s)\s+$/g);
     if (!cookies.includes('KUGOU_API_PLATFORM')) {
       if (req.protocol === 'https') {
-        res.append('Set-Cookie', `KUGOU_API_PLATFORM=lite; PATH=/; SameSite=None; Secure`);
+        res.append('Set-Cookie', `KUGOU_API_PLATFORM=${process.env.platform}; PATH=/; SameSite=None; Secure`);
       } else {
-        res.append('Set-Cookie', `KUGOU_API_PLATFORM=lite; PATH=/`);
+        res.append('Set-Cookie', `KUGOU_API_PLATFORM=${process.env.platform}; PATH=/`);
       }
     }
 
@@ -202,7 +202,7 @@ async function startService() {
   const host = process.env.HOST || '';
 
   const app = await consturctServer();
-
+  
   app.get('/', (req, res) => {
     res.send({
       type: 'welcome',
@@ -210,7 +210,7 @@ async function startService() {
     });
   });
 
-   /** @type {import('express').Express & ExpressExtension} */
+  /** @type {import('express').Express & ExpressExtension} */
   const appExt = app;
 
   appExt.service = app.listen(port, host, () => {

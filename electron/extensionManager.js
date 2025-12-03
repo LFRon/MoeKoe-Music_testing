@@ -4,12 +4,13 @@ import fs from 'fs';
 import log from 'electron-log';
 import { fileURLToPath } from 'url';
 import isDev from 'electron-is-dev';
+import AdmZip from 'adm-zip';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Chrome 插件管理 - 根据环境选择正确的路径
 const EXTENSIONS_DIR = !isDev
-    ? path.join(process.resourcesPath, '..' ,'plugins', 'extensions')
+    ? path.join(app.getPath('userData'), 'extensions')
     : path.join(__dirname, '../plugins/extensions');
 
 /**
@@ -237,6 +238,105 @@ function getDirectorySize(dirPath) {
 }
 
 /**
+ * 从zip文件安装插件
+ * @param {string} zipPath zip文件路径
+ * @returns {Promise<{success: boolean, message: string}>}
+ */
+export async function installPluginFromZip(zipPath) {
+    try {
+        const zip = new AdmZip(zipPath);
+        const zipEntries = zip.getEntries();
+
+        // 确保插件目录存在
+        ensureExtensionsDirectory();
+
+        // 查找包含 manifest.json 的第一级目录
+        let pluginEntry = null;
+        let manifestEntry = null;
+        for (const entry of zipEntries) {
+            const parts = entry.entryName.split('/');
+            if (parts.length === 2 && parts[1] === 'manifest.json') {
+                manifestEntry = entry;
+                pluginEntry = parts[0];
+                break;
+            }
+        }
+
+        if (!manifestEntry || !pluginEntry) {
+            return { success: false, message: '无效的插件包格式：未找到 manifest.json' };
+        }
+
+        // 验证 manifest
+        const manifestContent = zip.readAsText(manifestEntry);
+        try {
+            const manifest = JSON.parse(manifestContent);
+            // 直接验证 manifest 对象而不是文件路径
+            if (!manifest.manifest_version || !manifest.name || !manifest.version) {
+                return { success: false, message: '清单文件缺少必需字段' };
+            }
+            if (manifest.manifest_version !== 3) {
+                return { success: false, message: '仅支持 Manifest V3 格式' };
+            }
+        } catch (error) {
+            return { success: false, message: `manifest.json 解析失败: ${error.message}` };
+        }
+
+        // 获取真实的插件目录名（去除可能的 -main 后缀）
+        const pluginName = pluginEntry.replace(/-main$/, '');
+        const targetDir = path.join(EXTENSIONS_DIR, pluginName);
+        
+        // 如果目标目录已存在，先删除
+        if (fs.existsSync(targetDir)) {
+            fs.rmSync(targetDir, { recursive: true, force: true });
+        }
+
+        // 创建目标目录
+        fs.mkdirSync(targetDir, { recursive: true });
+
+        // 解压所有文件，保持目录结构
+        for (const entry of zipEntries) {
+            const entryName = entry.entryName;
+            // 检查是否属于目标插件目录
+            if (entryName.startsWith(pluginEntry + '/')) {
+                // 计算相对路径
+                const relativePath = entryName.substring(pluginEntry.length + 1);
+                if (relativePath) {  // 跳过空路径
+                    const targetPath = path.join(targetDir, relativePath);
+                    if (entry.isDirectory) {
+                        // 创建目录
+                        fs.mkdirSync(targetPath, { recursive: true });
+                    } else {
+                        // 解压文件
+                        const targetDirPath = path.dirname(targetPath);
+                        fs.mkdirSync(targetDirPath, { recursive: true });
+                        fs.writeFileSync(targetPath, entry.getData());
+                    }
+                }
+            }
+        }
+
+        // 加载新插件
+        const result = await installExtension(targetDir);
+        if (!result.success) {
+            // 如果加载失败，清理已解压的文件
+            if (fs.existsSync(targetDir)) {
+                fs.rmSync(targetDir, { recursive: true, force: true });
+            }
+            return { success: false, message: '插件加载失败：' + result.message };
+        }
+
+        return { 
+            success: true, 
+            message: `插件安装成功`,
+            extension: result.extension
+        };
+    } catch (error) {
+        log.error('安装插件失败:', error);
+        return { success: false, message: '安装插件失败：' + error.message };
+    }
+}
+
+/**
  * 格式化文件大小
  * @param {number} bytes 字节数
  */
@@ -309,5 +409,6 @@ export default {
     validateManifest,
     getExtensionInfo,
     formatFileSize,
-    scanExtensions
+    scanExtensions,
+    installPluginFromZip
 };

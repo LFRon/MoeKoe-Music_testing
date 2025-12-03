@@ -372,10 +372,8 @@ const readAudioMetadata = async (file) => {
     }
 };
 
-// 扫描音乐文件
-const scanMusicFiles = async (dirHandle) => {
-    const files = [];
-    
+// 递归扫描目录
+const scanDirectory = async (dirHandle, files = []) => {
     try {
         for await (const entry of dirHandle.values()) {
             if (entry.kind === 'file') {
@@ -412,8 +410,23 @@ const scanMusicFiles = async (dirHandle) => {
                         qualityInfo: getQualityInfo(extension, metadata.bitrate, metadata.sampleRate)
                     });
                 }
+            } else if (entry.kind === 'directory') {
+                // 递归扫描子文件夹
+                await scanDirectory(entry, files);
             }
         }
+    } catch (error) {
+        console.error('扫描目录失败:', error);
+    }
+    
+    return files;
+};
+
+// 扫描音乐文件
+const scanMusicFiles = async (dirHandle) => {
+    try {
+        // 递归扫描所有子文件夹
+        const files = await scanDirectory(dirHandle);
         
         // 按艺术家和标题排序
         files.sort((a, b) => {

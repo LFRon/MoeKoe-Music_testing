@@ -16,7 +16,7 @@ const { signKey, signParams, signParamsKey, signCloudKey, signatureAndroidParams
 const { randomString, decodeLyrics, parseCookieString, cookieToJson } = require('./util');
 
 // 判断是否为概念版
-const isLite = 'lite';
+const isLite = process.env.platform === 'lite';
 const useAppid = isLite ? liteAppid : appid;
 const useClientver = isLite ? liteClientver : clientver;
 

@@ -28,4 +28,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     validateExtension: (extensionPath) => ipcRenderer.invoke('validate-extension', extensionPath),
     getExtensionsDirectory: () => ipcRenderer.invoke('get-extensions-directory'),
     ensureExtensionsDirectory: () => ipcRenderer.invoke('ensure-extensions-directory'),
+    installPluginFromZip: (zipPath) => ipcRenderer.invoke('install-plugin-from-zip', zipPath),
+    showOpenDialog: (options) => ipcRenderer.invoke('show-open-dialog', options),
 });

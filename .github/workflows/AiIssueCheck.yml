@@ -1,0 +1,136 @@
+name: AI Issue Checker
+
+on:
+  issues:
+    types: [opened, edited] 
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  check-issue:
+    if: |
+      github.event_name == 'issues' &&
+      (
+        github.event.action == 'opened' ||
+        (
+          github.event.action == 'edited' &&
+          github.event.issue.state == 'open' &&
+          contains(github.event.issue.labels.*.name, 'invalid')
+        )
+      )
+    runs-on: ubuntu-latest
+    steps:
+      - name: Debug API Key existence
+        run: |
+          if [ -z "${{ secrets.OPENAI_API_KEY }}" ]; then
+            echo "❌ OPENAI_API_KEY is NOT set"
+            exit 1
+          else
+            echo "✅ OPENAI_API_KEY is set"
+            echo "API Key length: ${#OPENAI_API_KEY}"
+          fi
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Run AI Issue Validation
+        uses: actions/github-script@v6
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ISSUE_RULES: ${{ vars.ISSUE_RULES }}
+          OPENAI_API_URL: ${{ secrets.OPENAI_API_URL }}
+        with:
+          script: |
+            const issue = context.payload.issue
+            const issueBody = issue.body || ""
+            const rules = process.env.ISSUE_RULES
+
+            const response = await fetch(`${process.env.OPENAI_API_URL}`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+              },
+              body: JSON.stringify({
+                model: "gpt-4o-mini",
+                messages: [
+                  { role: "system", content: rules },
+                  { role: "user", content: issueBody }
+                ],
+                max_tokens: 200
+              })
+            })
+
+            const data = await response.json()
+            let result
+            try {
+              result = JSON.parse(data.choices[0].message.content)
+            } catch (e) {
+              result = { valid: true, missing: [] }
+            }
+
+            const { data: comments } = await github.rest.issues.listComments({
+              issue_number: issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            })
+
+            const botComment = comments.find(c => c.user.type === "Bot" && c.body.includes("感谢提交 Issue"))
+
+            if (!result.valid) {
+              const missingText = result.missing.join("、")
+              const reasonText = result.reason
+              const newBody = `⚠️ 感谢提交 Issue，但你的内容缺少以下部分：**${missingText}**。\n\n**${reasonText}**\n\n请根据模板补充完整后再提交，谢谢！`
+
+              if (botComment) {
+                await github.rest.issues.updateComment({
+                  comment_id: botComment.id,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: newBody
+                })
+              } else {
+                await github.rest.issues.createComment({
+                  issue_number: issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: newBody
+                })
+              }
+
+              await github.rest.issues.addLabels({
+                issue_number: issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: ["invalid"]
+              })
+            } else {
+              const passBody = `✅ 感谢提交 Issue，你的 Issue 已经符合要求了，我们会尽快处理～\n\n💖 听说点了Star许愿的成功率更高哦~`
+
+              if (botComment) {
+                await github.rest.issues.updateComment({
+                  comment_id: botComment.id,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: passBody
+                })
+              } else {
+                await github.rest.issues.createComment({
+                  issue_number: issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: passBody
+                })
+              }
+
+              try {
+                await github.rest.issues.removeLabel({
+                  issue_number: issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: "invalid"
+                })
+              } catch (e) {
+              }
+            }

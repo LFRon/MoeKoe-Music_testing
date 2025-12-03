@@ -181,11 +181,16 @@
     border-radius: 5px;
     overflow: visible;
     cursor: pointer;
-    transition: height 0.2s ease;
 }
 
-.progress-bar:hover {
-    height: 8px;
+.progress-bar::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 0;
+    right: 0;
+    bottom: -10px;
+    cursor: pointer;
 }
 
 .progress {
@@ -320,11 +325,151 @@
     margin-left: 20px;
 }
 
+.album-art-container {
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    position: relative;
+}
+
+.album-art-container:hover {
+    transform: scale(1.02);
+}
+
+/* 普通封面模式 */
+.album-art-large {
+    position: relative;
+    animation: fadeInScale 0.6s ease-out;
+}
+
 .album-art-large img {
     width: 400px;
     height: 400px;
     border-radius: 10px;
     z-index: 9;
+    transition: all 0.3s ease;
+}
+
+/* 唱片播放器模式 */
+.vinyl-player {
+    position: relative;
+    width: 450px;
+    height: 450px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeInScale 0.6s ease-out;
+}
+
+/* 淡入缩放动画 */
+@keyframes fadeInScale {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* 唱片圆盘 */
+.vinyl-disc {
+    position: relative;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle at center, #1a1a1a 0%, #1a1a1a 35%, #2a2a2a 35%, #2a2a2a 36%, #1a1a1a 36%, #1a1a1a 100%);
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vinyl-disc::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: repeating-radial-gradient(circle at center,
+        transparent 0px,
+        transparent 2px,
+        rgba(255, 255, 255, 0.03) 2px,
+        rgba(255, 255, 255, 0.03) 4px
+    );
+}
+
+/* .vinyl-disc::after {
+    content: '';
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #8B4513 0%, #654321 50%, #3d2817 100%);
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+    z-index: 10;
+} */
+
+/* 唱片封面 */
+.vinyl-cover {
+    width: 240px;
+    height: 240px;
+    border-radius: 50%;
+    object-fit: cover;
+    z-index: 5;
+}
+
+/* 唱片旋转动画 - 始终应用动画 */
+.vinyl-disc {
+    animation: vinylRotate 5s linear infinite;
+    animation-play-state: paused;
+}
+
+.vinyl-disc.rotating {
+    animation-play-state: running;
+}
+
+@keyframes vinylRotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* 磁头 */
+.tonearm {
+    position: absolute;
+    top: -50px;
+    right: 20px;
+    width: 160px;
+    height: 198px;
+    background: url('./assets/images/head.png') no-repeat center;
+    background-size: contain;
+    transform-origin: 85% 15%;
+    transform: rotate(-30deg);
+    transition: transform 0.6s ease-in-out;
+    z-index: 15;
+    pointer-events: none;
+    animation: tonearmSlideIn 0.8s ease-out;
+}
+
+/* 磁头滑入动画 */
+@keyframes tonearmSlideIn {
+    0% {
+        opacity: 0;
+        transform: rotate(-30deg) translateX(50px);
+    }
+    100% {
+        opacity: 1;
+        transform: rotate(-30deg) translateX(0);
+    }
+}
+
+/* 磁头播放状态 */
+.tonearm.playing {
+    transform: rotate(0deg);
 }
 
 .song-details {
@@ -475,11 +620,16 @@
     margin: 0 10px;
     position: relative;
     overflow: visible;
-    transition: height 0.2s ease;
 }
 
-.lyrics-screen .progress-bar:hover {
-    height: 7px;
+.lyrics-screen .progress-bar::before {
+    content: '';
+    position: absolute;
+    top: -12px;
+    left: 0;
+    right: 0;
+    bottom: -12px;
+    cursor: pointer;
 }
 
 .progress-handle.dragging {
@@ -616,4 +766,52 @@
   opacity: 0.9;
   margin-top: 5px;
   color: #e3e3e3b1;
+}
+.slide-up-enter-active {
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.slide-up-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+.slide-up-enter-from {
+  transform: translateY(100%);
+  opacity: 0;
+}
+
+.slide-up-leave-to {
+  transform: translateY(100%);
+  opacity: 0;
+}
+
+.slide-up-enter-to,
+.slide-up-leave-from {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* 封面模式切换过渡动画 */
+.cover-fade-enter-active {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cover-fade-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 1, 1);
+}
+
+.cover-fade-enter-from {
+  opacity: 0;
+  transform: scale(0.9) translateY(20px);
+}
+
+.cover-fade-leave-to {
+  opacity: 0;
+  transform: scale(0.9) translateY(-20px);
+}
+
+.cover-fade-enter-to,
+.cover-fade-leave-from {
+  opacity: 1;
+  transform: scale(1) translateY(0);
 }

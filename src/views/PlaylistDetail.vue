@@ -2,7 +2,7 @@
     <div class="detail-page">
         <!-- 头部信息区域 -->
         <div class="header">
-            <img class="cover-art" :class="isArtist ? 'artist-avatar' : ''"
+            <img class="cover-art" :class="isArtist ? 'artist-avatar' : ''" :data-playlist-id="detail.listid || null"
                 :src="isArtist ? ($getCover(detail.sizable_avatar, 480)) : (detail.pic ? $getCover(detail.pic, 480) : './assets/images/live.png')" />
             <div class="info">
                 <h1 class="title">{{ isArtist ? detail.author_name : detail.name }}</h1>
@@ -397,7 +397,9 @@ const fetchPlaylistTracks = async () => {
         });
         
         if (firstPageResponse.status === 1) {
-            const formattedTracks = firstPageResponse.data.info.map(track => {
+            const formattedTracks = firstPageResponse.data.songs
+            .filter(track => !!track.hash)
+            .map(track => {
                 const nameParts = track.name.split(' - ');
                 return {
                     hash: track.hash || '',
@@ -434,8 +436,13 @@ const fetchPlaylistTracks = async () => {
             });
             
             if (response.status === 1) {
-                if (response.data.info.length > 0) {
-                    const formattedTracks = response.data.info.map(track => {
+                if (response.data.songs.length > 0) {
+                    const formattedTracks = response.data.songs
+                    .filter(track => !!track.hash)
+                    .map(track => {
+                        if(track?.hash == null){
+                            return []
+                        }
                         const nameParts = track.name.split(' - ');
                         return {
                             hash: track.hash || '',
@@ -455,7 +462,7 @@ const fetchPlaylistTracks = async () => {
                     allTracks = allTracks.concat(formattedTracks);
                     currentPage++;
                 }
-                if (response.data.info.length < pageSize.value) break;
+                if (response.data.songs.length < pageSize.value) break;
             } else {
                 break;
             }

@@ -99,9 +99,15 @@ export const formatMilliseconds = (time) => {
     return `${minutes}分${seconds}秒`;
 };
 
+let themeMediaQueryListener = null;
 export const setTheme = (theme) => {
     const html = document.documentElement;
     const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+
+    if (themeMediaQueryListener) {
+        prefersDarkScheme.removeEventListener('change', themeMediaQueryListener);
+        themeMediaQueryListener = null;
+    }
 
     const applyTheme = (isDark) => {
         if (isDark) {
@@ -109,21 +115,24 @@ export const setTheme = (theme) => {
         } else {
             html.classList.remove('dark');
         }
-        localStorage.setItem('theme', isDark ? 'dark' : 'light');
     };
 
     switch (theme) {
         case 'dark':
             applyTheme(true);
+            localStorage.setItem('theme', 'dark');
             break;
         case 'light':
             applyTheme(false);
+            localStorage.setItem('theme', 'light');
             break;
         case 'auto':
+            localStorage.setItem('theme', 'auto');
             applyTheme(prefersDarkScheme.matches);
-            prefersDarkScheme.addEventListener('change', (e) => {
+            themeMediaQueryListener = (e) => {
                 applyTheme(e.matches);
-            });
+            };
+            prefersDarkScheme.addEventListener('change', themeMediaQueryListener);
             break;
     }
 };

@@ -8,10 +8,13 @@ export default defineConfig({
     vue(),
     VitePWA({
       registerType: 'autoUpdate',
-      // devOptions: {
-      //   enabled: true,
-      //   type: 'module'
-      // },
+      devOptions: {
+        enabled: true,
+        suppressWarnings: true,
+        suppressErrors: true,
+        logLevel: 'silent',
+        type: 'module'
+      },
       workbox: {
         // 缓存策略配置
         runtimeCaching: [

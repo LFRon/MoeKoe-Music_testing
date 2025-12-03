@@ -452,7 +452,19 @@ export function startApiServer() {
         }
 
         // 启动 API 服务器进程
-        apiProcess = spawn(apiPath, [], { windowsHide: true });
+        const savedConfig = store.get('settings') || {};
+        const proxy = savedConfig?.proxy;
+        const proxyUrl = savedConfig?.proxyUrl;
+        const Args = [];
+        if (proxy === 'on' && proxyUrl) {
+            const proxyAddress = String(proxyUrl).trim();
+            if (proxyAddress) {
+                Args.push(`--proxy=${proxyAddress}`);
+                log.info(`API proxy enabled: ${proxyAddress}`);
+            }
+        }
+
+        apiProcess = spawn(apiPath, Args, { windowsHide: true });
 
         apiProcess.stdout.on('data', (data) => {
             log.info(`API输出: ${data}`);

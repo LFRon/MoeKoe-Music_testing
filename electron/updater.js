@@ -87,6 +87,18 @@ export function setupAutoUpdater(mainWindow) {
 
 // 检查更新
 export function checkForUpdates(silent = false) {
+    if (process.platform !== 'win32') {
+        if (!silent) {
+            dialog.showMessageBox({
+                type: 'info',
+                title: '更新提示',
+                message: '非 Windows 平台暂不支持在线更新，请前往官网或应用市场下载最新版本。',
+                buttons: ['确定']
+            });
+        }
+        return;
+    }
+
     const settings = store.get('settings') || {};
     if (silent) {
         settings.silentCheck = true;

@@ -2,6 +2,8 @@
 html.dark {
     background-color: #121212;
     color: #e1e1e1;
+    filter: brightness(0.8);
+    mix-blend-mode: multiply;
 }
 
 html.dark body {
@@ -629,3 +631,9 @@ html.dark .primary-button:active:not(:disabled) {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
+html.dark .sort-selector{
+    border: 1px solid #444;
+}
+html.dark .section-content{
+    color: #777;
+}

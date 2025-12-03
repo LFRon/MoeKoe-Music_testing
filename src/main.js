@@ -18,15 +18,12 @@ app.config.globalProperties.$getQuality = getQuality;
 app.config.globalProperties.$formatMilliseconds = formatMilliseconds;
 app.config.globalProperties.$applyColorTheme = applyColorTheme;
 app.config.globalProperties.$setTheme = setTheme;
-// 配置全局错误处理器
 app.config.errorHandler = (err, vm, info) => {
   console.error(`全局捕获异常: ${info}`, err);
 };
-// 配置全局警告处理器
 app.config.warnHandler = (msg, vm, trace) => {
   console.warn(`全局捕获警告: ${msg}`, trace);
 };
-// 捕获未处理的 Promise 拒绝
 window.addEventListener('unhandledrejection', event => {
   console.error('未处理的 Promise 拒绝:', event.reason);
   // window.$modal.alert('系统错误');

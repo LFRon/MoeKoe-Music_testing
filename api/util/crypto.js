@@ -80,7 +80,7 @@ function cryptoAesDecrypt(data, key, iv) {
  * @returns {string} hex
  */
 function cryptoRSAEncrypt(data, publicKey) {
-  const isLite = 'lite';
+  const isLite = process.env.platform === 'lite';
   if (typeof data === 'object') data = JSON.stringify(data);
   const buffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
   const _buffer = Buffer.concat([buffer, Buffer.alloc(128 - buffer.length)]);
@@ -88,7 +88,7 @@ function cryptoRSAEncrypt(data, publicKey) {
   return crypto.publicEncrypt({ key: publicKey, padding: crypto.constants.RSA_NO_PADDING }, _buffer).toString('hex');
 }
 function rsaEncrypt2(data) {
-  const isLite = 'lite';
+  const isLite = process.env.platform === 'lite';
   const useData = typeof data === 'object' ? Buffer.from(JSON.stringify(data)) : Buffer.from(data);
 
   const buffer = Buffer.concat([useData]);

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div class="settings-page">
         <div class="settings-sidebar">
             <div v-for="(section, sectionIndex) in settingSections" :key="sectionIndex" 
@@ -116,6 +116,31 @@
                         这些是默认的 API 地址，当前版本不支持自定义修改
                     </div>
                 </div>
+                <div v-if="selectionType === 'proxy' && selectedSettings.proxy.value === 'on'" class="proxy-settings-container">
+                    <div class="api-setting-item">
+                        <input 
+                            type="text" 
+                            v-model="proxyForm.url" 
+                            class="api-input" 
+                            placeholder="请输入http或https代理地址，如: http://127.0.0.1:7890" 
+                        />
+                    </div>
+                    <div class="proxy-actions">
+                        <button 
+                            @click="testProxyConnection" 
+                            :disabled="proxyForm.testing"
+                            class="test-button"
+                        >
+                            {{ proxyForm.testing ? '正在测试...' : '测试连接' }}
+                        </button>
+                        <button class="primary" @click="saveProxy">
+                            保存设置
+                        </button>
+                    </div>
+                    <div v-if="proxyForm.testResult" :class="['proxy-test-result', proxyForm.testStatus]">
+                        {{ proxyForm.testResult }}
+                    </div>
+                </div>
                 <button @click="closeSelection">{{ $t('guan-bi') }}</button>
             </div>
         </div>
@@ -149,7 +174,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, getCurrentInstance, onUnmounted, computed } from 'vue';
+import { ref, onMounted, getCurrentInstance, onUnmounted, computed, reactive } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { MoeAuthStore } from '../stores/store';
 import ExtensionManager from '@/components/ExtensionManager.vue';
@@ -187,6 +212,8 @@ const selectedSettings = ref({
     startMinimized: { displayText: t('guan-bi'), value: 'off' },
     preventAppSuspension: { displayText: t('guan-bi'), value: 'off' },
     networkMode: { displayText: '主网', value: 'mainnet' },
+    proxy: { displayText: t('guan-bi'), value: 'off' },
+    proxyUrl: { displayText: '', value: '' },
 });
 
 // 设置分区配置
@@ -335,6 +362,13 @@ const settingSections = computed(() => [
                 label: t('pwa-app'),
                 customText: t('install'),
                 action: installPWA
+            },
+            {
+                key: 'proxy',
+                label: '网络代理',
+                showRefreshHint: true,
+                refreshHintText: t('zhong-qi-hou-sheng-xiao'),
+                helpLink:'https://music.moekoe.cn/guide/proxy-settings.html'
             }
         ]
     }
@@ -376,7 +410,8 @@ const getItemIcon = (key) => {
         'apiMode': 'fas fa-code',
         'touchBar': 'fas fa-tablet-alt',
         'shortcuts': 'fas fa-keyboard',
-        'pwa': 'fas fa-mobile-alt'
+        'pwa': 'fas fa-mobile-alt',
+        'proxy': 'fas fa-random'
     };
     return iconMap[key] || 'fas fa-sliders-h';
 };
@@ -563,7 +598,19 @@ const selectionTypeMap = {
             { displayText: '测试网', value: 'testnet' },
             { displayText: '开发网', value: 'devnet' }
         ]
-    }
+    },
+    proxy: {
+        title: '网络代理',
+        options: [
+            { displayText: '启用', value: 'on' },
+            { displayText: '禁用', value: 'off' }
+        ]
+    },
+    proxyUrl: {
+        title: '代理地址',
+        options: []
+    },
+
 };
 
 const showRefreshHint = ref({
@@ -576,7 +623,9 @@ const showRefreshHint = ref({
     font: false,
     touchBar: false,
     preventAppSuspension: false,
-    networkMode: false
+    networkMode: false,
+    apiMode: false,
+    proxy: false
 });
 
 const openSelection = (type, helpLink) => {
@@ -596,6 +645,10 @@ const openSelection = (type, helpLink) => {
         fontUrlInput.value = selectedSettings.value.fontUrl?.value || '';
         fontFamilyInput.value = selectedSettings.value.font?.value || '';
     }
+    
+    if (type === 'proxy') {
+        proxyForm.url = selectedSettings.value.proxyUrl?.value || '';
+    }
 };
 
 const openHelpLink = () => {
@@ -609,7 +662,7 @@ const openHelpLink = () => {
 };
 
 const selectOption = (option) => {
-    const electronFeatures = ['desktopLyrics', 'gpuAcceleration', 'minimizeToTray', 'highDpi', 'nativeTitleBar', 'touchBar', 'autoStart', 'startMinimized', 'preventAppSuspension', 'networkMode'];
+    const electronFeatures = ['desktopLyrics', 'gpuAcceleration', 'minimizeToTray', 'highDpi', 'nativeTitleBar', 'touchBar', 'autoStart', 'startMinimized', 'preventAppSuspension', 'networkMode', 'poxySettings', 'apiMode'];
     if (!isElectron() && electronFeatures.includes(selectionType.value)) {
         window.$modal.alert(t('fei-ke-hu-duan-huan-jing-wu-fa-qi-yong'));
         return;
@@ -658,8 +711,8 @@ const selectOption = (option) => {
     };
     actions[selectionType.value]?.();
     saveSettings();
-    if(!['apiMode','font','fontUrl'].includes(selectionType.value)) closeSelection();
-    const refreshHintTypes = ['lyricsBackground', 'lyricsFontSize', 'gpuAcceleration', 'highDpi', 'apiMode', 'touchBar', 'preventAppSuspension', 'networkMode', 'font'];
+    if(!['apiMode','font','fontUrl', 'proxy'].includes(selectionType.value)) closeSelection();
+    const refreshHintTypes = ['lyricsBackground', 'lyricsFontSize', 'gpuAcceleration', 'highDpi', 'apiMode', 'touchBar', 'preventAppSuspension', 'networkMode', 'font', 'proxy'];
     if (refreshHintTypes.includes(selectionType.value)) {
         showRefreshHint.value[selectionType.value] = true;
     }
@@ -702,6 +755,14 @@ onMounted(() => {
     if (savedSettings) {
         for (const key in savedSettings) {
             if (key === 'shortcuts') continue;
+            if (key === 'proxyUrl') {
+                const value = savedSettings[key];
+                selectedSettings.value[key] = {
+                    displayText: value,
+                    value: value
+                };
+                continue;
+            }
             if (selectionTypeMap[key] && selectionTypeMap[key].options) {
                 if (key === 'font') {
                     const value = savedSettings[key];
@@ -735,6 +796,108 @@ onMounted(() => {
 const showShortcutModal = ref(false);
 const recordingKey = ref('');
 const shortcuts = ref({});
+const proxyForm = reactive({url: '', testing: false, testResult: '', testStatus: '' });
+
+const testProxyConnection = async () => {
+    const proxyUrl = proxyForm.url.trim();
+    if (!proxyUrl) {
+        proxyForm.testResult = '请输入代理服务器地址';
+        proxyForm.testStatus = 'error';
+        return;
+    }
+
+    try {
+        const url = new URL(proxyUrl);
+        if (!['http:', 'https:'].includes(url.protocol)) {
+            proxyForm.testResult = '仅支持HTTP或HTTPS代理';
+            proxyForm.testStatus = 'error';
+            return;
+        }
+    } catch (e) {
+        proxyForm.testResult = '请输入有效的URL地址';
+        proxyForm.testStatus = 'error';
+        return;
+    }
+
+    proxyForm.testing = true;
+    proxyForm.testResult = '正在测试连接...';
+    proxyForm.testStatus = 'testing';
+
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const proxyUrl = new URL(proxyForm.url.trim());
+        const fetchOptions = {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Proxy-Authorization': `Basic ${btoa(`${proxyUrl.username || ''}:${proxyUrl.password || ''}`)}`,
+            },
+            signal: controller.signal,
+            agent: {
+                protocol: proxyUrl.protocol,
+                host: proxyUrl.hostname,
+                port: proxyUrl.port,
+                auth: proxyUrl.username && proxyUrl.password ? 
+                    `${proxyUrl.username}:${proxyUrl.password}` : undefined
+            }
+        };
+
+        const response = await fetch('https://api.ipify.org?format=json', fetchOptions);
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+            const data = await response.json();
+            proxyForm.testResult = `代理连接成功，IP: ${data.ip}`;
+            proxyForm.testStatus = 'success';
+        } else {
+            proxyForm.testResult = `代理连接失败: ${response.statusText}`;
+            proxyForm.testStatus = 'error';
+        }
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            proxyForm.testResult = '连接超时';
+        } else {
+            proxyForm.testResult = `连接错误: ${error.message}`;
+        }
+        proxyForm.testStatus = 'error';
+    } finally {
+        proxyForm.testing = false;
+    }
+};
+
+const saveProxy = () => {
+    const proxyUrl = proxyForm.url.trim();
+    
+    try {
+        if (proxyUrl) {
+            const url = new URL(proxyUrl);
+            if (!['http:', 'https:'].includes(url.protocol)) {
+                window.$modal.alert('暂仅支持HTTP或HTTPS代理');
+                return;
+            }
+        }
+    } catch (e) {
+        window.$modal.alert('请输入有效的URL地址');
+        return;
+    }
+
+    // 更新代理状态
+    selectedSettings.value.proxy = {
+        displayText: proxyUrl ? '启用' : '禁用',
+        value: proxyUrl ? 'on' : 'off'
+    };
+    
+    // 更新代理地址
+    selectedSettings.value.proxyUrl = {
+        displayText: proxyUrl,
+        value: proxyUrl
+    };
+
+    saveSettings();
+    closeSelection();
+};
 
 const shortcutConfigs = ref({
     mainWindow: {
@@ -836,7 +999,9 @@ const recordShortcut = (e) => {
         '-': 'numsub',
         '*': 'nummult',
         '/': 'numdiv',
-        '=': 'Equal'
+        '=': 'Equal',
+        '.': 'Dot',
+        'NumpadDecimal': 'numdec'
     };
 
     const key = specialKeys[e.key] || e.key.toUpperCase();
@@ -1397,7 +1562,7 @@ const installPWA = async () => {
     margin-bottom: 5px;
 }
 
-.api-settings-container .api-setting-item .api-input {
+.api-settings-container .api-setting-item .api-input, .proxy-settings-container .api-input {
     width: 100%;
     height: 35px;
     border: 1px solid #ccc;
@@ -1411,5 +1576,30 @@ const installPWA = async () => {
     font-size: 12px;
     color: #999;
     text-align: center;
+}
+
+.proxy-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.proxy-actions button {
+    flex: 1;
+    padding: 8px 0;
+    border-radius: 6px;
+}
+
+.proxy-test-result {
+    font-size: 13px;
+    line-height: 18px;
+    margin-top: 5px;
+}
+
+.proxy-test-result.success {
+    color: #4caf50;
+}
+
+.proxy-test-result.error {
+    color: #e53935;
 }
 </style>

@@ -9,6 +9,18 @@
                 <i class="fas fa-folder-open"></i>
                 打开插件目录
             </button>
+            <button @click="installPlugin" class="extension-btn success" :disabled="extensionsLoading">
+                <i class="fas fa-upload"></i>
+                安装插件
+            </button>
+            <input
+                type="file"
+                ref="fileInput"
+                style="display: none"
+                accept=".zip"
+                webkitdirectory="false"
+                @change="handleFileSelect"
+            />
         </div>
 
         <!-- 插件列表 -->
@@ -68,6 +80,7 @@ import { ref, onMounted } from 'vue'
 
 const extensions = ref([])
 const extensionsLoading = ref(false)
+const fileInput = ref(null)
 
 // 刷新插件
 const refreshExtensions = async () => {
@@ -142,12 +155,50 @@ const handleIconError = (event) => {
     }
 }
 
+// 触发文件选择
+const installPlugin = async () => {
+    try {
+        const result = await window.electronAPI?.showOpenDialog({
+            properties: ['openFile'],
+            filters: [
+                { name: '插件包', extensions: ['zip'] }
+            ]
+        });
+
+        if (result?.filePath) {
+            await handlePluginInstall(result.filePath);
+        }
+    } catch (error) {
+        alert('选择文件失败: ' + error.message);
+    }
+};
+
+// 处理插件安装
+const handlePluginInstall = async (filePath) => {
+    try {
+        extensionsLoading.value = true;
+        const result = await window.electronAPI?.installPluginFromZip(filePath);
+        if (result?.success) {
+            alert('插件安装成功！');
+            await refreshExtensions();
+        } else {
+            alert('安装插件失败: ' + (result?.message || '未知错误'));
+        }
+    } catch (error) {
+        alert('安装插件时出错: ' + error.message);
+    } finally {
+        extensionsLoading.value = false;
+    }
+};
+
 const isElectron = () => {
     return typeof window !== 'undefined' && typeof window.electron !== 'undefined';
 };
 
 onMounted(() => {
-    refreshExtensions()
+    if(isElectron()){
+        refreshExtensions()
+    }
 })
 </script>
 
@@ -186,6 +237,15 @@ onMounted(() => {
 
 .extension-btn.primary:hover:not(:disabled) {
     background: #0056b3;
+}
+
+.extension-btn.success {
+    background: #28a745;
+    color: white;
+}
+
+.extension-btn.success:hover:not(:disabled) {
+    background: #218838;
 }
 
 .extension-btn.secondary {

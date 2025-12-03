@@ -1,4 +1,4 @@
-import { ipcMain, shell, BrowserWindow } from 'electron';
+import { ipcMain, shell, BrowserWindow, dialog } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import log from 'electron-log';
@@ -196,6 +196,36 @@ export function registerExtensionIPC() {
             };
         } catch (error) {
             log.error('获取插件目录路径失败:', error);
+            return { success: false, message: error.message };
+        }
+    });
+
+    // 从zip安装插件
+    ipcMain.handle('install-plugin-from-zip', async (event, zipPath) => {
+        try {
+            const result = await extensionManager.installPluginFromZip(zipPath);
+            return result;
+        } catch (error) {
+            log.error('安装插件失败:', error);
+            return { success: false, message: error.message };
+        }
+    });
+
+    // 显示文件选择对话框
+    ipcMain.handle('show-open-dialog', async (event, options) => {
+        try {
+            const result = await dialog.showOpenDialog({
+                ...options,
+                properties: [...(options.properties || [])],
+                filters: [...(options.filters || [])]
+            });
+
+            if (!result.canceled && result.filePaths.length > 0) {
+                return { success: true, filePath: result.filePaths[0] };
+            }
+            return { success: false, message: '未选择文件' };
+        } catch (error) {
+            log.error('打开文件对话框失败:', error);
             return { success: false, message: error.message };
         }
     });
