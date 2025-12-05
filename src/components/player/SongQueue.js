@@ -100,6 +100,10 @@ export default function useSongQueue(t, musicQueueStore) {
         } catch (error) {
             console.error('[SongQueue] 获取音乐地址出错:', error);
             currentSong.value.author = currentSong.value.name = t('huo-qu-yin-le-di-zhi-shi-bai');
+            if (error.response?.data?.status == 2) {
+                window.$modal.alert(t('deng-lu-shi-xiao-qing-zhong-xin-deng-lu'));
+                return { error: true};
+            }
             if (musicQueueStore.queue.length === 0) return { error: true };
             currentSong.value.author = t('3-miao-hou-zi-dong-qie-huan-xia-yi-shou');
 

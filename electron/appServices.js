@@ -455,7 +455,13 @@ export function startApiServer() {
         const savedConfig = store.get('settings') || {};
         const proxy = savedConfig?.proxy;
         const proxyUrl = savedConfig?.proxyUrl;
-        const Args = ['--platform=lite'];
+        const dataSource = savedConfig?.dataSource || 'concept'; 
+        
+        const Args = [];
+        if (dataSource === 'concept') {
+            Args.push('--platform=lite');
+            log.info('API data source: concept (lite mode)');
+        }
         if (proxy === 'on' && proxyUrl) {
             const proxyAddress = String(proxyUrl).trim();
             if (proxyAddress) {

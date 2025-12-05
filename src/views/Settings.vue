@@ -214,6 +214,7 @@ const selectedSettings = ref({
     networkMode: { displayText: '主网', value: 'mainnet' },
     proxy: { displayText: t('guan-bi'), value: 'off' },
     proxyUrl: { displayText: '', value: '' },
+    dataSource: { displayText: '概念版', value: 'concept' },
 });
 
 // 设置分区配置
@@ -261,6 +262,14 @@ const settingSections = computed(() => [
                 key: 'greetings',
                 label: t('qi-dong-wen-hou-yu'),
                 icon: '👋 '
+            },
+            {
+                key: 'dataSource',
+                label: '数据源',
+                icon: '🔌 ',
+                showRefreshHint: true,
+                refreshHintText: t('zhong-qi-hou-sheng-xiao'),
+                helpLink:'https://music.moekoe.cn/guide/data-source.html'
             }
         ]
     },
@@ -610,6 +619,13 @@ const selectionTypeMap = {
         title: '代理地址',
         options: []
     },
+    dataSource: {
+        title: '数据源',
+        options: [
+            { displayText: '概念版', value: 'concept' },
+            { displayText: '正式版', value: 'official' }
+        ]
+    },
 
 };
 
@@ -625,7 +641,8 @@ const showRefreshHint = ref({
     preventAppSuspension: false,
     networkMode: false,
     apiMode: false,
-    proxy: false
+    proxy: false,
+    dataSource: false
 });
 
 const openSelection = (type, helpLink) => {
@@ -662,7 +679,7 @@ const openHelpLink = () => {
 };
 
 const selectOption = (option) => {
-    const electronFeatures = ['desktopLyrics', 'gpuAcceleration', 'minimizeToTray', 'highDpi', 'nativeTitleBar', 'touchBar', 'autoStart', 'startMinimized', 'preventAppSuspension', 'networkMode', 'poxySettings', 'apiMode'];
+    const electronFeatures = ['desktopLyrics', 'gpuAcceleration', 'minimizeToTray', 'highDpi', 'nativeTitleBar', 'touchBar', 'autoStart', 'startMinimized', 'preventAppSuspension', 'networkMode', 'poxySettings', 'apiMode', 'dataSource'];
     if (!isElectron() && electronFeatures.includes(selectionType.value)) {
         window.$modal.alert(t('fei-ke-hu-duan-huan-jing-wu-fa-qi-yong'));
         return;
@@ -712,7 +729,7 @@ const selectOption = (option) => {
     actions[selectionType.value]?.();
     saveSettings();
     if(!['apiMode','font','fontUrl', 'proxy'].includes(selectionType.value)) closeSelection();
-    const refreshHintTypes = ['lyricsBackground', 'lyricsFontSize', 'gpuAcceleration', 'highDpi', 'apiMode', 'touchBar', 'preventAppSuspension', 'networkMode', 'font', 'proxy'];
+    const refreshHintTypes = ['lyricsBackground', 'lyricsFontSize', 'gpuAcceleration', 'highDpi', 'apiMode', 'touchBar', 'preventAppSuspension', 'networkMode', 'font', 'proxy', 'dataSource'];
     if (refreshHintTypes.includes(selectionType.value)) {
         showRefreshHint.value[selectionType.value] = true;
     }
