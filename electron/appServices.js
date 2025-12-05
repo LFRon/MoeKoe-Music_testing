@@ -455,7 +455,7 @@ export function startApiServer() {
         const savedConfig = store.get('settings') || {};
         const proxy = savedConfig?.proxy;
         const proxyUrl = savedConfig?.proxyUrl;
-        const Args = [];
+        const Args = ['--platform=lite'];
         if (proxy === 'on' && proxyUrl) {
             const proxyAddress = String(proxyUrl).trim();
             if (proxyAddress) {
