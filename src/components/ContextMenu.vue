@@ -3,6 +3,7 @@
         class="context-menu">
         <ul>
             <li @mouseenter="fetchPlaylists" @mouseleave="hideSubMenu">
+                <i class="fa-solid fa-plus"></i>
                 {{ MoeAuth.isAuthenticated ? $t('tian-jia-ge-dan') : $t('qing-xian-deng-lu') }} <i
                     class="fa-solid fa-chevron-right"></i>
                 <ul v-if="MoeAuth.isAuthenticated && showSubMenu" class="submenu">
@@ -13,8 +14,8 @@
                 </ul>
             </li>
             <li @click="shareSong(contextSong)"><i class="fa-solid fa-share-nodes"></i> 分享</li>
-            <li v-if="MoeAuth.isAuthenticated && listId && contextSong.userid === MoeAuth.UserInfo.userid" @click="cancel()">取消收藏</li>
-            <li v-if="MoeAuth.isAuthenticated" @click="addToNext(contextSong)">添加到下一首</li>
+            <li v-if="MoeAuth.isAuthenticated && listId && contextSong.userid === MoeAuth.UserInfo.userid" @click="cancel()"><i class="fa-solid fa-heart"></i> 取消收藏</li>
+            <li v-if="MoeAuth.isAuthenticated" @click="addToNext(contextSong)"><i class="fa-solid fa-arrow-right"></i> 添加到下一首</li>
         </ul>
     </div>
 </template>

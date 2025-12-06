@@ -20,14 +20,15 @@ httpClient.interceptors.request.use(
         const userid = MoeAuth.UserInfo?.userid;
 
         if (token && userid) {
-            const cookieParam = `cookie=token=${encodeURIComponent(token)};userid=${encodeURIComponent(userid)}`;
-            config.url += config.url.includes('?') ? `&${cookieParam}` : `?${cookieParam}`;
+            const authStr = `token=${encodeURIComponent(token)};userid=${encodeURIComponent(userid)}`;
+            config.headers = {
+                ...config.headers,
+                Authorization: authStr
+            };
         }
         return config;
     },
-    error => {
-        return Promise.reject(error);
-    }
+    error => Promise.reject(error)
 );
 
 // 响应拦截器

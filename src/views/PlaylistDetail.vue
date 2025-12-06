@@ -265,7 +265,8 @@ const loadData = async () => {
         getArtistInfo();
         fetchArtistSongs();
     } else {
-        getPlaylistDetail();
+        updateFavoriteStatus();
+        await fetchPlaylistTracks();
     }
 };
 
@@ -283,22 +284,6 @@ const getArtistInfo = async () => {
         }
     } catch (error) {
         console.error('获取歌手信息失败:', error);
-    }
-};
-
-// 获取歌单信息
-const getPlaylistDetail = async () => {
-    try {
-        const response = await get('/playlist/detail', { 
-            ids: route.query.global_collection_id 
-        });
-        if (response.status === 1) {
-            detail.value = response.data[0];
-            updateFavoriteStatus();
-            await fetchPlaylistTracks();
-        }
-    } catch (error) {
-        console.error('获取歌单信息失败:', error);
     }
 };
 
@@ -322,7 +307,7 @@ const fetchArtistSongs = async () => {
                 name: track.audio_name || '',
                 author: track.author_name || '',
                 album: track.album_name || '',
-                cover: track.trans_param.union_cover?.replace("{size}", 480).replace('http://', 'https://') || '',
+                cover: track.trans_param.union_cover?.replace("{size}", 480) || '',
                 timelen: track.timelength || 0,
                 isSQ: track.hash_flac !== '',
                 isHQ: track.hash_320 !== '',
@@ -358,7 +343,7 @@ const fetchArtistSongs = async () => {
                         name: track.audio_name || '',
                         author: track.author_name || '',
                         album: track.album_name || '',
-                        cover: track.trans_param.union_cover?.replace("{size}", 480).replace('http://', 'https://') || '',
+                        cover: track.trans_param.union_cover?.replace("{size}", 480) || '',
                         timelen: track.timelength || 0,
                         isSQ: track.hash_flac !== '',
                         isHQ: track.hash_320 !== '',
@@ -397,7 +382,8 @@ const fetchPlaylistTracks = async () => {
         });
         
         if (firstPageResponse.status === 1) {
-            const formattedTracks = firstPageResponse.data.songs
+            detail.value = firstPageResponse.data?.list_info;
+            const formattedTracks = firstPageResponse.data?.songs
             .filter(track => !!track.hash)
             .map(track => {
                 const nameParts = track.name.split(' - ');
@@ -407,7 +393,7 @@ const fetchPlaylistTracks = async () => {
                     name: nameParts.length > 1 ? nameParts[1] : track.name,
                     author: nameParts.length > 1 ? nameParts[0] : '',
                     album: track.albuminfo?.name || '',
-                    cover: track.cover?.replace("{size}", 480).replace('http://', 'https://') || '',
+                    cover: track.cover?.replace("{size}", 480) || '',
                     timelen: track.timelen || 0,
                     isSQ: track.relate_goods && track.relate_goods.length > 2,
                     isHQ: track.relate_goods && track.relate_goods.length > 1,
@@ -450,7 +436,7 @@ const fetchPlaylistTracks = async () => {
                             name: nameParts.length > 1 ? nameParts[1] : track.name,
                             author: nameParts.length > 1 ? nameParts[0] : '',
                             album: track.albuminfo?.name || '',
-                            cover: track.cover?.replace("{size}", 480).replace('http://', 'https://') || '',
+                            cover: track.cover?.replace("{size}", 480) || '',
                             timelen: track.timelen || 0,
                             isSQ: track.relate_goods && track.relate_goods.length > 2,
                             isHQ: track.relate_goods && track.relate_goods.length > 1,
@@ -602,7 +588,7 @@ const showContextMenu = (event, song) => {
             fileid: song.originalData.fileid,
             userid: isArtist.value ? null : detail.value.list_create_userid,
             timeLength: song.timelen,
-            cover: song.cover.replace('http://', 'https://'),
+            cover: song.cover,
         }, isArtist.value ? null : detail.value.listid);
     }
 };
@@ -907,11 +893,11 @@ const changeArtistSort = (sortType) => {
 .fav-btn,
 .more-btn {
     background-color: transparent;
-    border: 1px solid #ccc;
     padding: 10px;
     border-radius: 5px;
     cursor: pointer;
     border: 1px solid var(--secondary-color);
+    height: 100%;
 }
 
 .fav-btn i {

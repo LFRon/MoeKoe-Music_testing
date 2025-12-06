@@ -362,7 +362,7 @@ const addAllSongsToQueue = () => {
     props.playerControl.addPlaylistToQueue(listenHistory.value.map(song => ({
         hash: song.hash,
         name: song.name,
-        cover: song.image?.replace("{size}", 480).replace('http://', 'https://'),
+        cover: song.image?.replace("{size}", 480),
         author: song.author_name,
         timelen: song.duration
     })));

@@ -60,7 +60,8 @@ export function createWindow() {
             contextIsolation: true,
             nodeIntegration: false,
             sandbox: false,
-            webSecurity: true,
+            webSecurity: false, // 禁用 CORS、同源策略
+            allowRunningInsecureContent: true, // 允许混合内容
             zoomFactor: 1.0
         },
         icon: getIconPath('icon.ico')
@@ -183,7 +184,8 @@ export function createLyricsWindow() {
             contextIsolation: true,
             nodeIntegration: false,
             sandbox: false,
-            webSecurity: true,
+            webSecurity: false, // 禁用 CORS、同源策略
+            allowRunningInsecureContent: true, // 允许混合内容
             backgroundThrottling: false,
             zoomFactor: 1.0
         }

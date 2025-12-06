@@ -127,7 +127,7 @@ const showContextMenu = (event, song) => {
         contextMenuRef.value.openContextMenu(event, {
             OriSongName: song.filename,
             FileHash: song.hash,
-            cover: song.sizable_cover?.replace("{size}", 480).replace('http://', 'https://') || './assets/images/ico.png',
+            cover: song.sizable_cover?.replace("{size}", 480) || './assets/images/ico.png',
             timeLength: song.time_length
         });
     }
@@ -199,7 +199,7 @@ const playFM = async (event) => {
                 return {
                     hash: song.hash,
                     name: song.songname,
-                    cover: song.sizable_cover?.replace("{size}", 480).replace('http://', 'https://'),
+                    cover: song.sizable_cover?.replace("{size}", 480),
                     author: song.author_name,
                     timelen: song.time_length
                 }
@@ -258,7 +258,7 @@ const addAllSongsToQueue = () => {
     props.playerControl.addPlaylistToQueue(songs.value.map(song => ({
         hash: song.hash,
         name: song.ori_audio_name,
-        cover: song.sizable_cover?.replace("{size}", 480).replace('http://', 'https://'),
+        cover: song.sizable_cover?.replace("{size}", 480),
         author: song.author_name,
         timelen: song.time_length
     })));
