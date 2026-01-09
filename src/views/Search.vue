@@ -239,9 +239,7 @@ const goToPage = (page) => {
 };
 
 const handleAlbumClick = (album) => {
-    window.$modal.alert('暂不支持查看');
-    // console.log('Album clicked:', album);
-    // router.push(`/album/${album.albumid}`);
+    router.push(`/PlaylistDetail?albumid=${album.albumid}`);
 };
 
 const handlePlaylistClick = (playlist) => {

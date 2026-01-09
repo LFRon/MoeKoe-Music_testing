@@ -13,6 +13,7 @@
                     </li>
                 </ul>
             </li>
+            <li v-if="contextSong.mvhash" @click="playMV(contextSong.mvhash)"><i class="fa-solid fa-video"></i> 播放MV</li>
             <li @click="shareSong(contextSong)"><i class="fa-solid fa-share-nodes"></i> 分享</li>
             <li v-if="MoeAuth.isAuthenticated && listId && contextSong.userid === MoeAuth.UserInfo.userid" @click="cancel()"><i class="fa-solid fa-heart"></i> 取消收藏</li>
             <li v-if="MoeAuth.isAuthenticated" @click="addToNext(contextSong)"><i class="fa-solid fa-arrow-right"></i> 添加到下一首</li>
@@ -22,10 +23,13 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { useRouter } from 'vue-router';
 import { get } from '../utils/request';
 import { MoeAuthStore } from '../stores/store';
 import i18n from '@/utils/i18n';
 import { share } from '@/utils/utils';
+
+const router = useRouter();
 const MoeAuth = MoeAuthStore();
 const showContextMenu = ref(false);
 const showSubMenu = ref(false);
@@ -66,7 +70,7 @@ const fetchPlaylists = async () => {
 // 分享歌曲功能
 const shareSong = (song) => {
     if (!song) return;
-    share('share?hash='+song.FileHash);
+    share(song.OriSongName, song.FileHash);
     hideContextMenu();
 };
 
@@ -108,6 +112,24 @@ const addToNext = async (song) => {
 const hideSubMenu = () => {
     showSubMenu.value = false;
 };
+
+// 播放MV
+const playMV = async (mvhash) => {
+    try {
+        hideContextMenu();
+        const title = contextSong.value?.OriSongName || '视频播放';
+        router.push({
+            path: '/video',
+            query: {
+                hash: mvhash,
+                title: encodeURIComponent(title)
+            }
+        });
+    } catch (error) {
+        $message.error('打开视频播放器失败');
+    }
+};
+
 const handleClickOutside = (event) => {
     if (!event.target.closest(".context-menu")) {
         hideContextMenu();

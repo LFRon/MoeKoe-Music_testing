@@ -17,8 +17,8 @@
                 <i v-else class="fas fa-music"></i>
             </div>
             <div class="song-info" @click="toggleLyrics(currentSong.hash, currentTime)">
-                <div class="song-title">{{ currentSong?.name || "MoeKoeMusic" }}</div>
-                <div class="artist">{{ currentSong?.author || "MoeJue" }}</div>
+                <div class="song-title" @click.stop="searchSong(currentSong.name)">{{ currentSong?.name || "MoeKoeMusic" }}</div>
+                <div class="artist" @click.stop="searchSong(currentSong.author)">{{ currentSong?.author || "MoeJue" }}</div>
             </div>
             <div class="controls">
                 <button class="control-btn" @click="playSongFromQueue('previous')">
@@ -49,7 +49,7 @@
                         class="fas fa-heart"></i></button>
                 <button class="extra-btn" title="收藏至" @click="playlistSelect.fetchPlaylists()"><i
                         class="fas fa-add"></i></button>
-                <button class="extra-btn" title="分享歌曲" @click="share('share?hash=' + currentSong.hash)"><i
+                <button class="extra-btn" title="分享歌曲" @click="share(currentSong.name, currentSong.hash)"><i
                         class="fas fa-share"></i></button>
                 <button class="extra-btn" @click="togglePlaybackMode">
                     <i v-if="currentPlaybackModeIndex != '2'" :class="currentPlaybackMode.icon"
@@ -106,8 +106,8 @@
                         </transition>
                     </div>
                     <div class="song-details">
-                        <div class="song-title">{{ currentSong?.name }}</div>
-                        <div class="artist">{{ currentSong?.author }}</div>
+                        <div class="song-title" @click="searchSong(currentSong.name)">{{ currentSong?.name }}</div>
+                        <div class="artist" @click="searchSong(currentSong.author)">{{ currentSong?.author }}</div>
                     </div>
 
                     <!-- 播放进度条 -->
@@ -175,7 +175,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useMusicQueueStore } from '../stores/musicQueue';
 import { useI18n } from 'vue-i18n';
 import PlaylistSelectModal from './PlaylistSelectModal.vue';
@@ -267,11 +267,13 @@ const updateCurrentTime = throttle(() => {
             const serverLyricsPayload = JSON.parse(JSON.stringify(serverLyricsSource));
             const currentSongPayload = JSON.parse(JSON.stringify(currentSong.value ?? null));
 
-            if (savedConfig?.desktopLyrics === 'on') {
+            if (savedConfig?.desktopLyrics === 'on' || savedConfig?.statusBarLyrics === 'on') {
+                const currentLine = hasLyricsData ? getCurrentLineText(audio.currentTime) : '';
                 window.electron.ipcRenderer.send('lyrics-data', {
                     currentTime: audio.currentTime,
                     lyricsData: desktopLyricsPayload,
-                    currentSongHash: currentSong.value?.hash || ''
+                    currentSongHash: currentSong.value?.hash || '',
+                    currentLyric: currentLine
                 });
             }
             if (savedConfig?.apiMode === 'on') {
@@ -292,7 +294,7 @@ const updateCurrentTime = throttle(() => {
         }
     }
 
-    if (!hasLyricsData && isElectron() && (savedConfig?.desktopLyrics === 'on' || savedConfig?.apiMode === 'on')) {
+    if (!hasLyricsData && isElectron() && (savedConfig?.desktopLyrics === 'on' || savedConfig?.statusBarLyrics === 'on' || savedConfig?.apiMode === 'on')) {
         if (isLyrics === false) return;
         getCurrentLyrics();
     }
@@ -302,10 +304,25 @@ const updateCurrentTime = throttle(() => {
 
 // 初始化各个模块
 const audioController = useAudioController({ onSongEnd, updateCurrentTime });
-const { playing, isMuted, volume, changeVolume, audio, playbackRate, setPlaybackRate } = audioController;
+const { playing, isMuted, volume, changeVolume, audio, playbackRate, setPlaybackRate, applyLoudnessNormalization, ensureAudioContextRunning, toggleLoudnessNormalization, loudnessNormalizationEnabled, currentLoudnessGain, webAudioInitialized } = audioController;
 
 const lyricsHandler = useLyricsHandler(t);
 const { lyricsData, originalLyrics, showLyrics, scrollAmount, SongTips, lyricsMode, toggleLyrics, getLyrics, highlightCurrentChar, resetLyricsHighlight, getCurrentLineText, scrollToCurrentLine, toggleLyricsMode } = lyricsHandler;
+
+// 获取当前播放时间的歌词行索引
+const getCurrentLineIndex = (currentTime) => {
+    if (!lyricsData.value || lyricsData.value.length === 0) return -1;
+    for (let i = 0; i < lyricsData.value.length; i++) {
+        const line = lyricsData.value[i];
+        if (line.characters && line.characters.length > 0) {
+            const startTime = line.characters[0].startTime / 1000;
+            if (startTime > currentTime) {
+                return Math.max(0, i - 1);
+            }
+        }
+    }
+    return lyricsData.value.length - 1;
+};
 
 const progressBar = useProgressBar(audio, resetLyricsHighlight);
 const { progressWidth, isProgressDragging, showTimeTooltip, tooltipPosition, tooltipTime, climaxPoints, formatTime, getMusicHighlights, onProgressDragStart, updateProgressFromEvent, updateTimeTooltip, hideTimeTooltip } = progressBar;
@@ -315,7 +332,7 @@ const { currentPlaybackModeIndex, currentPlaybackMode, playedSongsStack, current
 
 const mediaSession = useMediaSession();
 
-const songQueue = useSongQueue(t, musicQueueStore);
+const songQueue = useSongQueue(t, musicQueueStore, queueList);
 const { currentSong, NextSong, addSongToQueue, addCloudMusicToQueue, addLocalMusicToQueue, addLocalPlaylistToQueue, addToNext, getPlaylistAllSongs, addPlaylistToQueue, addCloudPlaylistToQueue } = songQueue;
 
 // 添加自动切换定时器引用
@@ -413,7 +430,20 @@ const playSong = async (song) => {
 
         currentSong.value = structuredClone(song);
 
+        // 应用响度规格化（如果已启用 Web Audio）
+        if (song.loudnessNormalization) {
+            console.log('[PlayerControl] 应用响度规格化:', song.loudnessNormalization);
+            applyLoudnessNormalization(song.loudnessNormalization);
+        } else {
+            console.log('[PlayerControl] 歌曲无响度规格化数据');
+            applyLoudnessNormalization(null);
+        }
+
         audio.src = song.url;
+
+        // 确保 AudioContext 处于运行状态（如果已启用）
+        await ensureAudioContextRunning();
+
         setPlaybackRate(currentSpeed.value);
         console.log('[PlayerControl] 设置音频源:', song.url);
 
@@ -763,7 +793,7 @@ const handleLyricsWheel = (event) => {
 };
 
 const handleLyricsClick = (lineIndex) => {
-    if (!lyricsFlag.value) return;
+    // if (!lyricsFlag.value) return;
     console.log('[PlayerControl] 点击歌词:', lineIndex);
     const lineStartTime = lyricsData.value[lineIndex].characters[0].startTime;
     audio.currentTime = lineStartTime / 1000;
@@ -772,7 +802,38 @@ const handleLyricsClick = (lineIndex) => {
     lyricsFlag.value = false;
     if (lyricScrollTimer) clearTimeout(lyricScrollTimer);
     lyricScrollTimer = null;
+    // 如果音乐暂停了，自动开始播放
+    if (!playing.value) {
+        audio.play();
+    }
 }
+
+// 复制全部歌词到剪贴板
+const copyLyricsToClipboard = async () => {
+    if (!showLyrics.value || !lyricsData.value || lyricsData.value.length === 0) {
+        return;
+    }
+    try {
+        let lyricsText = '';
+        lyricsData.value.forEach((lineData) => {
+            const originalLine = lineData.characters.map(char => char.char).join('');
+            lyricsText += originalLine + '\n';
+            if (lineData.translated) {
+                lyricsText += lineData.translated + '\n';
+            }
+            if (lineData.romanized) {
+                lyricsText += lineData.romanized + '\n';
+            }
+            if (lineData.translated || lineData.romanized) {
+                lyricsText += '\n';
+            }
+        });
+        await navigator.clipboard.writeText(lyricsText.trim());
+        $message.success('歌词已复制到剪贴板');
+    } catch (error) {
+        $message.error('复制歌词失败');
+    }
+};
 
 // 键盘快捷键
 const handleKeyDown = (event) => {
@@ -792,6 +853,13 @@ const handleKeyDown = (event) => {
             break;
         case 'Escape':
             if (showLyrics.value) toggleLyrics(currentSong.value.hash, audio.currentTime);
+            break;
+        case 'KeyC':
+            // Ctrl+C 或 Cmd+C 复制歌词（仅在全屏歌词界面）
+            if ((event.ctrlKey || event.metaKey) && showLyrics.value) {
+                event.preventDefault();
+                copyLyricsToClipboard();
+            }
             break;
     }
 };
@@ -868,12 +936,33 @@ const changePlaybackSpeed = (speed) => {
     }
 };
 
+// 跳转到搜索页面搜索歌曲
+const searchSong = (songName) => {
+    // 关闭全屏歌词
+    if (showLyrics.value) {
+        toggleLyrics(currentSong.value.hash, audio.currentTime);
+    }
+    if (!songName) return;
+    router.push({
+        path: '/search',
+        query: { q: songName }
+    });
+};
+
 // 组件挂载
 onMounted(() => {
     console.log('[PlayerControl] 组件挂载');
 
     // 初始化音频设置
     audioController.initAudio();
+
+    // 监听响度规格化开关变更
+    const handleLoudnessChange = (event) => {
+        const enabled = event.detail.enabled;
+        console.log('[PlayerControl] 响度规格化开关变更:', enabled);
+        toggleLoudnessNormalization(enabled);
+    };
+    window.addEventListener('loudness-normalization-change', handleLoudnessChange);
 
     // 初始化歌曲和播放状态
     const current_song = localStorage.getItem('current_song');
@@ -893,8 +982,11 @@ onMounted(() => {
         } catch (error) {
             console.error('[PlayerControl] 解析保存的歌曲信息失败:', error);
         }
-    } else {
-        console.log('[PlayerControl] 没有缓存的歌曲信息');
+    }
+
+    // 如果有当前歌曲，获取歌词
+    if (currentSong.value?.hash && !currentSong.value.isLocal) {
+        getCurrentLyrics();
     }
 
     // 初始化播放模式
@@ -985,10 +1077,23 @@ onMounted(() => {
     console.log('[PlayerControl] 音频初始化完成');
 });
 
+// 监听歌词数据变化，同步歌词到当前播放进度
+watch(lyricsData, (newLyrics) => {
+    if (newLyrics && newLyrics.length > 0 && audio.currentTime > 0) {
+        console.log('[PlayerControl] 歌词数据加载完成，同步到当前播放进度:', audio.currentTime);
+        highlightCurrentChar(audio.currentTime, false);
+        const currentLineIndex = getCurrentLineIndex(audio.currentTime);
+        scrollToCurrentLine(currentLineIndex);
+    }
+});
+
 // 组件卸载清理
 onUnmounted(() => {
     // 清除自动切换定时器
     clearAutoSwitchTimer();
+
+    // 移除响度规格化事件监听
+    window.removeEventListener('loudness-normalization-change', () => {});
 
     // 使用AudioController的销毁方法清理基本监听器
     audioController.destroy();
@@ -1016,6 +1121,7 @@ onUnmounted(() => {
 
 // 对外暴露接口
 defineExpose({
+    playing,
     addSongToQueue: async (hash, name, img, author) => {
         clearAutoSwitchTimer();
 

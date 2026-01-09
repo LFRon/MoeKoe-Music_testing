@@ -224,6 +224,10 @@ const getIconPath = (iconName, subPath = '') => path.join(
     iconName
 );
 
+export function getTray() {
+    return tray;
+}
+
 // 创建托盘图标及菜单
 export function createTray(mainWindow, title = '') {
     if (tray && title) {
@@ -287,6 +291,15 @@ export function createTray(mainWindow, title = '') {
             icon: getIconPath('update.png', 'menu'),
             click: () => {
                 checkForUpdates(false);
+            }
+        },
+        {
+            label: '重启应用',
+            icon: getIconPath('restart.png', 'menu'),
+            click: () => {
+                app.relaunch();
+                app.isQuitting = true;
+                app.quit();
             }
         },
         {

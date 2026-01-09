@@ -11,6 +11,7 @@ import Lyrics from '@/views/Lyrics.vue';
 import Ranking from '@/views/Ranking.vue';
 import CloudDrive from '@/views/CloudDrive.vue';
 import LocalMusic from '@/views/LocalMusic.vue';
+import VideoPlayer from '@/views/VideoPlayer.vue';
 import { MoeAuthStore } from '@/stores/store';
 
 
@@ -33,6 +34,7 @@ const routes = [
         ],
     },
     { path: '/lyrics', name: 'Lyrics', component: Lyrics },
+    { path: '/video', name: 'VideoPlayer', component: VideoPlayer },
 ];
 
 const router = createRouter({

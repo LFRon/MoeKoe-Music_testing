@@ -3,7 +3,7 @@ import {
     createWindow, createTray, createTouchBar, startApiServer,
     stopApiServer, registerShortcut,
     playStartupSound, createLyricsWindow, setThumbarButtons,
-    registerProtocolHandler, sendHashAfterLoad
+    registerProtocolHandler, sendHashAfterLoad, getTray
 } from './appServices.js';
 import { initializeExtensions, cleanupExtensions } from './extensions.js';
 import { setupAutoUpdater } from './updater.js';
@@ -14,6 +14,7 @@ import { fileURLToPath } from 'url';
 
 let mainWindow = null;
 let blockerId = null;
+let lastStatusBarLyric = ''; // 缓存上一次的状态栏歌词
 const store = new Store();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -198,6 +199,29 @@ ipcMain.on('lyrics-data', (event, lyricsData) => {
     if (lyricsWindow) {
         lyricsWindow.webContents.send('lyrics-data', lyricsData);
     }
+
+    // 状态栏歌词功能（仅支持Mac系统）
+    if (process.platform === 'darwin') {
+        const settings = store.get('settings');
+        if (settings?.statusBarLyrics === 'on') {
+            const tray = getTray();
+            if (tray) {
+                const currentLyric = lyricsData?.currentLyric || '';
+                // 只在歌词文本发生变化时才更新状态栏，减少不必要的调用
+                if (currentLyric !== lastStatusBarLyric) {
+                    tray.setTitle(currentLyric);
+                    lastStatusBarLyric = currentLyric;
+                }
+            }
+        } else if (lastStatusBarLyric !== '') {
+            // 如果关闭了状态栏歌词功能，清空状态栏文本和缓存
+            const tray = getTray();
+            if (tray) {
+                tray.setTitle('');
+                lastStatusBarLyric = '';
+            }
+        }
+    }
 });
 ipcMain.on('server-lyrics', (event, lyricsData) => {
     apiService.updateLyrics(lyricsData);
@@ -236,7 +260,7 @@ ipcMain.on('desktop-lyrics-action', (event, action) => {
 ipcMain.on('set-ignore-mouse-events', (event, ignore) => {
     const lyricsWindow = mainWindow.lyricsWindow;
     if (lyricsWindow) {
-        lyricsWindow.setIgnoreMouseEvents(false);
+        lyricsWindow.setIgnoreMouseEvents(ignore, { forward: true });
     }
 });
 

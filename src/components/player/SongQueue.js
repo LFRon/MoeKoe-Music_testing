@@ -3,7 +3,7 @@ import { get } from '../../utils/request';
 import { MoeAuthStore } from '../../stores/store';
 
 
-export default function useSongQueue(t, musicQueueStore) {
+export default function useSongQueue(t, musicQueueStore, queueList = null) {
     const currentSong = ref({ name: '', author: '', img: '', url: '', hash: '' });
     const NextSong = ref([]);
     const timeoutId = ref(null);
@@ -73,7 +73,13 @@ export default function useSongQueue(t, musicQueueStore) {
                 img: img,
                 author: author,
                 timeLength: response.timeLength,
-                url: response.url[0]
+                url: response.url[0],
+                // 响度规格化参数
+                loudnessNormalization: {
+                    volume: response.volume || 0,
+                    volumeGain: response.volume_gain || 0,
+                    volumePeak: response.volume_peak || 1
+                }
             };
 
             // 根据是否需要重置播放位置
@@ -100,6 +106,10 @@ export default function useSongQueue(t, musicQueueStore) {
         } catch (error) {
             console.error('[SongQueue] 获取音乐地址出错:', error);
             currentSong.value.author = currentSong.value.name = t('huo-qu-yin-le-di-zhi-shi-bai');
+            if (error.response?.data?.error?.includes('验证')) {
+                window.$modal.alert('账户风控,请稍候重试!');
+                return { error: true};
+            }
             if (error.response?.data?.status == 2) {
                 window.$modal.alert(t('deng-lu-shi-xiao-qing-zhong-xin-deng-lu'));
                 return { error: true};

@@ -195,6 +195,7 @@ const selectedSettings = ref({
     quality: { displayText: t('pu-tong-yin-zhi'), value: 'normal' },
     lyricsBackground: { displayText: t('da-kai'), value: 'on' },
     desktopLyrics: { displayText: t('guan-bi'), value: 'off' },
+    statusBarLyrics: { displayText: t('guan-bi'), value: 'off' },
     lyricsFontSize: { displayText: t('zhong'), value: '24px' },
     lyricsTranslation: { displayText: t('da-kai'), value: 'on' },
     lyricsAlign: { displayText: '居中', value: 'center' },
@@ -215,6 +216,7 @@ const selectedSettings = ref({
     proxy: { displayText: t('guan-bi'), value: 'off' },
     proxyUrl: { displayText: '', value: '' },
     dataSource: { displayText: '概念版', value: 'concept' },
+    loudnessNormalization: { displayText: t('guan-bi'), value: 'off' },
 });
 
 // 设置分区配置
@@ -259,6 +261,13 @@ const settingSections = computed(() => [
                 icon: '🎧 '
             },
             {
+                key: 'loudnessNormalization',
+                label: '平衡音频响度',
+                icon: '🎚️ ',
+                showRefreshHint: true,
+                refreshHintText: '开启需刷新页面后生效'
+            },
+            {
                 key: 'greetings',
                 label: t('qi-dong-wen-hou-yu'),
                 icon: '👋 '
@@ -293,10 +302,14 @@ const settingSections = computed(() => [
                 label: t('xian-shi-zhuo-mian-ge-ci')
             },
             {
-                key: 'lyricsTranslation',
-                label: '歌词翻译',
+                key: 'statusBarLyrics',
+                label: '状态栏歌词',
                 showRefreshHint: true,
                 refreshHintText: t('zhong-qi-hou-sheng-xiao')
+            },
+            {
+                key: 'lyricsTranslation',
+                label: '歌词翻译'
             },
             {
                 key: 'lyricsAlign',
@@ -404,10 +417,12 @@ const getItemIcon = (key) => {
         'nativeTitleBar': 'fas fa-window-maximize',
         'font': 'fas fa-font',
         'quality': 'fas fa-headphones',
+        'loudnessNormalization': 'fas fa-sliders-h',
         'greetings': 'fas fa-comment',
         'lyricsBackground': 'fas fa-image',
         'lyricsFontSize': 'fas fa-text-height',
         'desktopLyrics': 'fas fa-desktop',
+        'statusBarLyrics': 'fas fa-align-justify',
         'lyricsTranslation': 'fas fa-language',
         'lyricsAlign': 'fas fa-align-center',
         'gpuAcceleration': 'fas fa-microchip',
@@ -487,6 +502,13 @@ const selectionTypeMap = {
         title: t('xian-shi-zhuo-mian-ge-ci'),
         options: [
             { displayText: t('da-kai'), value: 'on' },
+            { displayText: t('guan-bi'), value: 'off' }
+        ]
+    },
+    statusBarLyrics: {
+        title: '状态栏歌词',
+        options: [
+            { displayText: t('da-kai')+ ' (仅支持Mac)', value: 'on' },
             { displayText: t('guan-bi'), value: 'off' }
         ]
     },
@@ -626,6 +648,13 @@ const selectionTypeMap = {
             { displayText: '正式版', value: 'official' }
         ]
     },
+    loudnessNormalization: {
+        title: '平衡音频响度',
+        options: [
+            { displayText: t('da-kai'), value: 'on' },
+            { displayText: t('guan-bi'), value: 'off' }
+        ]
+    },
 
 };
 
@@ -642,7 +671,8 @@ const showRefreshHint = ref({
     networkMode: false,
     apiMode: false,
     proxy: false,
-    dataSource: false
+    dataSource: false,
+    statusBarLyrics: false,
 });
 
 const openSelection = (type, helpLink) => {
@@ -679,7 +709,7 @@ const openHelpLink = () => {
 };
 
 const selectOption = (option) => {
-    const electronFeatures = ['desktopLyrics', 'gpuAcceleration', 'minimizeToTray', 'highDpi', 'nativeTitleBar', 'touchBar', 'autoStart', 'startMinimized', 'preventAppSuspension', 'networkMode', 'poxySettings', 'apiMode', 'dataSource'];
+    const electronFeatures = ['desktopLyrics', 'statusBarLyrics', 'gpuAcceleration', 'minimizeToTray', 'highDpi', 'nativeTitleBar', 'touchBar', 'autoStart', 'startMinimized', 'preventAppSuspension', 'networkMode', 'poxySettings', 'apiMode', 'dataSource', 'statusBarLyrics'];
     if (!isElectron() && electronFeatures.includes(selectionType.value)) {
         window.$modal.alert(t('fei-ke-hu-duan-huan-jing-wu-fa-qi-yong'));
         return;
@@ -688,13 +718,14 @@ const selectOption = (option) => {
         window.$modal.alert('非Mac设备不支持TouchBar');
         return;
     }
+    if(selectionType.value == 'statusBarLyrics' && window.electron.platform != 'darwin'){
+        window.$modal.alert('状态栏歌词仅支持Mac系统');
+        return;
+    }
     selectedSettings.value[selectionType.value] = option;
     const actions = {
         'themeColor': () => proxy.$applyColorTheme(option.value),
         'theme': () => proxy.$setTheme(option.value),
-        'nativeTitleBar': () => {
-            showRefreshHint.value.nativeTitleBar = true;
-        },
         'language': () => {
             proxy.$i18n.locale = option.value;
             document.documentElement.lang = option.value;
@@ -719,17 +750,17 @@ const selectOption = (option) => {
             const action = option.value === 'on' ? 'display-lyrics' : 'close-lyrics';
             window.electron.ipcRenderer.send('desktop-lyrics-action', action);
         },
-        'preventAppSuspension': () => {
-            showRefreshHint.value.preventAppSuspension = true;
-        },
-        'networkMode': () => {
-            showRefreshHint.value.networkMode = true;
+        'loudnessNormalization': () => {
+            // 触发响度规格化开关变更事件
+            window.dispatchEvent(new CustomEvent('loudness-normalization-change', {
+                detail: { enabled: option.value === 'on' }
+            }));
         }
     };
     actions[selectionType.value]?.();
     saveSettings();
     if(!['apiMode','font','fontUrl', 'proxy'].includes(selectionType.value)) closeSelection();
-    const refreshHintTypes = ['lyricsBackground', 'lyricsFontSize', 'gpuAcceleration', 'highDpi', 'apiMode', 'touchBar', 'preventAppSuspension', 'networkMode', 'font', 'proxy', 'dataSource'];
+    const refreshHintTypes = ['nativeTitleBar','lyricsBackground', 'lyricsFontSize', 'gpuAcceleration', 'highDpi', 'apiMode', 'touchBar', 'preventAppSuspension', 'networkMode', 'font', 'proxy', 'dataSource', 'loudnessNormalization', 'statusBarLyrics'];
     if (refreshHintTypes.includes(selectionType.value)) {
         showRefreshHint.value[selectionType.value] = true;
     }
