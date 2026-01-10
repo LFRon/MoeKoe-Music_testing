@@ -17,7 +17,8 @@
     <a href="https://github.com/iAJue/MoeKoeMusic/blob/main/docs/README_tw.md" target="blank"><strong>🇨🇳 繁体中文</strong></a>&nbsp;&nbsp;|&nbsp;&nbsp;
     <a href="https://github.com/iAJue/MoeKoeMusic/blob/main/docs/README_ja.md" target="blank"><strong>🇯🇵 日本語</strong></a>&nbsp;&nbsp;|&nbsp;&nbsp;
     <a href="https://github.com/iAJue/MoeKoeMusic/blob/main/docs/README_en.md" target="blank"><strong>🇺🇸 English</strong></a>&nbsp;&nbsp;|&nbsp;&nbsp;
-    <a href="https://github.com/iAJue/MoeKoeMusic/blob/main/docs/README_ko.md" target="blank"><strong>🇰🇷 한국어</strong></a>
+    <a href="https://github.com/iAJue/MoeKoeMusic/blob/main/docs/README_ko.md" target="blank"><strong>🇰🇷 한국어</strong></a>&nbsp;&nbsp;|&nbsp;&nbsp;
+    <a href="https://github.com/iAJue/MoeKoeMusic/blob/main/docs/README_ru.md" target="blank"><strong>🇷🇺 Русский</strong></a>
     <br />
     <br />
 </p>
@@ -49,11 +50,10 @@
 - 🛠 その他の機能開発中
 
 ## 📢 Todo List
-- [ ] 📺 MV再生をサポート
+- [x] 📺 MV再生をサポート
 - [x] 🌚 Light/Dark Mode 自動切り替え
 - [x] 👆 Touch Bar対応
 - [x] 🖥️ PWA対応、Chrome/Edgeでアドレスバー右の➕ コンピュータにインストール
-- [ ] 🟥 Last.fm Scrobbleをサポート
 - [ ] 🎧 Mprisのサポート
 - [x] ⌨️ ショートカットとグローバルショートカットのカスタマイズ
 - [x] 🤟 多言語サポート

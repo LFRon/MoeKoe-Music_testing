@@ -17,7 +17,8 @@
     <a href="https://github.com/iAJue/MoeKoeMusic/blob/main/docs/README_tw.md" target="blank"><strong>🇨🇳 繁体中文</strong></a>&nbsp;&nbsp;|&nbsp;&nbsp;
     <a href="https://github.com/iAJue/MoeKoeMusic/blob/main/docs/README_ja.md" target="blank"><strong>🇯🇵 日本語</strong></a>&nbsp;&nbsp;|&nbsp;&nbsp;
     <a href="https://github.com/iAJue/MoeKoeMusic/blob/main/docs/README_en.md" target="blank"><strong>🇺🇸 English</strong></a>&nbsp;&nbsp;|&nbsp;&nbsp;
-    <a href="https://github.com/iAJue/MoeKoeMusic/blob/main/docs/README_ko.md" target="blank"><strong>🇰🇷 한국어</strong></a>
+    <a href="https://github.com/iAJue/MoeKoeMusic/blob/main/docs/README_ko.md" target="blank"><strong>🇰🇷 한국어</strong></a>&nbsp;&nbsp;|&nbsp;&nbsp;
+    <a href="https://github.com/iAJue/MoeKoeMusic/blob/main/docs/README_ru.md" target="blank"><strong>🇷🇺 Русский</strong></a>
     <br />
     <br />
   </p>
@@ -49,11 +50,10 @@
 - 🛠 더 많은 기능 개발 중
 
 ## 📢 Todo List
-- [ ] 📺 뮤직비디오 재생 지원
+- [x] 📺 뮤직비디오 재생 지원
 - [x] 🌚 Light/Dark Mode 자동 전환
 - [x] 👆 Touch Bar 지원
 - [x] 🖥️ PWA 지원, Chrome/Edge에서 주소 표시줄 오른쪽에 있는➕ 컴퓨터에 설치
-- [ ] 🟥 Last.fm Scrobble 지원
 - [ ] 🎧 지원 Mpris
 - [x] ⌨️ 단축키 및 전역 단축키 사용자 정의
 - [x] 🤟 다국어 지원
