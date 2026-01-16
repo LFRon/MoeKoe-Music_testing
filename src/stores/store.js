@@ -44,13 +44,10 @@ export const MoeAuthStore = defineStore('MoeData', {
             }
         },
         async initDfid() {
-            // Skip if dfid already exists
             if (this.UserInfo?.dfid) {
                 console.log('dfid already exists:', this.UserInfo.dfid);
                 return this.UserInfo.dfid;
             }
-            // Register device to get dfid
-            console.log('Registering device to get dfid...');
             try {
                 const response = await registerDeviceApi.get('/register/dev');
                 const dfid = response?.data?.data?.dfid;

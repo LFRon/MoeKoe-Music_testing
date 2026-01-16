@@ -3,7 +3,7 @@ import {
     createWindow, createTray, createTouchBar, startApiServer,
     stopApiServer, registerShortcut,
     playStartupSound, createLyricsWindow, setThumbarButtons,
-    registerProtocolHandler, sendHashAfterLoad, getTray
+    registerProtocolHandler, sendHashAfterLoad, getTray, createMvWindow
 } from './appServices.js';
 import { initializeExtensions, cleanupExtensions } from './extensions.js';
 import { setupAutoUpdater } from './updater.js';
@@ -289,3 +289,11 @@ ipcMain.on('set-tray-title', (event, title) => {
     createTray(mainWindow, t('now-playing') + title);
     mainWindow.setTitle(title);
 })
+
+
+ipcMain.handle('open-mv-window', (e, url) => {
+    const mvWindow = createMvWindow();
+    mvWindow.loadURL(url).then(() => {
+        mvWindow.show();
+    });
+});
