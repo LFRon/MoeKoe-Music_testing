@@ -27,7 +27,7 @@
 ## ❤️ 前言
 MoeKoe Music官方主仓库链接: https://github.com/MoeKoeMusic/MoeKoeMusic
 
-这是一个抢先测试主要特供给Linux发行版(其实只是在Linux上测试过)的代码分支,所有Node依赖全部升级至最新版本,使用Electron 39@beta版本,确保在Wayland下可以调用原生渲染能力而非走XWayland
+这是一个抢先测试主要特供给Linux发行版(其实只是在Linux上测试过)的代码分支,所有Node依赖全部升级至最新版本,使用Electron 40版本,确保在Wayland下可以调用原生渲染能力而非走XWayland
 
 
 ## ✨ 特性

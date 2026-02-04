@@ -33,7 +33,7 @@ export default function useLyricsHandler(t) {
         try {
             const settings = JSON.parse(localStorage.getItem('settings') || '{}');
             if (!showLyrics.value &&
-                (settings?.desktopLyrics === 'off' && settings?.apiMode === 'off')) {
+                (settings?.desktopLyrics !== 'on' && settings?.apiMode !== 'on' && settings?.statusBarLyrics !== 'on' && settings?.touchBar !== 'on')) {
                 return;
             }
 

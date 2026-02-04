@@ -8,6 +8,8 @@
                         <div class="user-name-row">
                             <h2 class="user-name">{{ user.nickname }}</h2>
                             <span class="user-level">Lv.{{ userDetail.p_grade || 0 }}</span>
+                            <BirthdayEasterEgg :birthday="userDetail.birthday" :nickname="user.nickname"
+                                :player-control="props.playerControl" />
                             <img v-if="userVip[0] && userVip[0].is_vip == 1" class="user-vip-icon"
                                 :src="`./assets/images/${userVip[0].product_type === 'svip' ? 'vip' : 'vip2'}.png`"
                                 :title="`${$t('gai-nian-ban')} ${userVip[0].vip_end_time}`" />
@@ -155,6 +157,7 @@ import { get } from '../utils/request';
 import { MoeAuthStore } from '../stores/store';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import BirthdayEasterEgg from '../components/BirthdayEasterEgg.vue';
 const { t } = useI18n();
 const router = useRouter();
 const MoeAuth = MoeAuthStore();
@@ -170,6 +173,7 @@ const userDetail = ref({}); // 新增：用户详细信息
 const categories = ref([t('wo-chuang-jian-de-ge-dan'), t('wo-shou-cang-de-ge-dan'), t('wo-shou-cang-de-zhuan-ji'), t('wo-guan-zhu-de-ge-shou'), t('wo-guan-zhu-de-hao-you')]);
 const selectedCategory = ref(0);
 const isLoading = ref(true); 
+
 const selectCategory = (index) => {
     selectedCategory.value = index;
     router.replace({ path: '/library', query: { category: index } });
@@ -345,13 +349,26 @@ const signIn = async () => {
             window.$modal.alert(`签到成功，获得${res.data.award_vip_hour}小时VIP时长`);
         }
     } catch (error) {
-        window.$modal.alert('签到失败，请勿频繁签到');
+        window.$modal.alert('签到失败![该接口将在未来被移除]');
     }
 }
 const getVip = async () => {
     try{
-        const vipResponse = await get('/youth/day/vip');
-        if (vipResponse.status === 1) {
+        const todayKey = new Date().toISOString().split('T')[0];
+        const vipResponse = await get('/youth/day/vip',{
+            receive_day: todayKey
+        });
+        const result = await window.$modal.confirm('是否继续升级至概念版VIP,享受更高音质?');
+        if(result){
+            try{
+                const vipResponse = await get('/youth/day/vip/upgrade');
+                if (vipResponse.status === 1) {
+                    window.$modal.alert('升级成功，获得1天概念版VIP');
+                }
+            } catch (error) {
+                window.$modal.alert(error.error_msg || '升级VIP失败, 一天仅限一次');
+            }
+        }else if (vipResponse.status === 1) {
             window.$modal.alert(`签到成功，获得1天畅听VIP`);
         }
     } catch (error) {

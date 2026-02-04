@@ -72,7 +72,7 @@
 1.尅隆本倉庫
 
 ```sh
-git clone  https://github.com/iAJue/MoeKoeMusic.git
+git clone --recurse-submodules https://github.com/iAJue/MoeKoeMusic.git
 ```
 
 2.進入目錄並安裝依賴
@@ -227,7 +227,6 @@ npm run electron:build -- -mwl
 ## 👍 靈感來源
 
 API原始程式碼來自[MakcRe/KuGouMusicApi](https://github.com/MakcRe/KuGouMusicApi)
-(為了不破壞原項目的結構和後期更新反覆運算方便，API未做高度集成.~~ 其實是圖省事~~)
 
 - [Apple Music](https://music.apple.com)
 - [YouTube Music](https://music.youtube.com)

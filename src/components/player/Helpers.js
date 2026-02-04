@@ -72,27 +72,29 @@ export function useHelpers(t) {
   };
   
   // 获取VIP
-  const getVip = async() => {
+  const getVip = async () => {
     if (typeof MoeAuthStore !== 'function') return;
+
     const MoeAuth = MoeAuthStore();
-    if(!MoeAuth.isAuthenticated) return;
-    
-    const lastRequestTime = localStorage.getItem('lastVipRequestTime');
-    if (lastRequestTime) {
-      const now = new Date().getTime();
-      const elapsedTime = now - parseInt(lastRequestTime);
-      const threeHours = 3 * 60 * 60 * 1000;
-      if (elapsedTime < threeHours) {
-        return;
-      }
+    if (!MoeAuth.isAuthenticated) return;
+
+    const todayKey = new Date().toISOString().split('T')[0];
+    const lastVipDate = localStorage.getItem('lastVipRequestDate');
+
+    if (lastVipDate === todayKey) {
+      return;
     }
-    
+
     try {
-      await get('/youth/vip');
+      await get('/youth/day/vip',{
+        receive_day: todayKey
+      });
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await get('/youth/day/vip/upgrade');
     } catch (error) {
       console.error('领取VIP失败:', error);
     }
-    localStorage.setItem('lastVipRequestTime', new Date().getTime().toString());
+    localStorage.setItem('lastVipRequestDate', todayKey);
   };
   
   return {

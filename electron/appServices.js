@@ -7,10 +7,10 @@ import { fileURLToPath } from 'url';
 import isDev from 'electron-is-dev';
 import fs from 'fs';
 import { exec } from 'child_process';
-import { checkForUpdates } from './updater.js';
+import { checkForUpdates } from './services/updater.js';
 import { Notification } from 'electron';
-import extensionManager from './extensionManager.js';
-import { t } from './i18n.js';
+import extensionManager from './extensions/extensionManager.js';
+import { t } from './language/i18n.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const store = new Store();
 const { TouchBarLabel, TouchBarButton, TouchBarGroup, TouchBarSpacer } = TouchBar;
@@ -27,24 +27,24 @@ export function createWindow() {
     const windowWidth = Math.min(1200, screenWidth * 0.8);
     const windowHeight = Math.min(938, screenHeight * 0.9);
     const lastWindowState = store.get('windowState') || {};
-    
+
     let x = lastWindowState.x;
     let y = lastWindowState.y;
     let width = lastWindowState.width || windowWidth;
     let height = lastWindowState.height || windowHeight;
-    
+
     width = Math.min(width, screenWidth);
     height = Math.min(height, screenHeight);
-    
-    const isValidPosition = x !== undefined && y !== undefined && 
-                           x >= 0 && x <= screenWidth && 
-                           y >= 0 && y <= screenHeight;
-    
+
+    const isValidPosition = x !== undefined && y !== undefined &&
+        x >= 0 && x <= screenWidth &&
+        y >= 0 && y <= screenHeight;
+
     if (!isValidPosition) {
         x = Math.floor((screenWidth - width) / 2);
         y = Math.floor((screenHeight - height) / 2);
     }
-    
+
     mainWindow = new BrowserWindow({
         width: width,
         height: height,
@@ -76,11 +76,11 @@ export function createWindow() {
         mainWindow.loadURL('http://localhost:8080');
         mainWindow.webContents.openDevTools();
     } else {
-        if(savedConfig?.networkMode == 'devnet'){ //开发网
+        if (savedConfig?.networkMode == 'devnet') { //开发网
             mainWindow.loadURL('http://localhost:8080');
-        }else if(savedConfig?.networkMode == 'testnet'){ //测试网
+        } else if (savedConfig?.networkMode == 'testnet') { //测试网
             mainWindow.loadURL('https://app.testnet.music.moekoe.cn');
-        }else{ //主网
+        } else { //主网
             mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
         }
     }
@@ -96,9 +96,9 @@ export function createWindow() {
     mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
         console.error('Failed to load:', errorCode, errorDescription);
     });
-    
+
     mainWindow.once('ready-to-show', () => {
-        if(savedConfig?.startMinimized === 'on'){
+        if (savedConfig?.startMinimized === 'on') {
             mainWindow.hide();
         }
     });
@@ -114,7 +114,7 @@ export function createWindow() {
 
     mainWindow.on('close', (event) => {
         const savedConfig = store.get('settings');
-        if(savedConfig?.minimizeToTray === 'off'){
+        if (savedConfig?.minimizeToTray === 'off') {
             app.isQuitting = true;
             app.quit();
         }
@@ -146,21 +146,21 @@ export function createLyricsWindow() {
         width: windowWidth,
         height: windowHeight
     };
-    
+
     let x = savedLyricsPosition.x;
     let y = savedLyricsPosition.y;
     let width = savedLyricsSize.width || windowWidth;
     let height = savedLyricsSize.height || windowHeight;
-    
+
     // 限制窗口尺寸不超过屏幕
     width = Math.min(width, screenWidth);
     height = Math.min(height, screenHeight);
-    
+
     // 检查位置是否有效
-    const isValidPosition = x !== undefined && y !== undefined && 
-                           x >= 0 && x <= screenWidth && 
-                           y >= 0 && y <= screenHeight;
-    
+    const isValidPosition = x !== undefined && y !== undefined &&
+        x >= 0 && x <= screenWidth &&
+        y >= 0 && y <= screenHeight;
+
     // 如果位置无效，设置默认位置
     if (!isValidPosition) {
         x = Math.floor((screenWidth - width) / 2);
@@ -191,7 +191,7 @@ export function createLyricsWindow() {
             zoomFactor: 1.0
         }
     });
-    
+
     lyricsWindow.on('resize', () => {
         const [width, height] = lyricsWindow.getSize();
         store.set('lyricsWindowSize', { width, height });
@@ -269,7 +269,7 @@ export function createTray(mainWindow, title = '') {
     } else {
         trayIconName = 'tray-icon.ico'
     }
-    
+
     tray = new Tray(getIconPath(trayIconName));
     tray.setToolTip('MoeKoe Music');
 
@@ -496,8 +496,8 @@ export function startApiServer() {
         const savedConfig = store.get('settings') || {};
         const proxy = savedConfig?.proxy;
         const proxyUrl = savedConfig?.proxyUrl;
-        const dataSource = savedConfig?.dataSource || 'concept'; 
-        
+        const dataSource = savedConfig?.dataSource || 'concept';
+
         const Args = [];
         if (dataSource === 'concept') {
             Args.push('--platform=lite');
@@ -510,7 +510,7 @@ export function startApiServer() {
                 log.info(`API proxy enabled: ${proxyAddress}`);
             }
         }
-
+        Args.push('--port=6521');
         apiProcess = spawn(apiPath, Args, { windowsHide: true });
 
         apiProcess.stdout.on('data', (data) => {
@@ -752,18 +752,18 @@ let protocolMainWindow = null;
 // 注册自定义协议
 export function registerProtocolHandler(mainWindow) {
     const PROTOCOL = "moekoe";
-    
+
     // 保存mainWindow引用
     if (mainWindow) {
         protocolMainWindow = mainWindow;
     }
-    
+
     // 注册协议
     app.setAsDefaultProtocolClient(PROTOCOL, process.execPath);
-    
+
     // 处理启动参数
     handleArgv(process.argv);
-    
+
     // 处理第二个实例的启动参数
     app.on('second-instance', (event, commandLine) => {
         if (protocolMainWindow) {
@@ -773,7 +773,7 @@ export function registerProtocolHandler(mainWindow) {
             handleArgv(commandLine);
         }
     });
-    
+
     // 在macOS平台特别处理open-url事件
     if (process.platform === 'darwin') {
         app.on('open-url', (event, urlStr) => {
@@ -781,10 +781,10 @@ export function registerProtocolHandler(mainWindow) {
             handleUrl(urlStr);
         });
     }
-    
-    return { 
+
+    return {
         getHash: () => hash,
-        handleProtocolArgv: handleArgv 
+        handleProtocolArgv: handleArgv
     };
 }
 
@@ -799,15 +799,15 @@ function handleArgv(argv) {
 // 处理URL
 function handleUrl(url) {
     const urlObj = new URL(url);
-    
+
     // 提取所有参数并更新全局变量
     hash = urlObj.searchParams.get("hash") || "";
     listid = urlObj.searchParams.get("listid") || "";
-    
+
     // 根据路径和参数决定发送什么数据到渲染进程
     if (protocolMainWindow && protocolMainWindow.webContents) {
         // 将所有参数打包发送
-        protocolMainWindow.webContents.send('url-params', { 
+        protocolMainWindow.webContents.send('url-params', {
             hash,
             listid,
             urlPath: urlObj.pathname.substring(1) // 去掉前导斜杠
@@ -820,11 +820,11 @@ export function sendHashAfterLoad(mainWindow) {
     if (mainWindow) {
         protocolMainWindow = mainWindow;
     }
-    
+
     if ((hash || listid) && protocolMainWindow) {
         protocolMainWindow.webContents.on('did-finish-load', () => {
             setTimeout(() => {
-                protocolMainWindow.webContents.send('url-params', { 
+                protocolMainWindow.webContents.send('url-params', {
                     hash,
                     listid,
                     urlPath: 'share'

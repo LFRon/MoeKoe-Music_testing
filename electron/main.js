@@ -1,21 +1,21 @@
-import { app, ipcMain, globalShortcut, dialog, Notification, shell, session, powerSaveBlocker } from 'electron';
+import { app, ipcMain, globalShortcut, dialog, Notification, shell, session, powerSaveBlocker, nativeImage } from 'electron';
 import {
     createWindow, createTray, createTouchBar, startApiServer,
     stopApiServer, registerShortcut,
     playStartupSound, createLyricsWindow, setThumbarButtons,
     registerProtocolHandler, sendHashAfterLoad, getTray, createMvWindow
 } from './appServices.js';
-import { initializeExtensions, cleanupExtensions } from './extensions.js';
-import { setupAutoUpdater } from './updater.js';
-import apiService from './apiService.js';
+import { initializeExtensions, cleanupExtensions } from './extensions/extensions.js';
+import { setupAutoUpdater } from './services/updater.js';
+import apiService from './services/apiService.js';
+import statusBarLyricsService from './services/statusBarLyricsService.js';
 import Store from 'electron-store';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { t } from './i18n.js';
+import { t } from './language/i18n.js';
 
 let mainWindow = null;
 let blockerId = null;
-let lastStatusBarLyric = ''; // 缓存上一次的状态栏歌词
 const store = new Store();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -31,8 +31,8 @@ if (!gotTheLock) {
         }
         if (mainWindow) {
             if (mainWindow.isMinimized()) mainWindow.restore();
-            mainWindow.show(); 
-            mainWindow.focus(); 
+            mainWindow.show();
+            mainWindow.focus();
         }
         protocolHandler.handleProtocolArgv(commandLine);
     });
@@ -43,6 +43,10 @@ app.on('ready', () => {
         try {
             mainWindow = createWindow();
             createTray(mainWindow);
+
+            // 初始化状态栏歌词服务
+            statusBarLyricsService.init(mainWindow, store, getTray, createTray);
+
             if (process.platform === "darwin" && store.get('settings')?.touchBar == 'on') createTouchBar(mainWindow);
             playStartupSound();
             registerShortcut();
@@ -113,6 +117,10 @@ app.on('before-quit', () => {
     if (blockerId !== null) {
         powerSaveBlocker.stop(blockerId);
     }
+
+    // 清理状态栏歌词服务
+    statusBarLyricsService.cleanup();
+
     stopApiServer();
     apiService.stop();
     cleanupExtensions();
@@ -196,34 +204,17 @@ ipcMain.on('custom-shortcut', (event) => {
 });
 
 ipcMain.on('lyrics-data', (event, lyricsData) => {
-    const lyricsWindow = mainWindow.lyricsWindow;
+    const lyricsWindow = mainWindow?.lyricsWindow;
     if (lyricsWindow) {
         lyricsWindow.webContents.send('lyrics-data', lyricsData);
     }
 
-    // 状态栏歌词功能（仅支持Mac系统）
+    // 状态栏歌词功能服务处理（仅支持Mac系统）
     if (process.platform === 'darwin') {
-        const settings = store.get('settings');
-        if (settings?.statusBarLyrics === 'on') {
-            const tray = getTray();
-            if (tray) {
-                const currentLyric = lyricsData?.currentLyric || '';
-                // 只在歌词文本发生变化时才更新状态栏，减少不必要的调用
-                if (currentLyric !== lastStatusBarLyric) {
-                    tray.setTitle(currentLyric);
-                    lastStatusBarLyric = currentLyric;
-                }
-            }
-        } else if (lastStatusBarLyric !== '') {
-            // 如果关闭了状态栏歌词功能，清空状态栏文本和缓存
-            const tray = getTray();
-            if (tray) {
-                tray.setTitle('');
-                lastStatusBarLyric = '';
-            }
-        }
+        statusBarLyricsService.handleLyricsData(lyricsData);
     }
 });
+
 ipcMain.on('server-lyrics', (event, lyricsData) => {
     apiService.updateLyrics(lyricsData);
 });
@@ -292,8 +283,18 @@ ipcMain.on('set-tray-title', (event, title) => {
 
 
 ipcMain.handle('open-mv-window', (e, url) => {
-    const mvWindow = createMvWindow();
-    mvWindow.loadURL(url).then(() => {
-        mvWindow.show();
-    });
+    return (async () => {
+        const mvWindow = createMvWindow();
+        try {
+            await mvWindow.loadURL(url);
+            mvWindow.show();
+            return true;
+        } catch (error) {
+            console.error('[open-mv-window] loadURL failed:', url, error);
+            try {
+                mvWindow.close();
+            } catch {}
+            throw error;
+        }
+    })();
 });

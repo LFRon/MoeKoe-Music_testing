@@ -1,9 +1,10 @@
 import { defineStore } from 'pinia';
 import axios from 'axios';
+import { getApiBaseUrl } from '../utils/apiBaseUrl';
 
-// Separate axios instance for device registration (without interceptors to avoid circular dependency)
+// 用于设备注册的独立 axios 实例（不带拦截器，避免循环依赖）
 const registerDeviceApi = axios.create({
-    baseURL: import.meta.env.VITE_APP_API_URL || 'http://127.0.0.1:6521',
+    baseURL: getApiBaseUrl(),
     timeout: 10000,
 });
 
@@ -11,6 +12,7 @@ export const MoeAuthStore = defineStore('MoeData', {
     state: () => ({
         UserInfo: null, // 用户信息
         Config: null, // 配置信息
+        Device: null, // 设备信息
     }),
     actions: {
         fetchConfig(key) {
@@ -19,42 +21,20 @@ export const MoeAuthStore = defineStore('MoeData', {
             return configItem ? configItem.value : null;
         },
         async setData(data) {
-            if (data.UserInfo) {
-                // Preserve existing dfid when updating UserInfo
-                const existingDfid = this.UserInfo?.dfid;
-                this.UserInfo = data.UserInfo;
-                if (existingDfid && !this.UserInfo.dfid) {
-                    this.UserInfo.dfid = existingDfid;
-                }
-                // Ensure dfid exists after login
-                if (!this.UserInfo.dfid) {
-                    await this.initDfid();
-                }
-            }
+            if (data.UserInfo) this.UserInfo = data.UserInfo;
             if (data.Config) this.Config = data.Config;
         },
         clearData() {
             this.UserInfo = null; // 清除用户信息
         },
-        setDfid(dfid) {
-            if (!this.UserInfo) {
-                this.UserInfo = { dfid };
-            } else {
-                this.UserInfo.dfid = dfid;
-            }
-        },
-        async initDfid() {
-            if (this.UserInfo?.dfid) {
-                console.log('dfid already exists:', this.UserInfo.dfid);
-                return this.UserInfo.dfid;
-            }
+        async initDevice() {
+            if (this.Device) return this.Device;
             try {
-                const response = await registerDeviceApi.get('/register/dev');
-                const dfid = response?.data?.data?.dfid;
-                if (dfid) {
-                    this.setDfid(dfid);
-                    console.log('Device registered, dfid:', dfid);
-                    return dfid;
+                const response = await registerDeviceApi.get('/register/dev?register');
+                const device = response?.data?.data;
+                if (device) {
+                    this.Device = device;
+                    return device;
                 }
             } catch (error) {
                 console.error('Failed to register device:', error);
@@ -63,15 +43,15 @@ export const MoeAuthStore = defineStore('MoeData', {
         }
     },
     getters: {
-        isAuthenticated: (state) => !!state.UserInfo && !!state.UserInfo, // 判断是否已认证
+        isAuthenticated: (state) => !!state.UserInfo && !!state.UserInfo, // 是否已登录
     },
     persist: {
-        enabled: true, 
+        enabled: true,
         strategies: [
             {
-                key: 'MoeData', 
+                key: 'MoeData',
                 storage: localStorage,
-                paths: ['UserInfo', 'Config'], 
+                paths: ['UserInfo', 'Config', 'Device'],
             },
         ],
     },

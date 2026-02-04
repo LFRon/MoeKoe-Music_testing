@@ -73,7 +73,7 @@ Accessing for this project [Release](https://github.com/iAJue/MoeKoeMusic/releas
 1. Clone this repository
 
 ```sh
-git clone  https://github.com/iAJue/MoeKoeMusic.git
+git clone --recurse-submodules https://github.com/iAJue/MoeKoeMusic.git
 ```
 
 2. Enter the directory and install dependencies
@@ -227,7 +227,6 @@ Based on [MIT license](https://opensource.org/licenses/MIT)License to open sourc
 ## 👍 Inspiration source
 
 The API source code comes from [MakcRe/KuGouMusicApi](https://github.com/MakcRe/KuGouMusicApi ) 
-In order to avoid disrupting the structure of the original project and facilitate later updates and iterations, the API has not been highly integrated~~ Actually, it's to save time~~)
 
 - [Apple Music]( https://music.apple.com )
 - [YouTube Music]( https://music.youtube.com )

@@ -2,7 +2,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const express = require('express');
 const decode = require('safe-decode-uri-component');
-const { cookieToJson } = require('./util/util');
+const { cookieToJson, randomString, getGuid, calculateMid } = require('./util/util');
+const { cryptoMd5 } = require('./util/crypto');
 const { createRequest } = require('./util/request');
 const dotenv = require('dotenv');
 const cache = require('./util/apicache').middleware;
@@ -17,13 +18,16 @@ const cache = require('./util/apicache').middleware;
 
 /**
  * @typedef {{
-*  server?: import('http').Server,
-* }} ExpressExtension
-*/
+ *  server?: import('http').Server,
+ * }} ExpressExtension
+ */
+
+const guid = cryptoMd5(getGuid());
+const serverDev = randomString(10).toUpperCase();
 
 const envPath = path.join(process.cwd(), '.env');
 if (fs.existsSync(envPath)) {
-  dotenv.config({path: envPath, quiet: true});
+  dotenv.config({ path: envPath, quiet: true });
 }
 
 /**
@@ -92,14 +96,24 @@ async function consturctServer(moduleDefs) {
 
   // 将当前平台写入Cookie 以方便查看
   app.use((req, res, next) => {
-    const cookies = (req.headers.cookie || '').split(/;\s+|(?<!\s)\s+$/g);
-    if (!cookies.includes('KUGOU_API_PLATFORM')) {
-      if (req.protocol === 'https') {
-        res.append('Set-Cookie', `KUGOU_API_PLATFORM=${process.env.platform}; PATH=/; SameSite=None; Secure`);
-      } else {
-        res.append('Set-Cookie', `KUGOU_API_PLATFORM=${process.env.platform}; PATH=/; SameSite=None; Secure`);
-      }
-    }
+    const cookies = req.cookies || {};
+    const isHttps = req.protocol === 'https';
+    const cookieSuffix = isHttps ? '; PATH=/; SameSite=None; Secure' : '; PATH=/';
+
+    const ensureCookie = (key, value) => {
+      if (Object.prototype.hasOwnProperty.call(cookies, key)) return;
+      cookies[key] = String(value);
+      res.append('Set-Cookie', `${key}=${cookies[key]}${cookieSuffix}`);
+    };
+
+    const mid = calculateMid(process.env.KUGOU_API_GUID ?? guid);
+    ensureCookie('KUGOU_API_PLATFORM', process.env.platform);
+    ensureCookie('KUGOU_API_MID', mid);
+    ensureCookie('KUGOU_API_GUID', process.env.KUGOU_API_GUID ?? guid);
+    ensureCookie('KUGOU_API_DEV', (process.env.KUGOU_API_DEV ?? serverDev).toUpperCase());
+    ensureCookie('KUGOU_API_MAC', (process.env.KUGOU_API_MAC ?? '02:00:00:00:00:00').toUpperCase());
+
+    req.cookies = cookies;
 
     next();
   });
@@ -111,13 +125,13 @@ async function consturctServer(moduleDefs) {
   /**
    * Serving static files
    */
-  // app.use(express.static(path.join(__dirname, 'public')));
+  app.use(express.static(path.join(__dirname, 'public')));
 
   /**
    * docs
    */
 
-  // app.use('/docs', express.static(path.join(__dirname, 'docs')));
+  app.use('/docs', express.static(path.join(__dirname, 'docs')));
 
   // Cache
   app.use(cache('2 minutes', (_, res) => res.statusCode === 200));
@@ -133,12 +147,14 @@ async function consturctServer(moduleDefs) {
       });
 
       const { cookie, ...params } = req.query;
-      const query = Object.assign({}, { cookie: Object.assign(req.cookies, cookie) }, params, { body: req.body });
+
+      const query = Object.assign({}, { cookie: Object.assign({}, req.cookies, cookie) }, params, { body: req.body });
+
       const authHeader = req.headers['authorization'];
       if (authHeader) {
         query.cookie = {
           ...query.cookie,
-          ...cookieToJson(authHeader)
+          ...cookieToJson(authHeader),
         };
       }
       try {
@@ -205,17 +221,10 @@ async function consturctServer(moduleDefs) {
  * @returns {Promise<import('express').Express & ExpressExtension>}
  */
 async function startService() {
-  const port = Number(process.env.PORT || '6521');
+  const port = Number(process.env.PORT || '3000');
   const host = process.env.HOST || '';
 
   const app = await consturctServer();
-  
-  app.get('/', (req, res) => {
-    res.send({
-      type: 'welcome',
-      data: '感谢接入MoeKoe Music，文档地址：https://music.moekoe.cn/'
-    });
-  });
 
   /** @type {import('express').Express & ExpressExtension} */
   const appExt = app;

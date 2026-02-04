@@ -72,7 +72,7 @@
 1. 본 창고 클론
 
 ```sh
-git clone https://github.com/iAJue/MoeKoeMusic.git
+git clone --recurse-submodules https://github.com/iAJue/MoeKoeMusic.git
 ```
 
 2. 디렉터리에 들어가서 종속성 설치
@@ -231,7 +231,6 @@ x64 및 arm64 스키마를 지정하거나 다른 대상 형식을 선택하는 
 ## 👍 영감의 원천
 
 API 소스 코드는 [MakcRe/KuGouMusicApi](https://github.com/MakcRe/KuGouMusicApi) 
-(원 프로젝트의 구조를 파괴하지 않고 후기 업데이트 반복의 편리를 위해 API는 고도로 통합되지 않았다.~~사실 수고를 덜려고 ~~)
 
 - [Apple Music](https://music.apple.com)
 - [YouTube Music](https://music.youtube.com)

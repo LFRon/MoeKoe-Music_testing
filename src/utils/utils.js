@@ -99,6 +99,46 @@ export const formatMilliseconds = (time) => {
     return `${minutes}分${seconds}秒`;
 };
 
+export const requestMicrophonePermission = async () => {
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) return false;
+
+    try {
+        if (navigator.permissions?.query) {
+            const status = await navigator.permissions.query({ name: 'microphone' });
+
+            if (status.state === 'granted') {
+                // 不会弹窗
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream.getTracks().forEach(track => track.stop());
+                return true;
+            }
+
+            if (status.state === 'denied') return false;
+        }
+    } catch {
+        // permissions API 在部分环境不可用/会抛错（例如 Safari），直接走 getUserMedia
+    }
+
+    try {
+        // 可能弹窗申请权限
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(track => track.stop());
+        return true;
+    } catch {
+        return false;
+    }
+};
+
+export const getAudioOutputDeviceSignature = async () => {
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.enumerateDevices) return null;
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const signatures = devices
+        .filter(device => device.kind === 'audiooutput')
+        .map(device => `${device.deviceId || ''}:${device.groupId || ''}`)
+        .sort();
+    return signatures.join('|');
+};
+
 let themeMediaQueryListener = null;
 export const setTheme = (theme) => {
     const html = document.documentElement;

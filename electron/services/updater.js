@@ -2,7 +2,7 @@ import { app, dialog } from 'electron';
 import electronUpdater from 'electron-updater';
 const { autoUpdater } = electronUpdater;
 import Store from 'electron-store';
-import { t } from './i18n.js';
+import { t } from '../language/i18n.js';
 
 const store = new Store();
 autoUpdater.autoDownload = false; // 自动下载更新

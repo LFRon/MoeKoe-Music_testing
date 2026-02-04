@@ -1,10 +1,11 @@
 // src/services/request.js
 import axios from 'axios';
 import { MoeAuthStore } from '../stores/store';
+import { getApiBaseUrl } from './apiBaseUrl';
 
 // 创建一个 axios 实例
 const httpClient = axios.create({
-    baseURL: import.meta.env.VITE_APP_API_URL || 'http://127.0.0.1:6521',
+    baseURL: getApiBaseUrl(),
     timeout: 10000,
     headers: {
         'Content-Type': 'application/json',
@@ -18,12 +19,22 @@ httpClient.interceptors.request.use(
         const MoeAuth = MoeAuthStore();
         const token = MoeAuth.UserInfo?.token;
         const userid = MoeAuth.UserInfo?.userid;
-        const dfid = MoeAuth.UserInfo?.dfid;
+        const t1 = MoeAuth.UserInfo?.t1;
+        const dfid = MoeAuth.Device?.dfid;
+        const mid = MoeAuth.Device?.mid;
+        const guid = MoeAuth.Device?.guid;
+        const serverDev = MoeAuth.Device?.serverDev;
+        const mac = MoeAuth.Device?.mac;
 
         const authParts = [];
-        if (token) authParts.push(`token=${encodeURIComponent(token)}`);
-        if (userid) authParts.push(`userid=${encodeURIComponent(userid)}`);
-        if (dfid) authParts.push(`dfid=${encodeURIComponent(dfid)}`);
+        if (token) authParts.push(`token=${(token)}`);
+        if (userid) authParts.push(`userid=${(userid)}`);
+        // if (dfid) authParts.push(`dfid=${(dfid)}`);
+        if (t1) authParts.push(`t1=${(t1)}`);
+        if (mid) authParts.push(`KUGOU_API_MID=${(mid)}`);
+        if (guid) authParts.push(`KUGOU_API_GUID=${(guid)}`);
+        if (serverDev) authParts.push(`KUGOU_API_DEV=${(serverDev)}`);
+        if (mac) authParts.push(`KUGOU_API_MAC=${(mac)}`);
 
         if (authParts.length > 0) {
             config.headers = {
@@ -46,8 +57,8 @@ httpClient.interceptors.response.use(
             console.error(`http error status:${error.response.status}`,error.response.data);
             if (error.response?.data?.data) {
                 console.error(error.response.data.data);
-            } else {
-                $message.error('服务器错误,请稍后再试!');
+            // } else {
+            //     $message.error('服务器错误,请稍后再试!');
             }
         } else if (error.request) {
             console.error('No response received:', error.request);

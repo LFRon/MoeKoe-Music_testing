@@ -72,7 +72,7 @@
 1.本倉庫のクローニング
 
 ```sh
-git clone https://github.com/iAJue/MoeKoeMusic.git
+git clone --recurse-submodules https://github.com/iAJue/MoeKoeMusic.git
 ```
 
 2.ディレクトリにアクセスして依存関係をインストールする
@@ -226,7 +226,6 @@ npm run electron:build -- -mwl
 ### 👍 インスピレーションソース
 
 APIソースコードは[MakcRe/KuGouMusicApi](https://github.com/MakcRe/KuGouMusicApi) 
-(元のプロジェクトの構造を破壊しないためと後期更新の反復が便利で、APIは高度な統合をしていない.~~実は手間を省くために~~)
 
 - [Apple Music](https://music.apple.com)
 - [YouTube Music](https://music.youtube.com)
