@@ -29,7 +29,7 @@ httpClient.interceptors.request.use(
         const authParts = [];
         if (token) authParts.push(`token=${(token)}`);
         if (userid) authParts.push(`userid=${(userid)}`);
-        // if (dfid) authParts.push(`dfid=${(dfid)}`);
+        if (dfid) authParts.push(`dfid=${(dfid)}`);
         if (t1) authParts.push(`t1=${(t1)}`);
         if (mid) authParts.push(`KUGOU_API_MID=${(mid)}`);
         if (guid) authParts.push(`KUGOU_API_GUID=${(guid)}`);

@@ -30,7 +30,7 @@ export const MoeAuthStore = defineStore('MoeData', {
         async initDevice() {
             if (this.Device) return this.Device;
             try {
-                const response = await registerDeviceApi.get('/register/dev?register');
+                const response = await registerDeviceApi.get('/register/dev');
                 const device = response?.data?.data;
                 if (device) {
                     this.Device = device;
