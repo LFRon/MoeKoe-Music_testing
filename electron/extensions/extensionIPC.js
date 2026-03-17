@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import log from 'electron-log';
 import extensionManager from './extensionManager.js';
+import { bindExternalLinkHandler } from '../services/externalLinkHandler.js';
 
 // 获取插件图标数据
 function getExtensionIconData(extension, extensionPath) {
@@ -45,6 +46,13 @@ export function registerExtensionIPC() {
             const extensions = loadedExtensions.map(ext => {
                 const scannedExt = scannedExtensions.find(scanned => scanned.name === ext.name);
                 let iconData = null;
+                const manifestAuthor = ext.manifest?.author ?? scannedExt?.manifest?.author;
+                const authorName = typeof manifestAuthor === 'string'
+                    ? manifestAuthor
+                    : (manifestAuthor?.name || '');
+                const authorUrl = typeof manifestAuthor === 'object'
+                    ? (manifestAuthor?.url || '')
+                    : '';
                 
                 if (scannedExt?.path) {
                     iconData = getExtensionIconData(ext, scannedExt.path);
@@ -52,10 +60,14 @@ export function registerExtensionIPC() {
                 
                 return {
                     id: ext.id,
+                    pluginId: ext.manifest?.plugin_id || scannedExt?.manifest?.plugin_id || '',
                     name: ext.name,
+                    directory: scannedExt?.directory || '',
                     version: ext.version,
                     enabled: true,
                     description: ext.manifest?.description || '',
+                    author: authorName,
+                    authorUrl: authorUrl,
                     permissions: ext.manifest?.permissions || [],
                     iconData: iconData,
                     moeKoeAdapted: ext.manifest?.moekoe === true || scannedExt?.manifest?.moekoe === true
@@ -137,6 +149,11 @@ export function registerExtensionIPC() {
             popupWindow.setMenuBarVisibility(false);
             popupWindow.removeMenu();
 
+            bindExternalLinkHandler(
+                popupWindow,
+                (url) => /^(https?:|mailto:|tel:)/i.test(url)
+            );
+
             // 构建插件弹窗URL
             const popupUrl = `chrome-extension://${extensionId}/popup.html`;
             
@@ -166,9 +183,9 @@ export function registerExtensionIPC() {
     });
 
     // 卸载插件
-    ipcMain.handle('uninstall-extension', (event, extensionId) => {
+    ipcMain.handle('uninstall-extension', (event, extensionId, extensionDir) => {
         try {
-            const result = extensionManager.uninstallExtension(extensionId);
+            const result = extensionManager.uninstallExtension(extensionId, extensionDir);
             return result;
         } catch (error) {
             log.error('卸载插件失败:', error);
@@ -211,7 +228,22 @@ export function registerExtensionIPC() {
             return { success: false, message: error.message };
         }
     });
-
+    
+    // 从URL安装插件
+    ipcMain.handle('install-plugin-from-url', async (event, payload = {}) => {
+        try {
+            const result = await extensionManager.installPluginFromUrl(
+                payload.downloadUrl,
+                payload.extensionId,
+                payload.extensionDir
+            );
+            return result;
+        } catch (error) {
+            log.error('Failed to install remote plugin:', error);
+            return { success: false, message: error.message };
+        }
+    });
+    
     // 显示文件选择对话框
     ipcMain.handle('show-open-dialog', async (event, options) => {
         try {
@@ -259,7 +291,10 @@ export function unregisterExtensionIPC() {
         'uninstall-extension',
         'validate-extension',
         'get-extensions-directory',
-        'ensure-extensions-directory'
+        'ensure-extensions-directory',
+        'install-plugin-from-zip',
+        'install-plugin-from-url',
+        'show-open-dialog'
     ];
 
     channels.forEach(channel => {

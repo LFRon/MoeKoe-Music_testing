@@ -16,18 +16,22 @@
     <a href="https://github.com/iAJue/MoeKoeMusic/blob/main/docs/README_tw.md" target="blank"><strong>🇨🇳 繁体中文</strong></a>&nbsp;&nbsp;|&nbsp;&nbsp;
     <a href="https://github.com/iAJue/MoeKoeMusic/blob/main/docs/README_ja.md" target="blank"><strong>🇯🇵 日本語</strong></a>&nbsp;&nbsp;|&nbsp;&nbsp;
     <a href="https://github.com/iAJue/MoeKoeMusic/blob/main/docs/README_en.md" target="blank"><strong>🇺🇸 English</strong></a>&nbsp;&nbsp;|&nbsp;&nbsp;
-    <a href="https://github.com/iAJue/MoeKoeMusic/blob/main/docs/README_ko.md" target="blank"><strong>🇰🇷 한국어</strong></a>
+    <a href="https://github.com/iAJue/MoeKoeMusic/blob/main/docs/README_ko.md" target="blank"><strong>🇰🇷 한국어</strong></a>&nbsp;&nbsp;|&nbsp;&nbsp;
+    <a href="https://github.com/iAJue/MoeKoeMusic/blob/main/docs/README_ru.md" target="blank"><strong>🇷🇺 Русский</strong></a>
     <br />
     <br />
   </p>
 </p>
 
-![images](https://github.com/LFRon/LFRon-File/raw/main/MoeKoe_Music/MF-Ghost-2.png)
+![images](https://github.com/iAJue/MoeKoeMusic/raw/main/images/1.png)
 
 ## ❤️ 前言
-MoeKoe Music官方主仓库链接: https://github.com/MoeKoeMusic/MoeKoeMusic
 
-这是一个抢先测试主要特供给Linux发行版(其实只是在Linux上测试过)的代码分支,所有Node依赖全部升级至最新版本,使用Electron 40版本,确保在Wayland下可以调用原生渲染能力而非走XWayland
+早在10年前后的样子,那会在用网页版QQ的时候我就已经开始使用酷狗音乐了(也是十来年的老粉了),所以这些年收藏的歌曲全部都在上面.后来我也尝试开始使用网易云或QQ音乐,也尝试把酷狗的歌单导入进去,但是效果都不尽人意.我听的大多是日漫OP,好多歌曲都没办法找到.
+
+兜兜转转最后还是回到酷狗,但是在Mac端的酷狗,时常可能会出现不能播放的情况,虽说界面没什么功能,但也挺好的.在网友的安利下,我现在一直是在酷狗的[概念版](https://t1.kugou.com/d2tBza3CSV2)上听歌,并且是市面上为数不多能免费听VIP歌曲的音乐播放软件了,力推.
+
+我在我的个人介绍页面说我特别喜欢听歌,尤其是日漫OP.怎么证明呢?(之前我网页版歌单也年久失修了)那就自己开发一个音乐播放器.
 
 
 ## ✨ 特性
@@ -38,17 +42,17 @@ MoeKoe Music官方主仓库链接: https://github.com/MoeKoeMusic/MoeKoeMusic
 - 📻 每日推荐歌曲
 - 🚫🤝 无任何社交功能
 - 🔗 官方服务器直连, 无任何第三方 API
+- ✔️ 每日自动领取VIP, 登录就是VIP
 - 🎨 主题色切换 
 - 👋 启动问候语
 - ⚙️ 多平台支持
 - 🛠 更多特性开发中
 
 ## 📢 Todo List
-- [ ] 📺 支持 MV 播放
+- [x] 📺 支持 MV 播放
 - [x] 🌚 Light/Dark Mode 自动切换
 - [x] 👆 支持 Touch Bar
 - [x] 🖥️ 支持 PWA，可在 Chrome/Edge 里点击地址栏右边的 ➕ 安装到电脑
-- [ ] 🟥 支持 Last.fm Scrobble
 - [ ] 🎧 支持 Mpris
 - [x] ⌨️ 全局快捷键
 - [x] 🤟 多语言支持
@@ -73,13 +77,14 @@ MoeKoe Music官方主仓库链接: https://github.com/MoeKoeMusic/MoeKoeMusic
     ```
     git clone https://github.com/iAJue/MoeKoeMusic.git
     cd MoeKoeMusic
+    git submodule update --init --recursive
     docker compose up -d &
     ```
 
     2. ~~方式二：使用docker-compose一键安装 （镜像暂未上传官方）~~
     
     ```
-    docker run -d --name MoeKoeMusic -p 8080:8080 iajue/moekoe-music:latest
+    docker run -d --name MoeKoeMusic -p 8080:8080 -p 6521:6521 -e PORT=6521 -e platform=lite iajue/moekoe-music:latest
     ```
 
     3. 方式三：宝塔容器编排
@@ -98,6 +103,9 @@ MoeKoe Music官方主仓库链接: https://github.com/MoeKoeMusic/MoeKoeMusic
         build:
           context: .
           dockerfile: Dockerfile
+        environment:
+          - PORT=6521
+          - platform=lite
         ports: # 端口映射
           - "8080:8080"  # 前端服务
           - "6521:6521"  # 接口服务
@@ -111,12 +119,12 @@ MoeKoe Music官方主仓库链接: https://github.com/MoeKoeMusic/MoeKoeMusic
 
 需在环境变量(VITE_APP_API_URL)中填写自己的API地址
 
-## ⚙️ 如何开发并导出安装包
+## ⚙️ 开发
 
 1. 克隆本仓库
 
 ```sh
-git clone https://github.com/iAJue/MoeKoeMusic.git
+git clone --recurse-submodules https://github.com/iAJue/MoeKoeMusic.git
 ```
 
 2. 进入目录并安装依赖
@@ -139,9 +147,9 @@ npm run build
   npm run electron:build:win [默认 NSIS 安装包]
   ```
   -	Linux: 
-    -	x86-64 架构: `npm run electron:build:linux [仅生成 AppImage 安装包]`
-    -	ARM64 架构: `npm run electron:build:linux-aarch64 [仅生成 AppImage 安装包]`
-
+  ```sh
+  npm run electron:build:linux [默认 AppImage 格式]
+  ```
   -	macOS: 
   ```sh
   npm run electron:build:macos [默认 macOS 双架构]
@@ -149,6 +157,100 @@ npm run build
 
 
 更多命令请查看 `package.json` 文件 `scripts` 
+
+## 👷‍♂️ 编译客户端
+
+如果在 Release 页面没有找到适合你的设备的安装包的话，你可以根据下面的步骤来打包自己的客户端。
+
+1. 安装 [Node.js](https://nodejs.org/en/)，并确保 `Node.js` 版本 >= 18.0.0。
+
+2. 使用 `git clone https://github.com/iAJue/MoeKoeMusic.git` 克隆本仓库到本地。
+
+3. 使用 `npm install` 安装项目依赖。
+4. 编译API服务端
+    - Windows:
+        ```sh
+        npm run build:api:win
+        ```
+    - Linux:
+        ```sh
+        npm run build:api:linux
+        ```
+    - macOS:
+      ```sh
+      npm run build:api:macos
+      ```
+
+5. 选择下列的命令来打包适合的你的安装包，打包出来的文件在 `/dist_electron` 目录下。了解更多信息可访问 [electron-builder 文档](https://www.electron.build/cli)
+
+
+#### 1. 打包 macOS 平台
+   - 通用的 macOS 包（Intel 和 Apple Silicon 双架构）：
+   ```
+   npm run electron:build -- --mac --universal
+   ```
+   - 仅 Intel 架构：
+   ```
+   npm run electron:build -- --mac --x64
+   ```
+   - 仅 Apple Silicon 架构：
+   ```
+   npm run electron:build -- --mac --arm64
+   ```
+
+
+#### 2. 打包 Windows 平台
+
+   - 默认 NSIS 安装包（适合大多数 Windows 用户）：
+   ```
+   npm run electron:build -- --win
+   ```
+   - 为 Windows 创建 EXE 文件和 Squirrel 安装包：
+   ```
+   npm run electron:build -- --win --ia32 --x64 --arm64 --target squirrel
+   ```
+       - --ia32 为 32 位 Windows 架构。
+       - --x64 为 64 位 Windows 架构。
+       - --arm64 为 ARM Windows 架构（Surface 等设备）。
+
+   - 为 Windows 生成便携式的 EXE 文件（免安装）：
+   ```
+   npm run electron:build -- --win --portable
+   ```
+#### 3. 打包 Linux 平台
+   - 默认 AppImage 格式（适用于大多数 Linux 发行版）：
+
+   ```
+   npm run electron:build -- --linux
+   ```
+   - snap（适用于 Ubuntu 和支持 snap 的发行版）：
+   ```
+   npm run electron:build -- --linux --target snap
+   ```
+   - 	deb（适用于 Debian/Ubuntu 系列）：
+   ```
+   npm run electron:build -- --linux --target deb
+   ```
+   - rpm（适用于 Red Hat/Fedora 系列）：
+   ```
+   npm run electron:build -- --linux --target rpm
+   ```
+   - ARM64架构(ARM v8+): 
+   ```
+   npm run build:api:linux-arm64 //编译API
+   npm run electron:build:linux-arm64 //编译主程序
+   ```
+
+#### 4. 打包所有平台
+
+  如果需要同时生成 Windows、macOS 和 Linux 的安装包，可以使用以下命令：
+  ```
+  npm run electron:build -- -mwl
+  ```
+
+#### 5. 自定义编译设置
+
+您可以根据需要添加其他选项来进一步自定义打包，例如指定 x64 和 arm64 架构，或选择不同的目标格式。
 
 ## ⭐ 支持项目
 
@@ -180,7 +282,6 @@ npm run build
 ## 👍 灵感来源
 
 API 源代码来自 [MakcRe/KuGouMusicApi](https://github.com/MakcRe/KuGouMusicApi) 
-(为了不破坏原项目的结构和后期更新迭代方便,API未做高度集成.~~其实是图省事~~)
 
 - [Apple Music](https://music.apple.com)
 - [YouTube Music](https://music.youtube.com)
@@ -189,12 +290,13 @@ API 源代码来自 [MakcRe/KuGouMusicApi](https://github.com/MakcRe/KuGouMusicA
 
 ## 🖼️ 截图
 
-![image](https://github.com/LFRon/LFRon-File/raw/main/MoeKoe_Music/Home-Page.png)
-
-![image](https://github.com/LFRon/LFRon-File/raw/main/MoeKoe_Music/PHONK-1.png)
-![image](https://github.com/LFRon/LFRon-File/raw/main/MoeKoe_Music/Initial-D-1.png)
-![image](https://github.com/LFRon/LFRon-File/raw/main/MoeKoe_Music/Search-Page.png)
-![image](https://github.com/LFRon/LFRon-File/raw/main/MoeKoe_Music/MF-Ghost.png)
+![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/2.png)
+![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/3.png)
+![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/4.png)
+![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/5.png)
+![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/6.png)
+![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/7.png)
+![image](https://github.com/iAJue/MoeKoeMusic/raw/main/images/8.png)
 
 
 ## 🗓️ Star History

@@ -107,11 +107,37 @@ export async function installExtension(extensionPath) {
  * 卸载单个插件
  * @param {string} extensionId 插件ID
  */
-export function uninstallExtension(extensionId) {
+export function uninstallExtension(extensionId, extensionDir = '') {
     try {
-        session.defaultSession.removeExtension(extensionId);
-        log.info(`卸载插件: ${extensionId}`);
-        return { success: true };
+        let removedFromSession = false;
+        let removedFiles = false;
+        let targetDirPath = '';
+
+        targetDirPath = path.join(EXTENSIONS_DIR, path.basename(extensionDir.trim()));
+        try {
+            session.defaultSession.removeExtension(extensionId);
+            removedFromSession = true;
+            log.info(`卸载插件会话: ${extensionId}`);
+        } catch (error) {
+            log.warn(`卸载插件会话失败 ${extensionId}:`, error);
+        }
+
+        if (targetDirPath && fs.existsSync(targetDirPath)) {
+            fs.rmSync(targetDirPath, { recursive: true, force: true });
+            removedFiles = true;
+            log.info(`删除插件目录: ${targetDirPath}`);
+        }
+
+        if (!removedFromSession && !removedFiles) {
+            return { success: false, message: '未找到可卸载的插件会话或目录' };
+        }
+
+        return {
+            success: true,
+            removedFromSession,
+            removedFiles,
+            path: targetDirPath || ''
+        };
     } catch (error) {
         log.error('卸载插件失败:', error);
         return { success: false, message: error.message };
@@ -337,6 +363,68 @@ export async function installPluginFromZip(zipPath) {
 }
 
 /**
+ * Download a zip package and install or update a plugin from a remote URL.
+ * @param {string} downloadUrl
+ * @param {string} extensionId
+ * @param {string} extensionDir
+ * @returns {Promise<{success: boolean, message: string}>}
+ */
+export async function installPluginFromUrl(downloadUrl, extensionId = '', extensionDir = '') {
+    const tempZipPath = path.join(app.getPath('temp'), `moekoe-plugin-${Date.now()}.zip`);
+
+    try {
+        if (!downloadUrl || typeof downloadUrl !== 'string') {
+            return { success: false, message: 'Invalid plugin download url' };
+        }
+
+        const response = await fetch(downloadUrl);
+        if (!response.ok) {
+            return {
+                success: false,
+                message: `Failed to download plugin package: ${response.status} ${response.statusText || ''}`.trim()
+            };
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        const zipBuffer = Buffer.from(arrayBuffer);
+
+        if (!isZipBuffer(zipBuffer)) {
+            return { success: false, message: '下载内容不是有效的 zip 插件包' };
+        }
+
+        fs.writeFileSync(tempZipPath, zipBuffer);
+
+        if (extensionId || extensionDir) {
+            const uninstallResult = uninstallExtension(extensionId, extensionDir);
+            if (!uninstallResult.success) {
+                log.warn('Failed to remove existing plugin before update:', uninstallResult.message);
+            }
+        }
+
+        return await installPluginFromZip(tempZipPath);
+    } catch (error) {
+        log.error('Failed to install plugin from url:', error);
+        return { success: false, message: error.message };
+    } finally {
+        if (fs.existsSync(tempZipPath)) {
+            fs.rmSync(tempZipPath, { force: true });
+        }
+    }
+}
+
+function isZipBuffer(buffer) {
+    return Boolean(buffer) &&
+        buffer.length >= 4 &&
+        buffer[0] === 0x50 &&
+        buffer[1] === 0x4b &&
+        (
+            (buffer[2] === 0x03 && buffer[3] === 0x04) ||
+            (buffer[2] === 0x05 && buffer[3] === 0x06) ||
+            (buffer[2] === 0x07 && buffer[3] === 0x08)
+        );
+}
+
+/**
  * 格式化文件大小
  * @param {number} bytes 字节数
  */
@@ -410,5 +498,6 @@ export default {
     getExtensionInfo,
     formatFileSize,
     scanExtensions,
-    installPluginFromZip
+    installPluginFromZip,
+    installPluginFromUrl
 };

@@ -79,20 +79,34 @@
                         :style="currentLineStyle"
                         :class="{ 'hovering': isHovering && !isLocked }"
                     >
-                        <span class="lyrics-text" :style="getLineHighlightStyle(displayedLines[0])">
-                            {{ lyrics[displayedLines[0]]?.text || '' }}
+                        <span class="lyrics-text">
+                            <span class="lyrics-layer lyrics-layer-default" :style="defaultLineStyle">
+                                {{ lyrics[displayedLines[0]]?.text || '' }}
+                            </span>
+                            <span class="lyrics-layer lyrics-layer-highlight" :style="getLineHighlightStyle(displayedLines[0])">
+                                {{ lyrics[displayedLines[0]]?.text || '' }}
+                            </span>
                         </span>
                     </div>
                 </div>
                 <div class="lyrics-line" v-if="lyrics[displayedLines[0]]?.translated">
-                    <div class="lyrics-content" :style="{ color: defaultColor }" :class="{ 'hovering': isHovering && !isLocked }">
-                        <span>{{ lyrics[displayedLines[0]].translated }}</span>
+                    <div class="lyrics-content" :class="{ 'hovering': isHovering && !isLocked }">
+                        <span class="lyrics-text lyrics-text-static">
+                            <span class="lyrics-layer lyrics-layer-default" :style="defaultLineStyle">
+                                {{ lyrics[displayedLines[0]].translated }}
+                            </span>
+                        </span>
                     </div>
                 </div>
                 <div class="lyrics-line" v-else-if="lyrics[displayedLines[1]]">
                     <div class="lyrics-content" :class="{ 'hovering': isHovering && !isLocked }">
-                        <span class="lyrics-text" :style="getLineHighlightStyle(displayedLines[1])">
-                            {{ lyrics[displayedLines[1]]?.text || '' }}
+                        <span class="lyrics-text">
+                            <span class="lyrics-layer lyrics-layer-default" :style="defaultLineStyle">
+                                {{ lyrics[displayedLines[1]]?.text || '' }}
+                            </span>
+                            <span class="lyrics-layer lyrics-layer-highlight" :style="getLineHighlightStyle(displayedLines[1])">
+                                {{ lyrics[displayedLines[1]]?.text || '' }}
+                            </span>
                         </span>
                     </div>
                 </div>
@@ -146,8 +160,100 @@ const sendWindowDrag = throttle((mouseX, mouseY) => {
 }, 16)
 
 const displayedLines = ref([0, 1]) 
-const defaultColor = ref(localStorage.getItem('lyrics-default-color') || '#999999')
+const defaultColor = ref(localStorage.getItem('lyrics-default-color') || '#D4D4D4')
 const highlightColor = ref(localStorage.getItem('lyrics-highlight-color') || 'var(--primary-color)')
+const FALLBACK_COLOR = '#D4D4D4'
+let colorContext = null
+
+const clampColorChannel = (value) => Math.max(0, Math.min(255, Math.round(value)))
+
+const getColorContext = () => {
+    if (colorContext) return colorContext
+    const canvas = document.createElement('canvas')
+    colorContext = canvas.getContext('2d')
+    return colorContext
+}
+
+const parseHexColor = (hex) => {
+    const cleanHex = hex.replace('#', '')
+    if (cleanHex.length === 3) {
+        return {
+            r: parseInt(cleanHex[0] + cleanHex[0], 16),
+            g: parseInt(cleanHex[1] + cleanHex[1], 16),
+            b: parseInt(cleanHex[2] + cleanHex[2], 16),
+        }
+    }
+    return {
+        r: parseInt(cleanHex.slice(0, 2), 16),
+        g: parseInt(cleanHex.slice(2, 4), 16),
+        b: parseInt(cleanHex.slice(4, 6), 16),
+    }
+}
+
+const parseRgbColorString = (rgbString) => {
+    const match = rgbString.match(/rgba?\(([^)]+)\)/i)
+    if (!match) return null
+    const [r = '0', g = '0', b = '0'] = match[1].split(',').map((item) => item.trim())
+    return {
+        r: clampColorChannel(Number.parseFloat(r)),
+        g: clampColorChannel(Number.parseFloat(g)),
+        b: clampColorChannel(Number.parseFloat(b)),
+    }
+}
+
+const resolveCssVarColor = (color) => {
+    const rawColor = `${color || ''}`.trim()
+    if (!rawColor) return FALLBACK_COLOR
+    if (!rawColor.startsWith('var(')) return rawColor
+
+    const varMatch = rawColor.match(/^var\(\s*([^,\s)]+)\s*(?:,\s*(.+))?\)$/)
+    if (!varMatch) return FALLBACK_COLOR
+
+    const [, cssVarName, fallback = ''] = varMatch
+    const cssValue = getComputedStyle(document.documentElement).getPropertyValue(cssVarName).trim()
+    return cssValue || fallback.trim() || FALLBACK_COLOR
+}
+
+const parseColorToRgb = (color) => {
+    const ctx = getColorContext()
+    if (!ctx) return parseHexColor(FALLBACK_COLOR)
+
+    ctx.fillStyle = FALLBACK_COLOR
+    ctx.fillStyle = resolveCssVarColor(color)
+    const normalized = ctx.fillStyle
+
+    if (normalized.startsWith('#')) return parseHexColor(normalized)
+    if (normalized.startsWith('rgb')) {
+        const rgb = parseRgbColorString(normalized)
+        if (rgb) return rgb
+    }
+    return parseHexColor(FALLBACK_COLOR)
+}
+
+const rgbToHex = ({ r, g, b }) => `#${[r, g, b].map((channel) => clampColorChannel(channel).toString(16).padStart(2, '0')).join('')}`
+
+const shiftRgb = (rgb, offset) => ({
+    r: clampColorChannel(rgb.r + offset),
+    g: clampColorChannel(rgb.g + offset),
+    b: clampColorChannel(rgb.b + offset),
+})
+
+const buildVerticalGradient = (baseColor) => {
+    const rgb = parseColorToRgb(baseColor)
+    const topColor = rgbToHex(shiftRgb(rgb, -38))
+    const bottomColor = rgbToHex(shiftRgb(rgb, 28))
+    return `linear-gradient(to bottom, ${topColor}, ${bottomColor})`
+}
+
+const defaultLineStyle = computed(() => ({
+    background: buildVerticalGradient(defaultColor.value),
+    backgroundClip: 'text',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    color: 'transparent',
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
+    fontWeight: 'bold',
+}))
 
 const handleColorChange = (color, type) => {
     if (type === 'default') {
@@ -349,80 +455,71 @@ const containerStyle = computed(() => ({
 }))
 
 const computeHighlightMetrics = (lineIndex) => {
-    const line = lyrics.value[lineIndex];
+    const line = lyrics.value[lineIndex]
     if (!line || !line.characters || !line.characters.length) {
         return {
-            style: { color: defaultColor.value },
             progress: 0
-        };
+        }
     }
 
-    const characters = line.characters;
-    const text = line.text || '';
-    const safeTextLength = Math.max(1, text.length);
-    const lineStartTime = characters[0].startTime;
-    const lineEndTime = characters[characters.length - 1].endTime;
-    const lineDuration = Math.max(1, lineEndTime - lineStartTime);
+    const characters = line.characters
+    const text = line.text || ''
+    const safeTextLength = Math.max(1, text.length)
+    const lineStartTime = characters[0].startTime
+    const lineEndTime = characters[characters.length - 1].endTime
+    const lineDuration = Math.max(1, lineEndTime - lineStartTime)
 
     if (currentTime.value < lineStartTime) {
         return {
-            style: { color: defaultColor.value },
             progress: 0
-        };
+        }
     }
 
     if (currentTime.value >= lineEndTime) {
         return {
-            style: {
-                background: `linear-gradient(to right, ${highlightColor.value} 0%, ${highlightColor.value} 100%)`,
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                color: 'transparent',
-                textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
-                fontWeight: 'bold',
-            },
             progress: 1
-        };
+        }
     }
 
-    let charBasedPosition = 0;
+    let charBasedPosition = 0
     for (let i = 0; i < characters.length; i++) {
-        const char = characters[i];
-        const startTime = char.startTime;
-        const endTime = char.endTime;
+        const char = characters[i]
+        const startTime = char.startTime
+        const endTime = char.endTime
 
         if (currentTime.value >= startTime && currentTime.value <= endTime) {
-            const charDuration = Math.max(1, (endTime - startTime));
-            const progress = (currentTime.value - startTime) / charDuration;
-            const charWidth = 100 / safeTextLength;
-            charBasedPosition = (i / safeTextLength * 100) + (progress * charWidth);
-            break;
+            const charDuration = Math.max(1, endTime - startTime)
+            const progress = (currentTime.value - startTime) / charDuration
+            const charWidth = 100 / safeTextLength
+            charBasedPosition = (i / safeTextLength * 100) + (progress * charWidth)
+            break
         }
 
         if (currentTime.value > endTime) {
-            charBasedPosition = ((i + 1) / safeTextLength) * 100;
+            charBasedPosition = ((i + 1) / safeTextLength) * 100
         }
     }
 
-    const lineProgress = Math.min(1, Math.max(0, (currentTime.value - lineStartTime) / lineDuration));
-    let highlightPosition = Math.max(charBasedPosition, lineProgress * 100);
-    highlightPosition = Math.max(0, Math.min(100, highlightPosition));
+    const lineProgress = Math.min(1, Math.max(0, (currentTime.value - lineStartTime) / lineDuration))
+    let highlightPosition = Math.max(charBasedPosition, lineProgress * 100)
+    highlightPosition = Math.max(0, Math.min(100, highlightPosition))
 
     return {
-        style: {
-            background: `linear-gradient(to right, ${highlightColor.value} ${highlightPosition}%, ${defaultColor.value} ${highlightPosition}%)`,
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            color: 'transparent',
-            textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
-            fontWeight: 'bold',
-        },
         progress: highlightPosition / 100
-    };
-};
+    }
+}
 
-const getLineHighlightStyle = (lineIndex) => computeHighlightMetrics(lineIndex).style;
-const getHighlightProgress = (lineIndex) => computeHighlightMetrics(lineIndex).progress;
+const getLineHighlightStyle = (lineIndex) => ({
+    width: `${(computeHighlightMetrics(lineIndex).progress * 100).toFixed(3)}%`,
+    background: buildVerticalGradient(highlightColor.value),
+    backgroundClip: 'text',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    color: 'transparent',
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
+    fontWeight: 'bold',
+})
+const getHighlightProgress = (lineIndex) => computeHighlightMetrics(lineIndex).progress
 
 const updateActiveLineScroll = () => {
     const activeIndex = displayedLines.value[0];
@@ -494,15 +591,37 @@ html {
 .lyrics-text {
     display: inline-block;
     position: relative;
+    transform: translateZ(0);
+    white-space: pre;
+    letter-spacing: 0.5px;
+}
+
+.lyrics-layer {
+    display: block;
     background-clip: text;
     -webkit-background-clip: text;
-    font-weight: bold;
     color: transparent;
-    transform: translateZ(0);
-    will-change: background-position;
+    font-weight: bold;
     white-space: pre;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    letter-spacing: 0.5px;
+}
+
+.lyrics-layer-default {
+    position: relative;
+}
+
+.lyrics-layer-highlight {
+    position: absolute;
+    left: 0;
+    top: 0;
+    overflow: hidden;
+    width: 0;
+    max-width: 100%;
+    will-change: width;
+}
+
+.lyrics-text-static .lyrics-layer {
+    position: relative;
 }
 
 .lyrics-container {
@@ -630,7 +749,7 @@ html {
 .lyrics-line {
     overflow: hidden;
     position: relative;
-    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5));
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.2));
     opacity: 1;
     transform: translateY(0);
     will-change: background-position;
