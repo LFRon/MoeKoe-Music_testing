@@ -96,7 +96,7 @@ const platform = ref('');
 onMounted(() => {
     updateNavigationStatus();
     if (window.electron) {
-        window.electron.ipcRenderer.on('version', (version) => {
+        window.electron.ipcRenderer.on('version', (_event, version) => {
             appVersion.value = version;
             fetchLatestVersion();
             platform.value = window.electron.platform;

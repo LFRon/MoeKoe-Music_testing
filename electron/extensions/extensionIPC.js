@@ -2,8 +2,11 @@ import { ipcMain, shell, BrowserWindow, dialog } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import log from 'electron-log';
+import { fileURLToPath } from 'url';
 import extensionManager from './extensionManager.js';
 import { bindExternalLinkHandler } from '../services/externalLinkHandler.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // 获取插件图标数据
 function getExtensionIconData(extension, extensionPath) {
@@ -70,7 +73,8 @@ export function registerExtensionIPC() {
                     authorUrl: authorUrl,
                     permissions: ext.manifest?.permissions || [],
                     iconData: iconData,
-                    moeKoeAdapted: ext.manifest?.moekoe === true || scannedExt?.manifest?.moekoe === true
+                    moeKoeAdapted: ext.manifest?.moekoe === true || scannedExt?.manifest?.moekoe === true,
+                    minversion: ext.manifest?.minversion || scannedExt?.manifest?.minversion || ''
                 };
             });
             
@@ -130,9 +134,11 @@ export function registerExtensionIPC() {
                 width: 400,
                 height: 600,
                 webPreferences: {
+                    preload: path.join(__dirname, '../preload.cjs'),
                     nodeIntegration: false,
                     contextIsolation: true,
                     enableRemoteModule: false,
+                    sandbox: false,
                     webSecurity: false // 允许加载插件内容
                 },
                 title: extensionName || '插件弹窗',

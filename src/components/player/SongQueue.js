@@ -2,14 +2,91 @@ import { ref } from 'vue';
 import { get } from '../../utils/request';
 import { MoeAuthStore } from '../../stores/store';
 
+const QUALITY_LEVELS = ['128', '320', 'flac', 'high', 'viper_atmos', 'viper_clear', 'viper_tape'];
+const QUALITY_LABELS = {
+    '128': '标准',
+    '320': '高品',
+    flac: 'FLAC',
+    high: 'Hi-Res',
+    viper_atmos: '全景声',
+    viper_clear: '超清',
+    viper_tape: '母带'
+};
+
+const normalizeQuality = (quality) => {
+    return QUALITY_LEVELS.includes(quality) ? quality : '128';
+};
+
+const getFallbackChain = (quality) => QUALITY_LEVELS.slice(0, QUALITY_LEVELS.indexOf(normalizeQuality(quality)) + 1).reverse();
+
+const getQualityLabel = (quality) => QUALITY_LABELS[quality] || '';
+
+const getPrivilegeVariants = (response) => {
+    const variants = [];
+
+    for (const item of response?.data || []) {
+        for (const variant of [item, ...(item?.relate_goods || [])]) {
+            if (!variant?.hash || variant?.level === 0 || !QUALITY_LEVELS.includes(variant?.quality)) continue;
+            variants.push(variant);
+        }
+    }
+
+    return variants;
+};
+
+const getQualityOptions = (response) => {
+    const qualityOptions = new Map();
+
+    for (const variant of getPrivilegeVariants(response)) {
+        if (qualityOptions.has(variant.quality)) continue;
+        qualityOptions.set(variant.quality, {
+            value: variant.quality,
+            hash: variant.hash,
+            label: getQualityLabel(variant.quality)
+        });
+    }
+
+    return [...qualityOptions.values()].sort((a, b) => QUALITY_LEVELS.indexOf(b.value) - QUALITY_LEVELS.indexOf(a.value));
+};
+
+const getPrivilegeCandidates = (qualityOptions, quality, originalHash) => {
+    const candidatesByQuality = new Map();
+
+    for (const option of qualityOptions) {
+        if (!candidatesByQuality.has(option.value)) {
+            candidatesByQuality.set(option.value, {
+                hash: option.hash,
+                quality: option.value
+            });
+        }
+    }
+
+    const fallbackChain = getFallbackChain(quality);
+    const candidates = fallbackChain.map(itemQuality => candidatesByQuality.get(itemQuality)).filter(Boolean);
+
+    return candidates.length > 0 ? candidates : fallbackChain.map(itemQuality => ({
+        hash: originalHash,
+        quality: itemQuality
+    }));
+};
 
 export default function useSongQueue(t, musicQueueStore, queueList = null) {
-    const currentSong = ref({ name: '', author: '', img: '', url: '', hash: '' });
+    const currentSong = ref({
+        name: '',
+        author: '',
+        img: '',
+        url: '',
+        hash: '',
+        playHash: '',
+        resolvedQuality: '',
+        qualityLabel: '',
+        qualityOptions: []
+    });
     const NextSong = ref([]);
     const timeoutId = ref(null);
 
     // 添加歌曲到队列并播放
-    const addSongToQueue = async (hash, name, img, author, isReset = true) => {
+    const addSongToQueue = async (hash, name, img, author, isReset = true, qualityOverride = '', cachedQualityOptions = []) => {
         if(!hash) return { error: true };
         const currentSongHash = currentSong.value.hash;
         if (typeof window !== 'undefined' && typeof window.electron !== 'undefined') {
@@ -22,6 +99,10 @@ export default function useSongQueue(t, musicQueueStore, queueList = null) {
             currentSong.value.name = name;
             currentSong.value.img = img;
             currentSong.value.hash = hash;
+            currentSong.value.playHash = hash;
+            currentSong.value.resolvedQuality = '';
+            currentSong.value.qualityLabel = '';
+            currentSong.value.qualityOptions = [];
 
             console.log('[SongQueue] 获取歌曲:', hash, name);
 
@@ -34,27 +115,80 @@ export default function useSongQueue(t, musicQueueStore, queueList = null) {
             const MoeAuth = typeof MoeAuthStore === 'function' ? MoeAuthStore() : { isAuthenticated: false };
             const isAuth = !!MoeAuth.isAuthenticated;
 
+            let response = null;
+            let selectedCandidate = { hash, quality: '' };
+            let qualityOptions = [];
+
             if (!isAuth) {
                 data.free_part = 1;
+                response = await get('/song/url', data);
             } else {
-                const qualityMap = {
-                    normal: '128',
-                    high: '320',
-                    lossless: 'flac',
-                    hires: 'high',
-                    viper: 'viper_clear',
-                };
+                const q = normalizeQuality(qualityOverride || settings?.quality);
+                const fallbackCandidates = getFallbackChain(q).map(itemQuality => ({
+                    hash,
+                    quality: itemQuality
+                }));
+                let candidates = fallbackCandidates;
+                qualityOptions = Array.isArray(cachedQualityOptions) ? cachedQualityOptions.map(option => ({ ...option })) : [];
 
-                const q = settings?.quality;
-                const mapped = qualityMap[q];
-                if (mapped) data.quality = mapped;
+                try {
+                    if (qualityOptions.length === 0) {
+                        const privilegeResponse = await get(`/privilege/lite`, { hash: hash });
+                        qualityOptions = getQualityOptions(privilegeResponse);
+                    }
+                    candidates = getPrivilegeCandidates(qualityOptions, q, hash);
+                } catch (error) {
+                    if (error.response?.data?.error?.includes('验证')) {
+                        throw error;
+                    }
+                    if (error.response?.data?.status == 2) {
+                        throw error;
+                    }
+                    console.error('[SongQueue] 获取歌曲详情失败，回退到原始哈希请求:', error);
+                }
+
+                for (const candidate of candidates) {
+                    try {
+                        const candidateResponse = await get('/song/url', {
+                            hash: candidate.hash,
+                            quality: candidate.quality
+                        });
+
+                        if (candidateResponse.status !== 1) {
+                            response = candidateResponse;
+                            continue;
+                        }
+
+                        if (candidateResponse.extName == 'mp4') {
+                            console.log('[SongQueue] 歌曲格式为MP4，尝试获取下一档音质');
+                            response = candidateResponse;
+                            continue;
+                        }
+
+                        if (!candidateResponse.url || !candidateResponse.url[0]) {
+                            response = candidateResponse;
+                            continue;
+                        }
+
+                        response = candidateResponse;
+                        selectedCandidate = candidate;
+                        break;
+                    } catch (error) {
+                        if (error.response?.data?.error?.includes('验证')) {
+                            throw error;
+                        }
+                        if (error.response?.data?.status == 2) {
+                            throw error;
+                        }
+                        console.error('[SongQueue] 获取候选音质失败:', error);
+                    }
+                }
             }
 
-            const response = await get('/song/url', data);
-            if (response.status !== 1) {
+            if (!response || response.status !== 1) {
                 console.error('[SongQueue] 获取音乐URL失败:', response);
                 currentSong.value.author = currentSong.value.name = t('huo-qu-yin-le-shi-bai');
-                if (response.status == 3) {
+                if (response?.status == 3) {
                     currentSong.value.name = t('gai-ge-qu-zan-wu-ban-quan');
                 }
                 if (musicQueueStore.queue.length === 0) return { error: true };
@@ -64,14 +198,13 @@ export default function useSongQueue(t, musicQueueStore, queueList = null) {
                 return { error: true, shouldPlayNext: true };
             }
 
-            if (response.extName == 'mp4') {
-                console.log('[SongQueue] 歌曲格式为MP4，尝试获取其他格式');
-                return addSongToQueue(hash, name, img, author, false);
-            }
-
             // 设置URL
             if (response.url && response.url[0]) {
                 currentSong.value.url = response.url[0];
+                currentSong.value.playHash = selectedCandidate.hash || hash;
+                currentSong.value.resolvedQuality = selectedCandidate.quality || '';
+                currentSong.value.qualityLabel = getQualityLabel(selectedCandidate.quality);
+                currentSong.value.qualityOptions = qualityOptions.map(option => ({ ...option }));
                 console.log('[SongQueue] 获取到音乐URL:', currentSong.value.url);
             } else {
                 console.error('[SongQueue] 未获取到音乐URL');
@@ -83,6 +216,10 @@ export default function useSongQueue(t, musicQueueStore, queueList = null) {
             const song = {
                 id: musicQueueStore.queue.length + 1,
                 hash: hash,
+                playHash: selectedCandidate.hash || hash,
+                resolvedQuality: selectedCandidate.quality || '',
+                qualityLabel: getQualityLabel(selectedCandidate.quality),
+                qualityOptions: qualityOptions.map(option => ({ ...option })),
                 name: name,
                 img: img,
                 author: author,
@@ -149,6 +286,8 @@ export default function useSongQueue(t, musicQueueStore, queueList = null) {
             currentSong.value.name = name;
             currentSong.value.hash = hash;
             currentSong.value.img = cover;
+            currentSong.value.qualityLabel = '';
+            currentSong.value.qualityOptions = [];
 
             console.log('[SongQueue] 获取云盘歌曲:', hash, name);
 
@@ -345,6 +484,8 @@ export default function useSongQueue(t, musicQueueStore, queueList = null) {
             currentSong.value.name = localItem.displayName || localItem.name;
             currentSong.value.img = localItem.cover || './assets/images/ico.png';
             currentSong.value.hash = `local_${localItem.name}_${localItem.file.size}_${localItem.file.lastModified}`;
+            currentSong.value.qualityLabel = '';
+            currentSong.value.qualityOptions = [];
 
             // 创建本地文件的 URL
             const url = URL.createObjectURL(localItem.file);
@@ -452,4 +593,4 @@ export default function useSongQueue(t, musicQueueStore, queueList = null) {
         addCloudPlaylistToQueue,
         privilegeSong
     };
-} 
+}

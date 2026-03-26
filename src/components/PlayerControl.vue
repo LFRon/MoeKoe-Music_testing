@@ -17,7 +17,31 @@
                 <i v-else class="fas fa-music"></i>
             </div>
             <div class="song-info" @click="toggleLyrics(currentSong.hash, currentTime)">
-                <div class="song-title" @click.stop="searchSong(currentSong.name)">{{ currentSong?.name || "MoeKoeMusic" }}</div>
+                <div class="song-title-row">
+                    <div class="song-title" @click.stop="searchSong(currentSong.name)">{{ currentSong?.name || "MoeKoeMusic" }}</div>
+                    <div v-if="currentSong?.qualityLabel" class="quality-menu-wrapper" @click.stop>
+                        <button
+                            type="button"
+                            :class="['quality-badge', { clickable: canSwitchQuality }]"
+                            @click.stop="toggleQualityMenu"
+                        >
+                            {{ currentSong.qualityLabel }}
+                        </button>
+                        <div v-if="qualityMenuOpen && canSwitchQuality" class="quality-menu">
+                            <div v-if="!currentSong?.qualityOptions?.length" class="quality-menu-item disabled">暂无可选音质</div>
+                            <button
+                                v-for="option in currentSong.qualityOptions"
+                                :key="`${option.value}-${option.hash}`"
+                                type="button"
+                                class="quality-menu-item"
+                                :class="{ active: isCurrentQualityOption(option) }"
+                                @click.stop="switchQuality(option)"
+                            >
+                                {{ option.label }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
                 <div class="artist" @click.stop="searchSong(currentSong.author)">{{ currentSong?.author || "MoeJue" }}</div>
             </div>
             <div class="controls">
@@ -197,6 +221,7 @@ import {
 // 基础设置
 const queueList = ref(null);
 const playlistSelect = ref(null);
+const qualityMenuOpen = ref(false);
 const { t } = useI18n();
 const router = useRouter();
 const musicQueueStore = useMusicQueueStore();
@@ -231,6 +256,58 @@ const easterEggImage = computed(() => {
 });
 
 const easterEggClass = computed(() => easterEggImage.value?.class || '');
+const canSwitchQuality = computed(() => {
+    return !!currentSong.value?.hash && !currentSong.value?.isLocal && !currentSong.value?.isCloud;
+});
+const isCurrentQualityOption = (option) => {
+    return currentSong.value?.resolvedQuality === option.value && currentSong.value?.playHash === option.hash;
+};
+const toggleQualityMenu = () => {
+    if (!canSwitchQuality.value) return;
+
+    qualityMenuOpen.value = !qualityMenuOpen.value;
+};
+const switchQuality = async (option) => {
+    if (!canSwitchQuality.value || isCurrentQualityOption(option)) {
+        qualityMenuOpen.value = false;
+        return;
+    }
+
+    const previousTime = audio.currentTime || 0;
+    const wasPlaying = playing.value;
+
+    qualityMenuOpen.value = false;
+    clearAutoSwitchTimer();
+    audio.pause();
+    playing.value = false;
+
+    const result = await addSongToQueue(
+        currentSong.value.hash,
+        currentSong.value.name,
+        currentSong.value.img,
+        currentSong.value.author,
+        false,
+        option.value,
+        currentSong.value.qualityOptions
+    );
+
+    if (result && result.song) {
+        await playSong(result.song);
+        if (audio.duration) {
+            audio.currentTime = Math.min(previousTime, audio.duration || previousTime);
+        } else {
+            audio.addEventListener('loadedmetadata', () => {
+                audio.currentTime = Math.min(previousTime, audio.duration || previousTime);
+            }, { once: true });
+        }
+
+        if (!wasPlaying) {
+            pausePlayback();
+        }
+    } else if (result && result.shouldPlayNext) {
+        handleAutoSwitch();
+    }
+};
 
 // 初始化事件回调
 const onSongEnd = () => {
@@ -418,6 +495,10 @@ const getCurrentLyrics = throttle(async() => {
 // 计算属性
 const formattedCurrentTime = computed(() => formatTime(currentTime.value));
 const formattedDuration = computed(() => formatTime(currentSong.value?.timeLength || 0));
+
+watch(() => currentSong.value.hash, () => {
+    qualityMenuOpen.value = false;
+});
 
 // 判断是否有多种歌词模式（同时有翻译和音译）
 const hasMultiLyricsMode = computed(() => {
@@ -907,7 +988,7 @@ const setupMediaShortcuts = () => {
     window.electron.ipcRenderer.on('toggle-mute', toggleMute);
     window.electron.ipcRenderer.on('toggle-like', () => playlistSelect.value.toLike());
     window.electron.ipcRenderer.on('toggle-mode', togglePlaybackMode);
-    window.electron.ipcRenderer.on('url-params', (data) => {
+    window.electron.ipcRenderer.on('url-params', (_event, data) => {
         console.log('[PlayerControl] 接收到URL参数:', data);
 
         // 处理歌曲哈希参数

@@ -144,11 +144,14 @@
 
                         <!-- 歌曲信息 -->
                         <div class="track-title-container">
-                            <div class="track-title" :title="item.name" :class="{ 'current': isCurrentSong(item.hash) }">{{ item.name }}
-                                <span v-if="item.privilege == 10" class="icon vip-icon">VIP</span>
-                                <span v-if="item.isHQ" class="icon sq-icon">HQ</span>
-                                <span v-else-if="item.isSQ" class="icon sq-icon">SQ</span>
-                                <span v-if="item.mvhash" class="icon mv-icon">MV</span>
+                            <div class="track-title" :title="item.name" :class="{ 'current': isCurrentSong(item.hash) }">
+                                <span class="track-title-text">{{ item.name }}</span>
+                                <span class="track-title-tags">
+                                    <span v-if="item.privilege == 10" class="icon vip-icon">VIP</span>
+                                    <span v-if="item.isSQ" class="icon sq-icon">SQ</span>
+                                    <span v-else-if="item.isHQ" class="icon sq-icon">HQ</span>
+                                    <span v-if="item.mvhash" class="icon mv-icon">MV</span>
+                                </span>
                             </div>
                             <div v-if="viewMode === 'grid' && item.remark" :title="item.remark" class="track-remark">{{ item.remark }}</div>
                         </div>
@@ -397,8 +400,8 @@ const fetchArtistSongs = async () => {
                 album: track.album_name || '',
                 cover: track.trans_param.union_cover?.replace("{size}", 480) || '',
                 timelen: track.timelength || 0,
-                isSQ: track.hash_flac !== '',
-                isHQ: track.hash_320 !== '',
+                isSQ: !!track.hash_flac,
+                isHQ: !!track.hash_320,
                 privilege: track.privilege || 0,
                 mvhash: track.mvhash || '',
                 originalData: track
@@ -571,8 +574,8 @@ const loadMoreTracks = async () => {
                     album: track.album_name || '',
                     cover: track.trans_param.union_cover?.replace("{size}", 480) || '',
                     timelen: track.timelength || 0,
-                    isSQ: track.hash_flac !== '',
-                    isHQ: track.hash_320 !== '',
+                    isSQ: !!track.hash_flac,
+                    isHQ: !!track.hash_320,
                     privilege: track.privilege || 0,
                     mvhash: track.mvhash || '',
                     originalData: track
@@ -1508,9 +1511,26 @@ const isCurrentPlaying = (hash) => {
 }
 
 .track-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.track-title-text {
+    flex: 0 1 auto;
+    max-width: 100%;
+    min-width: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.track-title-tags {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
 }
 
 .track-remark {
@@ -1550,6 +1570,10 @@ const isCurrentPlaying = (hash) => {
     font-size: 10px;
     padding-left: 6px;
     padding-right: 6px;
+}
+
+.track-title-tags .icon {
+    margin-left: 0;
 }
 
 .vip-icon {
@@ -1812,9 +1836,26 @@ const isCurrentPlaying = (hash) => {
 }
 
 .li.cover-view .track-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.li.cover-view .track-title-text {
+    flex: 0 1 auto;
+    max-width: 100%;
+    min-width: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.li.cover-view .track-title-tags {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
 }
 
 .li.cover-view .track-remark {

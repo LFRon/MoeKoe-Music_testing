@@ -379,7 +379,7 @@ const checkMousePosition = (event) => {
     setIgnoreMouseEvents(!(isMouseInControls || isHovering.value))
 }
 
-window.electron.ipcRenderer.on('lyrics-data', (data) => {
+window.electron.ipcRenderer.on('lyrics-data', (_event, data) => {
     if (data.currentTime < 1) {
         lyrics.value = processLyricsData(data.lyricsData);
     }
@@ -406,7 +406,7 @@ const processLyricsData = (lyricsData) => {
     });
 }
 
-window.electron.ipcRenderer.on('playing-status', (playing)=>{
+window.electron.ipcRenderer.on('playing-status', (_event, playing)=>{
     isPlaying.value = !!playing
 })
 

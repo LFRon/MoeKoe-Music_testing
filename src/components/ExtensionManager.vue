@@ -89,6 +89,10 @@
                         <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
                         <span>该插件未对萌音适配，可能存在兼容性问题</span>
                     </p>
+                    <p v-if="isCurrentAppVersionLowerThanMin(extension.minversion)" class="extension-compatibility-warning installed-warning">
+                        <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                        <span>当前萌音版本较低，插件最低支持 V{{ extension.minversion }}</span>
+                    </p>
                 </div>
             </div>
 
@@ -118,7 +122,6 @@
                 </div>
                 <h4>插件市场加载失败</h4>
                 <p>{{ marketError }}</p>
-                <button class="extension-btn primary" @click="fetchMarketPlugins(true)">重新加载</button>
             </div>
 
             <div v-else-if="pagedMarketPlugins.length > 0" class="market-list">
@@ -136,7 +139,12 @@
                                 <i v-else class="fas fa-store"></i>
                             </div>
                             <div class="market-title-text">
-                                <h4>{{ plugin.name }}</h4>
+                                <h4>
+                                    {{ plugin.name }}
+                                    <span v-if="isCurrentAppVersionLowerThanMin(plugin.minversion)" class="market-min-version-inline">
+                                        需V{{ plugin.minversion }}+
+                                    </span>
+                                </h4>
                                 <p>{{ plugin.description || '暂无描述' }}</p>
                             </div>
                         </div>
@@ -204,7 +212,7 @@ import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const MARKET_URL = 'https://raw.githubusercontent.com/MoeKoeMusic/MoeKoeMusic-Plugins/refs/heads/main/plugins.json'
-const MARKET_PAGE_SIZE = 10
+const MARKET_PAGE_SIZE = 5
 
 const extensions = ref([])
 const extensionsLoading = ref(false)
@@ -216,6 +224,7 @@ const marketError = ref('')
 const marketSearch = ref('')
 const marketPage = ref(1)
 const marketActionLoading = ref('')
+const currentAppVersion = ref('')
 
 const normalizedInstalledExtensions = computed(() => extensions.value)
 
@@ -357,7 +366,8 @@ const normalizeMarketPlugin = (item, index) => {
         repositoryUrl: normalizeUrl(repositoryValue),
         downloadUrl,
         branch: String(snapshot.branch ).trim(),
-        commitSha: String(snapshot.commitSha).trim()
+        commitSha: String(snapshot.commitSha).trim(),
+        minversion: item.minversion
     }
 
     if (!plugin.name) {
@@ -479,12 +489,21 @@ const compareVersions = (currentVersion, latestVersion) => {
 }
 
 const tokenizeVersion = version => {
-    return String(version || '')
-        .trim()
-        .replace(/^v/i, '')
+    return version
         .split(/[\.\-_]/)
         .filter(Boolean)
         .map(part => (/^\d+$/.test(part) ? Number(part) : part.toLowerCase()))
+}
+
+const isCurrentAppVersionLowerThanMin = minVersion => {
+    const required = minVersion
+    const current = currentAppVersion.value
+
+    if (!required || !current) {
+        return false
+    }
+
+    return compareVersions(current, required) < 0
 }
 
 const resolveMarketState = plugin => {
@@ -683,6 +702,7 @@ const isElectron = () => {
 
 onMounted(async () => {
     if (isElectron()) {
+        currentAppVersion.value = localStorage.getItem('version')
         await refreshExtensions()
     }
 })
@@ -878,6 +898,23 @@ onMounted(async () => {
     color: var(--text-color, #222);
 }
 
+.market-min-version-inline {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    margin-left: 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(180, 83, 9, 0.28);
+    background: rgba(180, 83, 9, 0.12);
+    color: #b45309;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+    position: relative;
+    top: -3px;
+}
+
 .extension-details p,
 .market-title-text p,
 .market-meta {
@@ -907,7 +944,6 @@ onMounted(async () => {
 }
 
 .extension-compatibility-warning {
-    margin-top: 6px !important;
     color: #b45309 !important;
     font-size: 12px !important;
     display: flex !important;

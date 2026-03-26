@@ -78,7 +78,7 @@
         </div>
         <div v-else class="song-list">
             <div class="song-item" v-for="(song, index) in songs" :key="index"
-                @click="playSong($getQuality(null, song), song.ori_audio_name, $getCover(song.sizable_cover, 480), song.author_name)"
+                @click="playSong(song['hash'], song.ori_audio_name, $getCover(song.sizable_cover, 480), song.author_name)"
                 @contextmenu.prevent="showContextMenu($event, song)">
                 <img :src="$getCover(song.sizable_cover, 64)" :alt="song.ori_audio_name" class="song-cover">
                 <div class="song-info">
@@ -216,7 +216,8 @@ onMounted(() => {
     playlist();
 });
 
-onUpdated(() => {
+onUpdated(async () => {
+    await new Promise(resolve => setTimeout(resolve, 1000));
     if(!window.electron){
         if(route.query.hash){
             privilegeSong(route.query.hash).then(res=>{

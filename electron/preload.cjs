@@ -2,15 +2,11 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electron', {
     ipcRenderer: {
-        send: (channel, data) => ipcRenderer.send(channel, data),
-        on: (channel, listener) => ipcRenderer.on(channel, (event, ...args) => listener(...args)),
-        once: (channel, listener) => ipcRenderer.once(channel, (event, ...args) => listener(...args)),
-        removeListener: (channel, func) => {
-            ipcRenderer.removeListener(channel, func);
-        },
-        removeAllListeners: (channel) => {
-            ipcRenderer.removeAllListeners(channel);
-        }
+        send: (channel, ...args) => ipcRenderer.send(channel, ...args),
+        on: (channel, listener) => ipcRenderer.on(channel, listener),
+        once: (channel, listener) => ipcRenderer.once(channel, listener),
+        removeListener: (channel, listener) => ipcRenderer.removeListener(channel, listener),
+        removeAllListeners: (channel) => ipcRenderer.removeAllListeners(channel)
     },
     platform: process.platform
 });

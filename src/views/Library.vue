@@ -53,7 +53,7 @@
                 </div>
                 <ul v-if="listenHistory.length > 0">
                     <li v-for="(song, index) in listenHistory" :key="index" class="song-item"
-                        @click="playSong($getQuality(null, song), song.name.split(' - ')[1] || song.name, $getCover(song.image, 480), song.singername)">
+                        @click="playSong(song['hash'], song.name.split(' - ')[1] || song.name, $getCover(song.image, 480), song.singername)">
                         <img :src="$getCover(song.image, 120)" class="album-cover" />
                         <div class="song-info">
                             <p class="album-name">{{ song.name.split(' - ')[1] || song.name }}</p>
@@ -372,7 +372,14 @@ const getVip = async () => {
             window.$modal.alert(`签到成功，获得1天畅听VIP`);
         }
     } catch (error) {
-        window.$modal.alert('获取VIP失败, 一天仅限一次');
+        if(error.response.data.error_code == 131001){
+            window.$modal.alert('你今天已经签到过了');
+            return;
+        }else if(error.response.data.error_code == 20028){
+            window.$modal.alert('当前账号风控,请前往手机端领取');
+            return;
+        }
+        window.$modal.alert('获取VIP失败-' + error.response.data.error_code);
     }
 }
 const addAllSongsToQueue = () => {

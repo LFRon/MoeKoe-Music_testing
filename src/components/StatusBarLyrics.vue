@@ -245,7 +245,7 @@ const initStatusBar = (logoSrc, settings) => {
     } catch (e) { }
 
     // 创建消息处理器
-    const handler = (text) => {
+    const handler = (_event, text) => {
         try {
             updateStatusBarImage(text);
         } catch (e) { }

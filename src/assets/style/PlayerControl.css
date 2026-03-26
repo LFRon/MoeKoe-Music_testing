@@ -129,18 +129,96 @@
 }
 
 .song-info {
-    flex-grow: 0;
+    flex: 0 1 300px;
     cursor: pointer;
     margin-right: auto;
+    min-width: 0;
+    max-width: 300px;
+}
+
+.song-title-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 300px;
+    min-width: 0;
+    vertical-align: top;
+    margin-bottom: 5px;
+}
+
+.song-title-row .song-title {
+    margin-bottom: 0;
 }
 
 .song-title {
     font-weight: bold;
     margin-bottom: 5px;
-    width: 300px;
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.quality-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid;
+    border-radius: 999px;
+    font-size: 11px;
+    background: transparent;
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+    background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+}
+
+.quality-badge.clickable {
+    cursor: pointer;
+}
+
+.quality-menu-wrapper {
+    position: relative;
+    flex-shrink: 0;
+    transform: translateY(-2px);
+}
+
+.quality-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    min-width: 110px;
+    padding: 6px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    z-index: 10;
+}
+
+.quality-menu-item {
+    width: 100%;
+    border: none;
+    background: transparent;
+    text-align: left;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 13px;
+    color: #303133;
+    cursor: pointer;
+}
+
+.quality-menu-item:hover,
+.quality-menu-item.active {
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+}
+
+.quality-menu-item.disabled {
+    color: #909399;
+    cursor: default;
 }
 
 .fa-volume-up {
@@ -150,7 +228,8 @@
 .artist {
     font-size: 0.9em;
     color: #c3c3c3;
-    width: 300px;
+    width: auto;
+    max-width: 300px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

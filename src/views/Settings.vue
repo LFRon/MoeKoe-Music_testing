@@ -220,7 +220,7 @@ const selectedSettings = ref({
     themeColor: { displayText: t('shao-nv-fen'), value: 'pink' },
     theme: { displayText: '☀️ ' + t('qian-se'), value: 'light' },
     nativeTitleBar: { displayText: t('guan-bi'), value: 'off' },
-    quality: { displayText: t('pu-tong-yin-zhi'), value: 'normal' },
+    quality: { displayText: '标准音质 - 128Kbps', value: '128' },
     lyricsBackground: { displayText: t('da-kai'), value: 'on' },
     desktopLyrics: { displayText: t('guan-bi'), value: 'off' },
     statusBarLyrics: { displayText: t('guan-bi'), value: 'off' },
@@ -539,10 +539,13 @@ const selectionTypeMap = {
     quality: {
         title: t('yin-zhi-xuan-ze'),
         options: [
-            { displayText: t('pu-tong-yin-zhi'), value: 'normal' },
-            { displayText: t('gao-yin-zhi-320kbps'), value: 'high' },
-            { displayText: t('wu-sun-yin-zhi-1104kbps'), value: 'lossless' },
-            { displayText: t('hires-yin-zhi'), value: 'hires' }
+            { displayText: '标准音质 - 128Kbps', value: '128' },
+            { displayText: '高品音质 - 320Kbps', value: '320' },
+            { displayText: 'FLAC 无损', value: 'flac' },
+            { displayText: 'Hi-Res 无损', value: 'high' },
+            { displayText: '蝰蛇全景', value: 'viper_atmos' },
+            { displayText: '蝰蛇超清', value: 'viper_clear' },
+            { displayText: '蝰蛇母带', value: 'viper_tape' }
         ]
     },
     lyricsBackground: {
@@ -703,21 +706,21 @@ const selectionTypeMap = {
         ]
     },
     loudnessNormalization: {
-        title: t('ping-heng-yin-pin-xiang-du'),
+        title: t('ping-heng-yin-pin-xiang-du')+'(实验性)',
         options: [
             { displayText: t('da-kai'), value: 'on' },
             { displayText: t('guan-bi'), value: 'off' }
         ]
     },
     pauseOnAudioOutputChange: {
-        title: '输出设备变化自动暂停',
+        title: '输出设备变化自动暂停(实验性)',
         options: [
             { displayText: t('da-kai'), value: 'on' },
             { displayText: t('guan-bi'), value: 'off' }
         ]
     },
     audioOutputDevice: {
-        title: '音频输出设备',
+        title: '音频输出设备(实验性)',
         options: []
     },
 
@@ -964,6 +967,11 @@ onMounted(() => {
         for (const key in savedSettings) {
             if (key === 'shortcuts') continue;
             if (key === 'audioOutputDevice') continue;
+            if (key === 'quality') {
+                const option = selectionTypeMap[key].options.find(option => option.value === savedSettings[key]) || selectionTypeMap[key].options[0];
+                selectedSettings.value[key] = { ...option };
+                continue;
+            }
             if (key === 'apiBaseUrlMode') {
                 const value = savedSettings[key] || 'default';
                 selectedSettings.value[key] = {
@@ -1865,3 +1873,4 @@ const installPWA = async () => {
     color: #e53935;
 }
 </style>
+
