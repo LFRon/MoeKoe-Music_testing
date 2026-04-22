@@ -6,7 +6,8 @@
                 :src="isArtist ? ($getCover(detail.sizable_avatar, 480)) : (detail.pic ? $getCover(detail.pic, 480) : './assets/images/live.png')" />
             <div class="info">
                 <h1 class="title">{{ isArtist ? detail.author_name : detail.name }}</h1>
-                <p class="subtitle" v-if="!isArtist && !isAlbum">{{ detail.publish_date }} | {{ detail.list_create_username }}</p>
+                <p class="subtitle" v-if="!isArtist && !isAlbum">{{ detail.publish_date }} | {{
+                    detail.list_create_username }}</p>
                 <p class="subtitle" v-if="isAlbum">{{ detail.publish_date }}</p>
                 <div class="stats" v-if="isArtist">
                     <span>歌曲: {{ detail.song_count }}</span>
@@ -23,7 +24,8 @@
                     <button class="follow-btn" v-if="isArtist" @click="toggleFollow" :disabled="followLoading">
                         <i class="fas fa-heart"></i> {{ isFollowed ? '已关注' : '关注' }}
                     </button>
-                    <button class="fav-btn" v-if="!isArtist && !isAlbum && detail.list_create_userid != MoeAuth.UserInfo?.userid && !route.query.listid"
+                    <button class="fav-btn"
+                        v-if="!isArtist && !isAlbum && detail.list_create_userid != MoeAuth.UserInfo?.userid && !route.query.listid"
                         @click="toggleFavorite(detail.list_create_gid)" :class="{ 'active': isPlaylistFavorited }">
                         <i class="fas fa-heart"></i>
                     </button>
@@ -33,13 +35,14 @@
                         </button>
                         <div v-if="isDropdownVisible" class="dropdown-menu">
                             <ul>
-                                <li @click="deletePlaylist(detail.listid)" v-if="(detail.list_create_userid == MoeAuth.UserInfo?.userid || route.query.listid) && detail.sort > 1">
+                                <li @click="deletePlaylist(detail.listid)"
+                                    v-if="(detail.list_create_userid == MoeAuth.UserInfo?.userid || route.query.listid) && detail.sort > 1">
                                     <i class="fas fa-trash-alt"></i>
                                 </li>
                                 <li @click="sharePlaylist">
                                     <i class="fas fa-share-alt"></i>
                                 </li>
-                                <li @click="addPlaylistToQueue($event,true)" title="添加至播放列表">
+                                <li @click="addPlaylistToQueue($event, true)" title="添加至播放列表">
                                     <i class="fas fa-add"></i>
                                 </li>
                             </ul>
@@ -51,7 +54,8 @@
 
         <!-- 导航按钮 -->
         <i class="location-arrow fas fa-crosshairs" @click="scrollToItem" :title="t('dang-qian-bo-fang-ge-qu')"></i>
-        <i class="scroll-bottom-img fas fa-angle-double-up" @click="scrollToFirstItem" :title="t('fan-hui-ding-bu')"></i>
+        <i class="scroll-bottom-img fas fa-angle-double-up" @click="scrollToFirstItem"
+            :title="t('fan-hui-ding-bu')"></i>
 
         <!-- 歌曲列表 -->
         <div class="track-list-container">
@@ -59,32 +63,40 @@
                 <h2 class="track-list-title"><span>{{ $t('ge-qu-lie-biao') }}</span> ( {{ displayTrackCount }} )</h2>
                 <div class="track-list-actions">
                     <div class="batch-action-container">
-                        <button class="batch-action-btn" @click="toggleBatchSelection" :class="{ 'active': batchSelectionMode }">
+                        <button class="batch-action-btn" @click="toggleBatchSelection"
+                            :class="{ 'active': batchSelectionMode }">
                             <input type="checkbox" v-model="batchSelectionMode" /> 批量操作
-                            <span v-if="selectedTracks.length > 0" class="selected-count">{{ selectedTracks.length }}</span>
+                            <span v-if="selectedTracks.length > 0" class="selected-count">{{ selectedTracks.length
+                                }}</span>
                         </button>
-                        <div v-if="batchSelectionMode && isBatchMenuVisible && selectedTracks.length > 0" class="batch-actions-menu">
+                        <div v-if="batchSelectionMode && isBatchMenuVisible && selectedTracks.length > 0"
+                            class="batch-actions-menu">
                             <ul>
                                 <li @click="appendSelectedToQueue"><i class="fas fa-list"></i> 添加到播放列表 </li>
-                                <li @click="addSelectedToOtherPlaylist" v-if="MoeAuth.UserInfo?.userid"><i class="fas fa-folder-plus"></i> 添加到其他歌单</li>
-                                <li v-if="!isArtist && detail.list_create_userid == MoeAuth.UserInfo?.userid && route.query.listid" 
+                                <li @click="addSelectedToOtherPlaylist" v-if="MoeAuth.UserInfo?.userid"><i
+                                        class="fas fa-folder-plus"></i> 添加到其他歌单</li>
+                                <li v-if="!isArtist && detail.list_create_userid == MoeAuth.UserInfo?.userid && route.query.listid"
                                     @click="removeSelectedFromPlaylist"><i class="fas fa-trash-alt"></i> 取消收藏</li>
                             </ul>
                         </div>
                     </div>
                     <!-- 歌手歌曲排序选择 -->
                     <div v-if="isArtist" class="sort-selector">
-                        <button class="sort-btn" :class="{ 'active': artistSortType === 'hot' }" @click="changeArtistSort('hot')">
+                        <button class="sort-btn" :class="{ 'active': artistSortType === 'hot' }"
+                            @click="changeArtistSort('hot')">
                             热门
                         </button>
-                        <button class="sort-btn" :class="{ 'active': artistSortType === 'new' }" @click="changeArtistSort('new')">
+                        <button class="sort-btn" :class="{ 'active': artistSortType === 'new' }"
+                            @click="changeArtistSort('new')">
                             最新
                         </button>
                     </div>
-                    <button class="view-mode-btn" @click="toggleViewMode" :title="viewMode === 'list' ? '切换到网格视图' : '切换到列表视图'">
+                    <button class="view-mode-btn" @click="toggleViewMode"
+                        :title="viewMode === 'list' ? '切换到网格视图' : '切换到列表视图'">
                         <i class="fas" :class="viewMode === 'list' ? 'fa-th' : 'fa-list'"></i>
                     </button>
-                    <input type="text" v-model="searchQuery" @keyup.enter="searchTracks" :placeholder="t('sou-suo-ge-qu')" class="search-input" />
+                    <input type="text" v-model="searchQuery" @keyup.enter="searchTracks"
+                        :placeholder="t('sou-suo-ge-qu')" class="search-input" />
                 </div>
             </div>
 
@@ -116,7 +128,8 @@
                 </div>
             </div>
 
-            <RecycleScroller v-else ref="recycleScrollerRef" :items="filteredTracks" :item-size="viewMode === 'list' ? 50 : 70" class="track-list" key-field="hash" @scroll="handleScroll">
+            <RecycleScroller v-else ref="recycleScrollerRef" :items="filteredTracks"
+                :item-size="viewMode === 'list' ? 50 : 70" class="track-list" key-field="hash" @scroll="handleScroll">
                 <template #default="{ item, index }">
                     <div class="li" :key="item.hash"
                         :class="{ 'cover-view': viewMode === 'grid', 'selected': selectedTracks.includes(index) }"
@@ -125,7 +138,8 @@
 
                         <!-- 复选框或序号 -->
                         <div class="track-checkbox" v-if="batchSelectionMode">
-                            <input type="checkbox" :checked="selectedTracks.includes(index)" @click.stop="selectTrack(index, $event)">
+                            <input type="checkbox" :checked="selectedTracks.includes(index)"
+                                @click.stop="selectTrack(index, $event)">
                         </div>
                         <div class="track-number" v-else :class="{ 'current': isCurrentSong(item.hash) }">
                             <div v-if="isCurrentPlaying(item.hash)" class="sound-wave">
@@ -138,13 +152,15 @@
                         <div class="track-cover" v-if="viewMode === 'grid'">
                             <img :src="item.cover || './assets/images/ico.png'" alt="Cover">
                             <div class="track-cover-overlay">
-                                <i :class="props.playerControl?.currentSong.hash == item.hash ? 'fas fa-music' : 'fas fa-play'"></i>
+                                <i
+                                    :class="props.playerControl?.currentSong.hash == item.hash ? 'fas fa-music' : 'fas fa-play'"></i>
                             </div>
                         </div>
 
                         <!-- 歌曲信息 -->
                         <div class="track-title-container">
-                            <div class="track-title" :title="item.name" :class="{ 'current': isCurrentSong(item.hash) }">
+                            <div class="track-title" :title="item.name"
+                                :class="{ 'current': isCurrentSong(item.hash) }">
                                 <span class="track-title-text">{{ item.name }}</span>
                                 <span class="track-title-tags">
                                     <span v-if="item.privilege == 10" class="icon vip-icon">VIP</span>
@@ -153,7 +169,8 @@
                                     <span v-if="item.mvhash" class="icon mv-icon">MV</span>
                                 </span>
                             </div>
-                            <div v-if="viewMode === 'grid' && item.remark" :title="item.remark" class="track-remark">{{ item.remark }}</div>
+                            <div v-if="viewMode === 'grid' && item.remark" :title="item.remark" class="track-remark">{{
+                                item.remark }}</div>
                         </div>
                         <div class="track-artist" :title="item.author">{{ item.author }}</div>
                         <div class="track-album" :title="item.album">{{ item.album }}</div>
@@ -182,7 +199,7 @@
             </transition-group>
         </div>
     </div>
-    <PlaylistSelectModal ref="playlistSelect" :current-song="songs"/>
+    <PlaylistSelectModal ref="playlistSelect" :current-song="songs" />
 </template>
 
 <script setup>
@@ -315,7 +332,7 @@ watch(() => [route.query.global_collection_id, route.query.singerid, route.query
 });
 
 const loadData = async () => {
-    if(!route.query.global_collection_id && !route.query.singerid && !route.query.albumid) {
+    if (!route.query.global_collection_id && !route.query.singerid && !route.query.albumid) {
         router.push('/library');
         return;
     }
@@ -390,22 +407,22 @@ const fetchArtistSongs = async () => {
             totalCount.value = detail.value.song_count || 0;
             const rawSongs = response.data || [];
             const formattedTracks = rawSongs
-            .filter(track => !!track.hash)
-            .map(track => ({
-                hash: track.hash || '',
-                remark: track.remark || '',
-                OriSongName: track.audio_name + ' - ' + track.author_name,
-                name: track.audio_name || '',
-                author: track.author_name || '',
-                album: track.album_name || '',
-                cover: track.trans_param.union_cover?.replace("{size}", 480) || '',
-                timelen: track.timelength || 0,
-                isSQ: !!track.hash_flac,
-                isHQ: !!track.hash_320,
-                privilege: track.privilege || 0,
-                mvhash: track.mvhash || '',
-                originalData: track
-            }));
+                .filter(track => !!track.hash)
+                .map(track => ({
+                    hash: track.hash || '',
+                    remark: track.remark || '',
+                    OriSongName: track.audio_name + ' - ' + track.author_name,
+                    name: track.audio_name || '',
+                    author: track.author_name || '',
+                    album: track.album_name || '',
+                    cover: track.trans_param.union_cover?.replace("{size}", 480) || '',
+                    timelen: track.timelength || 0,
+                    isSQ: !!track.hash_flac,
+                    isHQ: !!track.hash_320,
+                    privilege: track.privilege || 0,
+                    mvhash: track.mvhash || '',
+                    originalData: track
+                }));
 
             tracks.value = formattedTracks;
             filteredTracks.value = formattedTracks;
@@ -447,29 +464,29 @@ const fetchAlbumSongs = async () => {
             }
             const rawSongs = response.data.songs || [];
             const formattedTracks = rawSongs
-            .filter(track => track.audio_info?.hash)
-            .map(track => {
-                const audioInfo = track.audio_info;
-                const base = track.base;
-                const albumInfo = track.album_info;
-                const mvHash = track.mvdata && track.mvdata.length > 0 ? track.mvdata[0].hash : '';
+                .filter(track => track.audio_info?.hash)
+                .map(track => {
+                    const audioInfo = track.audio_info;
+                    const base = track.base;
+                    const albumInfo = track.album_info;
+                    const mvHash = track.mvdata && track.mvdata.length > 0 ? track.mvdata[0].hash : '';
 
-                return {
-                    hash: audioInfo.hash || '',
-                    remark: track.extra?.remark || '',
-                    OriSongName: base.audio_name + ' - ' + base.author_name,
-                    name: base.audio_name || '',
-                    author: base.author_name || '',
-                    album: albumInfo?.album_name || '',
-                    cover: track.trans_param?.union_cover?.replace("{size}", 480) || '',
-                    timelen: audioInfo.duration || 0,
-                    isSQ: !!audioInfo.hash_flac,
-                    isHQ: !!audioInfo.hash_320,
-                    privilege: track.copyright?.privilege || 0,
-                    mvhash: mvHash,
-                    originalData: track
-                };
-            });
+                    return {
+                        hash: audioInfo.hash || '',
+                        remark: track.extra?.remark || '',
+                        OriSongName: base.audio_name + ' - ' + base.author_name,
+                        name: base.audio_name || '',
+                        author: base.author_name || '',
+                        album: albumInfo?.album_name || '',
+                        cover: track.trans_param?.union_cover?.replace("{size}", 480) || '',
+                        timelen: audioInfo.duration || 0,
+                        isSQ: !!audioInfo.hash_flac,
+                        isHQ: !!audioInfo.hash_320,
+                        privilege: track.copyright?.privilege || 0,
+                        mvhash: mvHash,
+                        originalData: track
+                    };
+                });
 
             tracks.value = formattedTracks;
             filteredTracks.value = formattedTracks;
@@ -508,25 +525,25 @@ const fetchPlaylistTracks = async () => {
             totalCount.value = detail.value.count || 0;
             const rawSongs = response.data?.songs || [];
             const formattedTracks = rawSongs
-            .filter(track => !!track.hash)
-            .map(track => {
-                const nameParts = track.name.split(' - ');
-                return {
-                    hash: track.hash || '',
-                    remark: track.remark || '',
-                    OriSongName: track.name,
-                    name: nameParts.length > 1 ? nameParts[1] : track.name,
-                    author: nameParts.length > 1 ? nameParts[0] : '',
-                    album: track.albuminfo?.name || '',
-                    cover: track.cover?.replace("{size}", 480) || '',
-                    timelen: track.timelen || 0,
-                    isSQ: track.relate_goods && track.relate_goods.length > 2,
-                    isHQ: track.relate_goods && track.relate_goods.length > 1,
-                    privilege: track.privilege || 0,
-                    mvhash: track.mvhash || '',
-                    originalData: track
-                };
-            });
+                .filter(track => !!track.hash)
+                .map(track => {
+                    const nameParts = track.name.split(' - ');
+                    return {
+                        hash: track.hash || '',
+                        remark: track.remark || '',
+                        OriSongName: track.name,
+                        name: nameParts.length > 1 ? nameParts[1] : track.name,
+                        author: nameParts.length > 1 ? nameParts[0] : '',
+                        album: track.albuminfo?.name || '',
+                        cover: track.cover?.replace("{size}", 480) || '',
+                        timelen: track.timelen || 0,
+                        isSQ: track.relate_goods && track.relate_goods.length > 2,
+                        isHQ: track.relate_goods && track.relate_goods.length > 1,
+                        privilege: track.privilege || 0,
+                        mvhash: track.mvhash || '',
+                        originalData: track
+                    };
+                });
 
             tracks.value = formattedTracks;
             filteredTracks.value = formattedTracks;
@@ -565,21 +582,21 @@ const loadMoreTracks = async () => {
             if (response.status === 1 && response.data.length > 0) {
                 const rawSongs = response.data;
                 const formattedTracks = rawSongs
-                .filter(track => !!track.hash)
-                .map(track => ({
-                    hash: track.hash || '',
-                    OriSongName: track.audio_name + ' - ' + track.author_name,
-                    name: track.audio_name || '',
-                    author: track.author_name || '',
-                    album: track.album_name || '',
-                    cover: track.trans_param.union_cover?.replace("{size}", 480) || '',
-                    timelen: track.timelength || 0,
-                    isSQ: !!track.hash_flac,
-                    isHQ: !!track.hash_320,
-                    privilege: track.privilege || 0,
-                    mvhash: track.mvhash || '',
-                    originalData: track
-                }));
+                    .filter(track => !!track.hash)
+                    .map(track => ({
+                        hash: track.hash || '',
+                        OriSongName: track.audio_name + ' - ' + track.author_name,
+                        name: track.audio_name || '',
+                        author: track.author_name || '',
+                        album: track.album_name || '',
+                        cover: track.trans_param.union_cover?.replace("{size}", 480) || '',
+                        timelen: track.timelength || 0,
+                        isSQ: !!track.hash_flac,
+                        isHQ: !!track.hash_320,
+                        privilege: track.privilege || 0,
+                        mvhash: track.mvhash || '',
+                        originalData: track
+                    }));
 
                 tracks.value = [...tracks.value, ...formattedTracks];
                 filteredTracks.value = tracks.value;
@@ -602,29 +619,29 @@ const loadMoreTracks = async () => {
             if (response.status === 1 && response.data.songs?.length > 0) {
                 const rawSongs = response.data.songs;
                 const formattedTracks = rawSongs
-                .filter(track => track.audio_info?.hash)
-                .map(track => {
-                    const audioInfo = track.audio_info;
-                    const base = track.base;
-                    const albumInfo = track.album_info;
-                    const mvHash = track.mvdata && track.mvdata.length > 0 ? track.mvdata[0].hash : '';
+                    .filter(track => track.audio_info?.hash)
+                    .map(track => {
+                        const audioInfo = track.audio_info;
+                        const base = track.base;
+                        const albumInfo = track.album_info;
+                        const mvHash = track.mvdata && track.mvdata.length > 0 ? track.mvdata[0].hash : '';
 
-                    return {
-                        hash: audioInfo.hash || '',
-                        remark: track.extra?.remark || '',
-                        OriSongName: base.audio_name + ' - ' + base.author_name,
-                        name: base.audio_name || '',
-                        author: base.author_name || '',
-                        album: albumInfo?.album_name || '',
-                        cover: track.trans_param?.union_cover?.replace("{size}", 480) || '',
-                        timelen: audioInfo.duration || 0,
-                        isSQ: !!audioInfo.hash_flac,
-                        isHQ: !!audioInfo.hash_320,
-                        privilege: track.copyright?.privilege || 0,
-                        mvhash: mvHash,
-                        originalData: track
-                    };
-                });
+                        return {
+                            hash: audioInfo.hash || '',
+                            remark: track.extra?.remark || '',
+                            OriSongName: base.audio_name + ' - ' + base.author_name,
+                            name: base.audio_name || '',
+                            author: base.author_name || '',
+                            album: albumInfo?.album_name || '',
+                            cover: track.trans_param?.union_cover?.replace("{size}", 480) || '',
+                            timelen: audioInfo.duration || 0,
+                            isSQ: !!audioInfo.hash_flac,
+                            isHQ: !!audioInfo.hash_320,
+                            privilege: track.copyright?.privilege || 0,
+                            mvhash: mvHash,
+                            originalData: track
+                        };
+                    });
 
                 tracks.value = [...tracks.value, ...formattedTracks];
                 filteredTracks.value = tracks.value;
@@ -647,24 +664,24 @@ const loadMoreTracks = async () => {
             if (response.status === 1 && response.data.songs?.length > 0) {
                 const rawSongs = response.data.songs;
                 const formattedTracks = rawSongs
-                .filter(track => !!track.hash)
-                .map(track => {
-                    const nameParts = track.name.split(' - ');
-                    return {
-                        hash: track.hash || '',
-                        OriSongName: track.name,
-                        name: nameParts.length > 1 ? nameParts[1] : track.name,
-                        author: nameParts.length > 1 ? nameParts[0] : '',
-                        album: track.albuminfo?.name || '',
-                        cover: track.cover?.replace("{size}", 480) || '',
-                        timelen: track.timelen || 0,
-                        isSQ: track.relate_goods && track.relate_goods.length > 2,
-                        isHQ: track.relate_goods && track.relate_goods.length > 1,
-                        privilege: track.privilege || 0,
-                        mvhash: track.mvhash || '',
-                        originalData: track
-                    };
-                });
+                    .filter(track => !!track.hash)
+                    .map(track => {
+                        const nameParts = track.name.split(' - ');
+                        return {
+                            hash: track.hash || '',
+                            OriSongName: track.name,
+                            name: nameParts.length > 1 ? nameParts[1] : track.name,
+                            author: nameParts.length > 1 ? nameParts[0] : '',
+                            album: track.albuminfo?.name || '',
+                            cover: track.cover?.replace("{size}", 480) || '',
+                            timelen: track.timelen || 0,
+                            isSQ: track.relate_goods && track.relate_goods.length > 2,
+                            isHQ: track.relate_goods && track.relate_goods.length > 1,
+                            privilege: track.privilege || 0,
+                            mvhash: track.mvhash || '',
+                            originalData: track
+                        };
+                    });
 
                 tracks.value = [...tracks.value, ...formattedTracks];
                 filteredTracks.value = tracks.value;
@@ -759,8 +776,8 @@ const addPlaylistToQueue = (event, append = false) => {
     const note = {
         id: noteId++,
         style: {
-            '--start-x': `${rect.left + rect.width/2}px`,
-            '--start-y': `${rect.top + rect.height/2}px`,
+            '--start-x': `${rect.left + rect.width / 2}px`,
+            '--start-y': `${rect.top + rect.height / 2}px`,
             'left': '0',
             'top': '0'
         }
@@ -807,13 +824,13 @@ const toggleFavorite = async (id) => {
         window.$modal.alert(t('qing-xian-deng-lu'));
         return;
     }
-    
+
     try {
         if (isPlaylistFavorited.value) {
             const playlist = collectedPlaylists.value.find(p => p.list_create_listid === detail.value.list_create_listid);
             if (playlist) {
                 await get('/playlist/del', { listid: playlist.listid });
-                const newCollectedPlaylists = collectedPlaylists.value.filter(item => 
+                const newCollectedPlaylists = collectedPlaylists.value.filter(item =>
                     item.list_create_listid !== detail.value.list_create_listid
                 );
                 localStorage.setItem('collectedPlaylists', JSON.stringify(newCollectedPlaylists));
@@ -821,11 +838,11 @@ const toggleFavorite = async (id) => {
                 $message.success('取消收藏成功');
             }
         } else {
-            const response = await get('/playlist/add', { 
-                name: detail.value.name, 
-                list_create_userid: MoeAuth.UserInfo.userid, 
+            const response = await get('/playlist/add', {
+                name: detail.value.name,
+                list_create_userid: MoeAuth.UserInfo.userid,
                 type: 1,
-                list_create_gid: id 
+                list_create_gid: id
             });
             if (response.status === 1) {
                 const newPlaylist = {
@@ -859,7 +876,7 @@ const deletePlaylist = async () => {
 // 分享歌单
 const sharePlaylist = () => {
     isDropdownVisible.value = false;
-    share(detail.value.name,route.query.global_collection_id, 1);
+    share(detail.value.name, route.query.global_collection_id, 1);
 };
 
 // 右键菜单
@@ -891,7 +908,7 @@ const scrollToFirstItem = () => {
     window.scrollTo({
         top: 0,
         behavior: 'smooth',
-        scrollSource: 'manual-button-click' 
+        scrollSource: 'manual-button-click'
     });
 };
 
@@ -902,7 +919,7 @@ const handleClickOutside = (event) => {
     if (dropdown && !dropdown.contains(event.target) && !moreBtn.contains(event.target)) {
         isDropdownVisible.value = false;
     }
-    
+
     // 处理批量操作菜单
     const batchActionsMenu = document.querySelector('.batch-actions-menu');
     const batchActionBtn = document.querySelector('.batch-action-btn');
@@ -943,7 +960,7 @@ const selectTrack = (index, event) => {
         // Shift 键多选
         const start = Math.min(lastSelectedIndex, index);
         const end = Math.max(lastSelectedIndex, index);
-        
+
         for (let i = start; i <= end; i++) {
             if (!selectedTracks.value.includes(i)) {
                 selectedTracks.value.push(i);
@@ -958,7 +975,7 @@ const selectTrack = (index, event) => {
             selectedTracks.value.splice(existingIndex, 1);
         }
     }
-    
+
     lastSelectedIndex = index;
 };
 
@@ -975,7 +992,7 @@ const appendSelectedToQueue = async () => {
 const addSelectedToOtherPlaylist = async () => {
     if (selectedTracks.value.length === 0) return;
     const selectedSongs = selectedTracks.value.map(index => filteredTracks.value[index]);
-    songs.value =  selectedSongs;
+    songs.value = selectedSongs;
     await playlistSelect.value.fetchPlaylists();
     isBatchMenuVisible.value = false;
 };
@@ -994,7 +1011,7 @@ const removeSelectedFromPlaylist = async () => {
             });
             selectedTracks.value.sort((a, b) => b - a).forEach(index => {
                 filteredTracks.value.splice(index, 1);
-                tracks.value = tracks.value.filter((_, i) => 
+                tracks.value = tracks.value.filter((_, i) =>
                     !selectedTracks.value.includes(i)
                 );
             });
@@ -1034,10 +1051,10 @@ const sortTracks = async (field) => {
         sortField.value = field;
         sortOrder.value = 'asc';
     }
-    
+
     filteredTracks.value = [...filteredTracks.value].sort((a, b) => {
         let valueA, valueB;
-        
+
         if (field === 'timelen') {
             valueA = a[field] || 0;
             valueB = b[field] || 0;
@@ -1045,14 +1062,14 @@ const sortTracks = async (field) => {
             valueA = (a[field] || '').toLowerCase();
             valueB = (b[field] || '').toLowerCase();
         }
-        
+
         if (sortOrder.value === 'asc') {
             return valueA > valueB ? 1 : -1;
         } else {
             return valueA < valueB ? 1 : -1;
         }
     });
-    
+
     if (batchSelectionMode.value) {
         selectedTracks.value = [];
     }
@@ -1096,12 +1113,18 @@ const isCurrentPlaying = (hash) => {
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+$primary: var(--primary-color);
+$text-muted: #666;
+$text-light: #999;
+$border-light: #eee;
+$white: white;
+$shadow-light: 0 2px 10px rgba(0, 0, 0, 0.1);
+
 .detail-page {
     padding: 20px;
 }
 
-/* 头部样式 */
 .header {
     display: flex;
     align-items: center;
@@ -1115,10 +1138,10 @@ const isCurrentPlaying = (hash) => {
     margin-right: 20px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     object-fit: cover;
-}
 
-.artist-avatar {
-    border-radius: 50%;
+    &.artist-avatar {
+        border-radius: 50%;
+    }
 }
 
 .info {
@@ -1133,24 +1156,24 @@ const isCurrentPlaying = (hash) => {
     text-overflow: ellipsis;
     white-space: nowrap;
     margin: 0;
-    color: var(--primary-color);
+    color: $primary;
 }
 
 .subtitle {
     font-size: 18px;
-    color: #666;
+    color: $text-muted;
 }
 
 .meta {
     font-size: 14px;
     margin-bottom: 10px;
-    color: #999;
+    color: $text-light;
 }
 
 .stats {
     display: flex;
     gap: 20px;
-    color: #666;
+    color: $text-muted;
     margin-top: 10px;
 }
 
@@ -1172,19 +1195,20 @@ const isCurrentPlaying = (hash) => {
     gap: 10px;
 }
 
-.primary-btn, .follow-btn {
-    background-color: #ff69b4;
-    color: white;
+.primary-btn,
+.follow-btn {
+    background-color: var(--primary-color);
+    color: $white;
     border: none;
     padding: 10px 20px;
     border-radius: 5px;
     cursor: pointer;
     display: flex;
     align-items: center;
-}
 
-.primary-btn i, .follow-btn i {
-    margin-right: 5px;
+    i {
+        margin-right: 5px;
+    }
 }
 
 .follow-btn:disabled {
@@ -1202,15 +1226,16 @@ const isCurrentPlaying = (hash) => {
     height: 100%;
 }
 
-.fav-btn i {
-    color: #999;
+.fav-btn {
+    i {
+        color: $text-light;
+    }
+
+    &.active i {
+        color: $primary;
+    }
 }
 
-.fav-btn.active i {
-    color: var(--primary-color);
-}
-
-/* 歌曲列表样式 */
 .track-list-container {
     margin-top: 30px;
 }
@@ -1226,10 +1251,9 @@ const isCurrentPlaying = (hash) => {
     font-size: 24px;
     font-weight: bold;
     margin-bottom: 10px;
-    color: var(--primary-color);
+    color: $primary;
 }
 
-/* 搜索和批量操作按钮 */
 .track-list-actions {
     display: flex;
     align-items: center;
@@ -1251,14 +1275,13 @@ const isCurrentPlaying = (hash) => {
     justify-content: center;
     color: var(--text-color);
     position: relative;
+
+    &.active {
+        background-color: $primary;
+        color: $white;
+    }
 }
 
-.batch-action-btn.active {
-    background-color: var(--primary-color);
-    color: white;
-}
-
-/* 视图模式切换按钮 */
 .view-mode-btn {
     background-color: transparent;
     border: 1px solid var(--secondary-color);
@@ -1272,14 +1295,14 @@ const isCurrentPlaying = (hash) => {
     width: 36px;
     height: 31px;
     transition: all 0.3s ease;
-}
 
-.view-mode-btn:hover {
-    background-color: rgba(var(--primary-color-rgb), 0.1);
-}
+    &:hover {
+        background-color: rgba(var(--primary-color-rgb), 0.1);
+    }
 
-.view-mode-btn i {
-    font-size: 16px;
+    i {
+        font-size: 16px;
+    }
 }
 
 .selected-count {
@@ -1287,7 +1310,7 @@ const isCurrentPlaying = (hash) => {
     top: -8px;
     right: -8px;
     background-color: red;
-    color: white;
+    color: $white;
     border-radius: 50%;
     width: 20px;
     height: 20px;
@@ -1302,40 +1325,39 @@ const isCurrentPlaying = (hash) => {
     position: absolute;
     top: 100%;
     left: 0;
-    background-color: white;
+    background-color: $white;
     border: 1px solid #ccc;
     border-radius: 5px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: $shadow-light;
     z-index: 50;
     margin-top: 5px;
     width: 200px;
+
+    ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    li {
+        padding: 10px 15px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        white-space: nowrap;
+
+        i {
+            margin-right: 10px;
+            width: 16px;
+            text-align: center;
+        }
+
+        &:hover {
+            background-color: #f0f0f0;
+        }
+    }
 }
 
-.batch-actions-menu ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.batch-actions-menu li {
-    padding: 10px 15px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    white-space: nowrap;
-}
-
-.batch-actions-menu li i {
-    margin-right: 10px;
-    width: 16px;
-    text-align: center;
-}
-
-.batch-actions-menu li:hover {
-    background-color: #f0f0f0;
-}
-
-/* 排序选择器样式 */
 .sort-selector {
     display: flex;
     border: 1px solid var(--secondary-color);
@@ -1351,19 +1373,19 @@ const isCurrentPlaying = (hash) => {
     color: var(--text-color);
     transition: all 0.3s ease;
     font-size: 14px;
-}
 
-.sort-btn:not(:last-child) {
-    border-right: 1px solid var(--secondary-color);
-}
+    &:not(:last-child) {
+        border-right: 1px solid var(--secondary-color);
+    }
 
-.sort-btn:hover {
-    background-color: rgba(var(--primary-color-rgb), 0.1);
-}
+    &:hover {
+        background-color: rgba(var(--primary-color-rgb), 0.1);
+    }
 
-.sort-btn.active {
-    background-color: var(--primary-color);
-    color: white;
+    &.active {
+        background-color: $primary;
+        color: $white;
+    }
 }
 
 .search-input {
@@ -1380,9 +1402,17 @@ const isCurrentPlaying = (hash) => {
     scrollbar-width: thin;
     scrollbar-color: transparent transparent;
     overflow: auto;
+
+    &::-webkit-scrollbar {
+        width: 8px !important;
+        display: block !important;
+    }
+
+    &:hover {
+        scrollbar-color: $primary transparent;
+    }
 }
 
-/* 搜索加载动画 */
 .search-loading-overlay {
     height: 800px;
     display: flex;
@@ -1398,26 +1428,16 @@ const isCurrentPlaying = (hash) => {
     align-items: center;
     gap: 15px;
     color: var(--text-color);
-}
 
-.search-loading-spinner i {
-    font-size: 48px;
-    color: var(--primary-color);
-}
+    i {
+        font-size: 48px;
+        color: $primary;
+    }
 
-.search-loading-spinner span {
-    font-size: 16px;
-    color: #999;
-}
-
-
-.track-list::-webkit-scrollbar {
-    width: 8px !important; 
-    display: block !important;
-}
-
-.track-list:hover {
-    scrollbar-color: var(--primary-color) transparent;
+    span {
+        font-size: 16px;
+        color: $text-light;
+    }
 }
 
 .li {
@@ -1425,20 +1445,101 @@ const isCurrentPlaying = (hash) => {
     justify-content: space-between;
     align-items: center;
     padding: 10px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid $border-light;
     border-radius: 5px;
     cursor: pointer;
+
+    &:hover {
+        background-color: var(--background-color);
+    }
+
+    &.selected {
+        background-color: rgba(var(--primary-color-rgb), 0.1);
+    }
+
+    &.cover-view {
+        height: 60px;
+        padding: 5px 10px;
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid $border-light;
+        border-radius: 5px;
+
+        &:hover {
+            background-color: var(--background-color);
+        }
+
+        .track-title-container {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .track-title {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+        }
+
+        .track-title-text {
+            flex: 0 1 auto;
+            max-width: 100%;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .track-title-tags {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+
+        .track-remark {
+            font-size: 12px;
+            color: $text-light;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 2px;
+        }
+
+        .track-artist {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 10px;
+        }
+
+        .track-album {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 10px;
+        }
+
+        .track-timelen {
+            width: 95px;
+            text-align: right;
+        }
+
+        .track-checkbox,
+        .track-number {
+            margin-right: 10px;
+            width: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    }
 }
 
-.li:hover {
-    background-color: var(--background-color);
-}
-
-.li.selected {
-    background-color: rgba(var(--primary-color-rgb), 0.1);
-}
-
-/* 歌曲多选 */
 .track-checkbox {
     margin-right: 10px;
     width: 30px;
@@ -1455,51 +1556,9 @@ const isCurrentPlaying = (hash) => {
     align-items: flex-end;
     justify-content: center;
     height: 20px;
-}
 
-.track-number.current {
-    color: var(--primary-color);
-}
-
-.track-title.current {
-    color: var(--primary-color);
-}
-
-/* 声波动画 */
-.sound-wave {
-    display: flex;
-    align-items: flex-end;
-    gap: 2px;
-    height: 16px;
-}
-
-.sound-wave span {
-    width: 3px;
-    background-color: var(--primary-color);
-    animation: wave 0.8s ease-in-out infinite;
-}
-
-.sound-wave span:nth-child(1) {
-    height: 6px;
-    animation-delay: 0s;
-}
-
-.sound-wave span:nth-child(2) {
-    height: 12px;
-    animation-delay: 0.2s;
-}
-
-.sound-wave span:nth-child(3) {
-    height: 8px;
-    animation-delay: 0.4s;
-}
-
-@keyframes wave {
-    0%, 100% {
-        transform: scaleY(0.5);
-    }
-    50% {
-        transform: scaleY(1);
+    &.current {
+        color: $primary;
     }
 }
 
@@ -1515,6 +1574,10 @@ const isCurrentPlaying = (hash) => {
     align-items: center;
     gap: 6px;
     min-width: 0;
+
+    &.current {
+        color: $primary;
+    }
 }
 
 .track-title-text {
@@ -1535,7 +1598,7 @@ const isCurrentPlaying = (hash) => {
 
 .track-remark {
     font-size: 12px;
-    color: #999;
+    color: $text-light;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1570,33 +1633,32 @@ const isCurrentPlaying = (hash) => {
     font-size: 10px;
     padding-left: 6px;
     padding-right: 6px;
+
+    &.vip-icon {
+        color: #ff6d00;
+    }
+
+    &.sq-icon {
+        color: #0094ff;
+    }
+
+    &.mv-icon {
+        color: #ff1744;
+    }
 }
 
 .track-title-tags .icon {
     margin-left: 0;
 }
 
-.vip-icon {
-    color: #ff6d00;
-}
-
-.sq-icon {
-    color: #0094ff;
-}
-
-.mv-icon {
-    color: #ff1744;
-}
-
 .queue-play-btn {
     background: none;
     border: none;
     font-size: 16px;
-    color: var(--primary-color);
+    color: $primary;
     cursor: pointer;
 }
 
-/* 歌手简介部分 */
 .content-section {
     margin-top: 50px;
     border-top: 1px dotted var(--secondary-color);
@@ -1604,11 +1666,11 @@ const isCurrentPlaying = (hash) => {
 
 .intro-section {
     margin-bottom: 30px;
-}
 
-.intro-section h3 {
-    color: var(--primary-color);
-    margin-bottom: 15px;
+    h3 {
+        color: $primary;
+        margin-bottom: 15px;
+    }
 }
 
 .section-content {
@@ -1617,7 +1679,6 @@ const isCurrentPlaying = (hash) => {
     color: var(--text-color);
 }
 
-/* 导航按钮 */
 .location-arrow {
     position: fixed;
     bottom: 168px;
@@ -1625,7 +1686,7 @@ const isCurrentPlaying = (hash) => {
     z-index: 1;
     cursor: pointer;
     font-size: 20px;
-    color: var(--primary-color);
+    color: $primary;
 }
 
 .scroll-bottom-img {
@@ -1635,40 +1696,38 @@ const isCurrentPlaying = (hash) => {
     z-index: 1;
     cursor: pointer;
     font-size: 20px;
-    color: var(--primary-color);
+    color: $primary;
 }
 
-/* 下拉菜单 */
 .more-btn-container {
     position: relative;
 }
 
 .dropdown-menu {
     position: absolute;
-    background-color: white;
+    background-color: $white;
     border: 1px solid #ccc;
     border-radius: 5px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: $shadow-light;
     top: 50px;
     z-index: 50;
+
+    ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    li {
+        padding: 10px;
+        cursor: pointer;
+
+        &:hover {
+            background-color: #f0f0f0;
+        }
+    }
 }
 
-.dropdown-menu ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.dropdown-menu li {
-    padding: 10px;
-    cursor: pointer;
-}
-
-.dropdown-menu li:hover {
-    background-color: #f0f0f0;
-}
-
-/* 音符动画 */
 .note-container {
     position: fixed;
     top: 0;
@@ -1682,7 +1741,7 @@ const isCurrentPlaying = (hash) => {
 .flying-note {
     position: absolute;
     font-size: 36px;
-    color: var(--primary-color);
+    color: $primary;
     pointer-events: none;
     transform-origin: center;
 }
@@ -1700,26 +1759,31 @@ const isCurrentPlaying = (hash) => {
         transform: translate(var(--start-x), calc(var(--start-y) - 50px)) rotate(0deg) scale(1.2);
         opacity: 0.9;
     }
+
     20% {
         transform: translate(calc(var(--start-x) + 20px), calc(var(--start-y) - 70px)) rotate(45deg) scale(1.3);
         opacity: 0.85;
     }
+
     100% {
         transform: translate(80vw, 100vh) rotate(360deg) scale(0.6);
         opacity: 0;
     }
 }
 
-/* 表头样式 */
 .track-list-header-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 10px;
-    border-bottom: 1px solid var(--primary-color);
+    border-bottom: 1px solid $primary;
     font-weight: bold;
     background-color: rgba(var(--primary-color-rgb), 0.1);
     border-radius: 5px 5px 0 0;
+
+    &:hover {
+        background-color: rgba(var(--primary-color-rgb), 0.15);
+    }
 }
 
 .track-checkbox-header {
@@ -1736,7 +1800,10 @@ const isCurrentPlaying = (hash) => {
     width: 30px;
 }
 
-.track-title-header, .track-artist-header, .track-album-header, .track-timelen-header {
+.track-title-header,
+.track-artist-header,
+.track-album-header,
+.track-timelen-header {
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -1744,39 +1811,32 @@ const isCurrentPlaying = (hash) => {
 
 .track-title-header {
     flex: 2;
+
+    i {
+        margin-left: 5px;
+        font-size: 14px;
+    }
 }
 
-.track-artist-header, .track-album-header {
+.track-artist-header,
+.track-album-header {
     flex: 1;
     padding: 0 10px;
+
+    i {
+        margin-left: 5px;
+        font-size: 14px;
+    }
 }
 
 .track-timelen-header {
     width: 95px;
     text-align: right;
-}
 
-.track-title-header i, .track-artist-header i, .track-album-header i, .track-timelen-header i {
-    margin-left: 5px;
-    font-size: 14px;
-}
-
-.track-list-header-row:hover {
-    background-color: rgba(var(--primary-color-rgb), 0.15);
-}
-
-/* 网格视图样式 */
-.li.cover-view {
-    height: 60px;
-    padding: 5px 10px;
-    display: flex;
-    align-items: center;
-    border-bottom: 1px solid #eee;
-    border-radius: 5px;
-}
-
-.li.cover-view:hover {
-    background-color: var(--background-color);
+    i {
+        margin-left: 5px;
+        font-size: 14px;
+    }
 }
 
 .track-cover {
@@ -1787,13 +1847,13 @@ const isCurrentPlaying = (hash) => {
     overflow: hidden;
     border-radius: 4px;
     flex-shrink: 0;
-}
 
-.track-cover img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
 }
 
 .li.cover-view:hover .track-cover img {
@@ -1806,94 +1866,61 @@ const isCurrentPlaying = (hash) => {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.5);
     opacity: 0;
     transition: opacity 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: $white;
     font-size: 20px;
+
+    &.playing {
+        opacity: 1;
+    }
 }
 
 .li.cover-view:hover .track-cover-overlay {
     opacity: 1;
 }
 
-.track-list {
-    height: 800px;
-    scrollbar-width: thin;
-    scrollbar-color: transparent transparent; 
-    overflow: auto;
-}
-
-/* 调整封面视图下的其他元素样式 */
-.li.cover-view .track-title-container {
-    flex: 2;
+.sound-wave {
     display: flex;
-    flex-direction: column;
-    overflow: hidden;
+    align-items: flex-end;
+    gap: 2px;
+    height: 16px;
+
+    span {
+        width: 3px;
+        background-color: $primary;
+        animation: wave 0.8s ease-in-out infinite;
+
+        &:nth-child(1) {
+            height: 6px;
+            animation-delay: 0s;
+        }
+
+        &:nth-child(2) {
+            height: 12px;
+            animation-delay: 0.2s;
+        }
+
+        &:nth-child(3) {
+            height: 8px;
+            animation-delay: 0.4s;
+        }
+    }
 }
 
-.li.cover-view .track-title {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 0;
-}
+@keyframes wave {
 
-.li.cover-view .track-title-text {
-    flex: 0 1 auto;
-    max-width: 100%;
-    min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
+    0%,
+    100% {
+        transform: scaleY(0.5);
+    }
 
-.li.cover-view .track-title-tags {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    flex-shrink: 0;
-}
-
-.li.cover-view .track-remark {
-    font-size: 12px;
-    color: #999;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-top: 2px;
-}
-
-.li.cover-view .track-artist {
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    padding: 0 10px;
-}
-
-.li.cover-view .track-album {
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    padding: 0 10px;
-}
-
-.li.cover-view .track-timelen {
-    width: 95px;
-    text-align: right;
-}
-
-.li.cover-view .track-checkbox,
-.li.cover-view .track-number {
-    margin-right: 10px;
-    width: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    50% {
+        transform: scaleY(1);
+    }
 }
 </style>

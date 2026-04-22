@@ -1,8 +1,9 @@
 <template>
   <div class="artist-grid">
-    <div v-for="(artist, index) in artists" :key="index" class="artist-card" @click="onArtistClick(artist)" :style="{'--artist-bg': `url(${artist.Avatar || './assets/images/ico.png'})`}">
+    <div v-for="(artist, index) in artists" :key="index" class="artist-card" @click="onArtistClick(artist)"
+      :style="{ '--artist-bg': `url(${artist.Avatar || './assets/images/ico.png'})` }">
       <div class="artist-avatar">
-        <img :src="(artist.Avatar || './assets/images/ico.png').replace('/240/','/480/')"/>
+        <img :src="(artist.Avatar || './assets/images/ico.png').replace('/240/', '/480/')" />
       </div>
       <div class="artist-info">
         <h3 class="artist-name">{{ artist.AuthorName }}</h3>
@@ -42,7 +43,7 @@ const onArtistClick = (artist) => {
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .artist-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -60,6 +61,19 @@ const onArtistClick = (artist) => {
   transition: transform 0.3s, box-shadow 0.3s;
   cursor: pointer;
   position: relative;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+
+    .artist-avatar img {
+      transform: scale(1.05);
+    }
+
+    &::before {
+      opacity: 0.15;
+    }
+  }
 }
 
 .artist-avatar {
@@ -71,57 +85,35 @@ const onArtistClick = (artist) => {
   align-items: center;
   background-color: #f5f5f5;
   position: relative;
-}
 
-.artist-avatar::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: var(--artist-bg);
-  background-size: cover;
-  background-position: center;
-  opacity: 0.2;
-  filter: blur(10px);
-  z-index: 0;
-}
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: var(--artist-bg);
+    background-size: cover;
+    background-position: center;
+    opacity: 0.2;
+    filter: blur(10px);
+    z-index: 0;
+  }
 
-.artist-avatar:hover::before {
-  opacity: 0.15;
-}
+  &,
+  .artist-info {
+    position: relative;
+    z-index: 1;
+  }
 
-.artist-avatar, .artist-info {
-  position: relative;
-  z-index: 1;
-}
-
-.artist-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
-}
-
-.artist-avatar {
-  width: 100%;
-  height: 180px;
-  overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #f5f5f5;
-}
-
-.artist-avatar img {
-  width: 150px;
-  height: 150px;
-  object-fit: cover;
-  transition: transform 0.5s;
-  border-radius: 50%; /* 将头像改为圆形 */
-}
-
-.artist-card:hover .artist-avatar img {
-  transform: scale(1.05);
+  img {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    transition: transform 0.5s;
+    border-radius: 50%;
+  }
 }
 
 .artist-info {
@@ -149,10 +141,10 @@ const onArtistClick = (artist) => {
   gap: 5px;
   color: #666;
   font-size: 14px;
-}
 
-.stat-item i {
-  color: var(--primary-color);
+  i {
+    color: var(--primary-color);
+  }
 }
 
 .artist-counts {

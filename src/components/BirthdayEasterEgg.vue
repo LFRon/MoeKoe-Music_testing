@@ -109,7 +109,7 @@ const tryAutoPlay = async () => {
     const add = props.playerControl?.addSongToQueue;
     if (typeof add !== 'function') return;
     try {
-        await add(props.songHash, `祝${props.nickname||'你'}生日快乐 🎉`, './assets/images/ico.png');
+        await add(props.songHash, `祝${props.nickname || '你'}生日快乐 🎉`, './assets/images/ico.png');
     } catch {
     }
 };
@@ -139,7 +139,7 @@ onBeforeUnmount(() => {
 });
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .birthday-badge {
     display: inline-flex;
     align-items: center;
@@ -162,11 +162,10 @@ onBeforeUnmount(() => {
     inset: 0;
     z-index: 9998;
     pointer-events: none;
-    background:
-        radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.75), transparent 45%),
-        radial-gradient(circle at 80% 30%, rgba(255, 255, 255, 0.70), transparent 40%),
+    background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.75), transparent 45%),
+        radial-gradient(circle at 80% 30%, rgba(255, 255, 255, 0.7), transparent 40%),
         radial-gradient(circle at 40% 80%, rgba(255, 255, 255, 0.65), transparent 45%),
-        linear-gradient(180deg, rgba(163, 214, 255, 0.45), rgba(255, 255, 255, 0.20));
+        linear-gradient(180deg, rgba(163, 214, 255, 0.45), rgba(255, 255, 255, 0.2));
     animation: birthdayFade 6500ms ease-in-out forwards;
 }
 
@@ -196,49 +195,49 @@ onBeforeUnmount(() => {
     text-align: center;
     transform: perspective(700px) rotateX(6deg);
     animation: ribbonIn 520ms cubic-bezier(0.2, 0.9, 0.2, 1);
-}
 
-.ribbon h1 {
-    margin: 0;
-    color: #ff4d6d;
-    font-size: 2.4rem;
-    font-weight: 800;
-    letter-spacing: 3px;
-    text-shadow: 1px 1px 0 rgba(255, 238, 245, 0.95);
-}
+    h1 {
+        margin: 0;
+        color: #ff4d6d;
+        font-size: 2.4rem;
+        font-weight: 800;
+        letter-spacing: 3px;
+        text-shadow: 1px 1px 0 rgba(255, 238, 245, 0.95);
+    }
 
-.ribbon p {
-    margin: 0;
-    margin-top: -6px;
-    color: #ff7fa0;
-    font-size: 1rem;
-    font-family: "Arial", sans-serif;
-    font-weight: 700;
-}
+    p {
+        margin: 0;
+        margin-top: -6px;
+        color: #ff7fa0;
+        font-size: 1rem;
+        font-family: 'Arial', sans-serif;
+        font-weight: 700;
+    }
 
-.ribbon::before,
-.ribbon::after {
-    content: "";
-    position: absolute;
-    top: 60%;
-    height: 100%;
-    width: 80px;
-    background: linear-gradient(to bottom, #ffb3c7 0%, #ffe3ec 55%, #fff 100%);
-    z-index: -1;
-    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 20% 50%);
-    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
-}
+    &::before,
+    &::after {
+        content: '';
+        position: absolute;
+        top: 60%;
+        height: 100%;
+        width: 80px;
+        background: linear-gradient(to bottom, #ffb3c7 0%, #ffe3ec 55%, #fff 100%);
+        z-index: -1;
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 20% 50%);
+        box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
+    }
 
-.ribbon::before {
-    left: -40px;
-    transform: translateY(-60%) rotate(-10deg);
-    border-right: none;
-}
+    &::before {
+        left: -40px;
+        transform: translateY(-60%) rotate(-10deg);
+        border-right: none;
+    }
 
-.ribbon::after {
-    right: -40px;
-    transform: translateY(-60%) scaleX(-1) rotate(-10deg);
-    border-left: none;
+    &::after {
+        right: -40px;
+        transform: translateY(-60%) scaleX(-1) rotate(-10deg);
+        border-left: none;
+    }
 }
 
 .ribbon-fold-left,
@@ -266,14 +265,32 @@ onBeforeUnmount(() => {
 }
 
 @keyframes ribbonIn {
-    0% { transform: perspective(700px) rotateX(6deg) translateY(-18px); opacity: 0; }
-    100% { transform: perspective(700px) rotateX(6deg) translateY(0); opacity: 1; }
+    0% {
+        transform: perspective(700px) rotateX(6deg) translateY(-18px);
+        opacity: 0;
+    }
+
+    100% {
+        transform: perspective(700px) rotateX(6deg) translateY(0);
+        opacity: 1;
+    }
 }
 
 @keyframes birthdayFade {
-    0% { opacity: 0; }
-    10% { opacity: 1; }
-    85% { opacity: 1; }
-    100% { opacity: 0; }
+    0% {
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    85% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
 }
 </style>

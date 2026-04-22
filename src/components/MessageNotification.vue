@@ -59,7 +59,7 @@ defineExpose({
 });
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .message-container {
     position: fixed;
     top: 60px;
@@ -90,11 +90,11 @@ defineExpose({
     min-width: 200px;
     max-width: 480px;
     width: auto;
-}
 
-.message:hover {
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-    transform: translateY(-2px);
+    &:hover {
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+    }
 }
 
 .message-content {
@@ -114,51 +114,50 @@ defineExpose({
     background-color: rgba(240, 249, 235, 0.95);
     border-left: 4px solid #67c23a;
     color: #67c23a;
-}
 
-.message-success .message-progress {
-    background-color: #67c23a;
+    .message-progress {
+        background-color: #67c23a;
+    }
 }
 
 .message-error {
     background-color: rgba(254, 240, 240, 0.95);
     border-left: 4px solid #f56c6c;
     color: #f56c6c;
-}
 
-.message-error .message-progress {
-    background-color: #f56c6c;
+    .message-progress {
+        background-color: #f56c6c;
+    }
 }
 
 .message-warning {
     background-color: rgba(253, 246, 236, 0.95);
     border-left: 4px solid #e6a23c;
     color: #e6a23c;
-}
 
-.message-warning .message-progress {
-    background-color: #e6a23c;
+    .message-progress {
+        background-color: #e6a23c;
+    }
 }
 
 .message-info {
     background-color: rgba(244, 244, 245, 0.95);
     border-left: 4px solid #909399;
     color: #909399;
-}
 
-.message-info .message-progress {
-    background-color: #909399;
+    .message-progress {
+        background-color: #909399;
+    }
 }
 
 .message-default {
     border-left: 4px solid #409eff;
+
+    .message-progress {
+        background-color: #409eff;
+    }
 }
 
-.message-default .message-progress {
-    background-color: #409eff;
-}
-
-/* 图标样式 */
 .icon-success,
 .icon-error,
 .icon-warning,
@@ -174,62 +173,61 @@ defineExpose({
 
 .icon-success {
     background-color: #67c23a;
-}
 
-.icon-success::before {
-    content: '';
-    position: absolute;
-    width: 10px;
-    height: 6px;
-    border-left: 2px solid white;
-    border-bottom: 2px solid white;
-    transform: rotate(-45deg);
+    &::before {
+        content: '';
+        position: absolute;
+        width: 10px;
+        height: 6px;
+        border-left: 2px solid white;
+        border-bottom: 2px solid white;
+        transform: rotate(-45deg);
+    }
 }
 
 .icon-error {
     background-color: #f56c6c;
-}
 
-.icon-error::before,
-.icon-error::after {
-    content: '';
-    position: absolute;
-    width: 12px;
-    height: 2px;
-    background-color: white;
-}
+    &::before,
+    &::after {
+        content: '';
+        position: absolute;
+        width: 12px;
+        height: 2px;
+        background-color: white;
+    }
 
-.icon-error::before {
-    transform: rotate(45deg);
-}
+    &::before {
+        transform: rotate(45deg);
+    }
 
-.icon-error::after {
-    transform: rotate(-45deg);
+    &::after {
+        transform: rotate(-45deg);
+    }
 }
 
 .icon-warning {
     background-color: #e6a23c;
-}
 
-.icon-warning::before {
-    content: '!';
-    color: white;
-    font-weight: bold;
-    font-size: 14px;
+    &::before {
+        content: '!';
+        color: white;
+        font-weight: bold;
+        font-size: 14px;
+    }
 }
 
 .icon-info {
     background-color: #909399;
+
+    &::before {
+        content: 'i';
+        color: white;
+        font-weight: bold;
+        font-size: 14px;
+    }
 }
 
-.icon-info::before {
-    content: 'i';
-    color: white;
-    font-weight: bold;
-    font-size: 14px;
-}
-
-/* 动画 */
 .message-fade-enter-active {
     transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }

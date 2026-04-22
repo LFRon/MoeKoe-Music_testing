@@ -4,8 +4,7 @@
             <div class="modal-content">
                 <h3>{{ t('shou-cang-dao') }}</h3>
                 <ul class="playlist-select-list" v-if="playlists.length > 0">
-                    <li v-for="playlist in playlists" 
-                        :key="playlist.list_id" 
+                    <li v-for="playlist in playlists" :key="playlist.list_id"
                         @click="addToPlaylist(playlist.listid, currentSong); isOpen = false">
                         {{ playlist.name }}
                     </li>
@@ -41,11 +40,11 @@ const validateUserAndSong = () => {
         return false;
     }
     if (Array.isArray(props.currentSong)) {
-        if(!props.currentSong[0].hash){
+        if (!props.currentSong[0].hash) {
             window.$modal.alert('没有选择正确的歌曲');
             return false;
         }
-    }else if (!props.currentSong.hash) {
+    } else if (!props.currentSong.hash) {
         window.$modal.alert(t('mei-you-zheng-zai-bo-fang-de-ge-qu'));
         return false;
     }
@@ -53,7 +52,7 @@ const validateUserAndSong = () => {
         window.$modal.alert('云盘音乐不支持添加到歌单');
         return false;
     }
-    if(props.currentSong.isLocal){
+    if (props.currentSong.isLocal) {
         window.$modal.alert('本地音乐不支持添加到歌单');
         return false;
     }
@@ -82,9 +81,9 @@ const fetchPlaylists = async () => {
 const addToPlaylist = async (listid, song) => {
     if (!validateUserAndSong()) return;
     let song_data = '';
-    if(Array.isArray(song)){
+    if (Array.isArray(song)) {
         song_data = song.map(s => `${encodeURIComponent(s.name.replace(',', ''))}|${s.hash}`).join(',');
-    }else{
+    } else {
         song_data = `${encodeURIComponent(song.name.replace(',', ''))}|${song.hash}`;
     }
     try {
@@ -98,7 +97,7 @@ const addToPlaylist = async (listid, song) => {
 
 const toLike = () => {
     const like_id = localStorage.getItem('like');
-    if(!like_id) {window.$modal.alert('先去看看你的收藏夹吧');return;}
+    if (!like_id) { window.$modal.alert('先去看看你的收藏夹吧'); return; }
     addToPlaylist(like_id, props.currentSong);
 };
 
@@ -110,7 +109,7 @@ defineExpose({
 });
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .modal {
     position: fixed;
     top: 0;
@@ -122,6 +121,21 @@ defineExpose({
     justify-content: center;
     align-items: center;
     z-index: 1000;
+
+    .close-btn-modal {
+        width: 100%;
+        padding: 8px;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 10px;
+
+        &:hover {
+            opacity: 0.9;
+        }
+    }
 }
 
 .modal-content {
@@ -140,31 +154,16 @@ defineExpose({
     margin: 15px 0;
     max-height: 300px;
     overflow-y: auto;
-}
 
-.playlist-select-list li {
-    padding: 10px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    border-radius: 8px;
-}
+    li {
+        padding: 10px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        border-radius: 8px;
 
-.playlist-select-list li:hover {
-    background-color: var(--secondary-color);
-}
-
-.modal .close-btn-modal {
-    width: 100%;
-    padding: 8px;
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-top: 10px;
-}
-
-.modal .close-btn-modal:hover {
-    opacity: 0.9;
+        &:hover {
+            background-color: var(--secondary-color);
+        }
+    }
 }
 </style>

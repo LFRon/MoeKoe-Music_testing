@@ -9,6 +9,7 @@ export default function useLyricsHandler(t) {
     const SongTips = ref(t('zan-wu-ge-ci'));
     const lyricsMode = ref('translation'); // 'translation' 翻译模式 或 'romanization' 音译模式
     let currentLineIndex = 0;
+    let activeLyricsRequestId = 0;
 
     // 显示/隐藏歌词
     const toggleLyrics = (hash, currentTime) => {
@@ -30,6 +31,7 @@ export default function useLyricsHandler(t) {
 
     // 获取歌词
     const getLyrics = async (hash) => {
+        const requestId = ++activeLyricsRequestId;
         try {
             const settings = JSON.parse(localStorage.getItem('settings') || '{}');
             if (!showLyrics.value &&
@@ -39,6 +41,9 @@ export default function useLyricsHandler(t) {
 
             console.log('[LyricsHandler] 请求歌词……');
             const lyricSearchResponse = await get(`/search/lyric?hash=${hash}`);
+            if (requestId !== activeLyricsRequestId) {
+                return false;
+            }
             if (lyricSearchResponse.status !== 200 || lyricSearchResponse.candidates.length === 0) {
                 SongTips.value = t('zan-wu-ge-ci');
                 return false;
@@ -46,6 +51,9 @@ export default function useLyricsHandler(t) {
 
             // 明确指定使用KRC格式
             const lyricResponse = await get(`/lyric?id=${lyricSearchResponse.candidates[0].id}&accesskey=${lyricSearchResponse.candidates[0].accesskey}&fmt=krc&decode=true`);
+            if (requestId !== activeLyricsRequestId) {
+                return false;
+            }
             if (lyricResponse.status !== 200) {
                 SongTips.value = t('huo-qu-ge-ci-shi-bai');
                 return false;

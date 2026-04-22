@@ -207,6 +207,23 @@ export function validateManifest(manifestPath) {
     }
 }
 
+function getExtensionPopupPath(manifest) {
+    const popupPath = manifest?.action?.default_popup || '';
+
+    return typeof popupPath === 'string' ? popupPath.trim() : '';
+}
+
+function hasExtensionPopupFile(extensionPath, manifest) {
+    const popupPath = getExtensionPopupPath(manifest);
+    if (!popupPath) {
+        return false;
+    }
+
+    const normalizedPopupPath = popupPath.replace(/[\\/]+/g, path.sep);
+    const fullPopupPath = path.join(extensionPath, normalizedPopupPath);
+    return fs.existsSync(fullPopupPath);
+}
+
 /**
  * 获取插件详细信息
  * @param {string} extensionDir 插件目录名
@@ -222,6 +239,8 @@ export function getExtensionInfo(extensionDir) {
 
     const manifest = validation.manifest;
     const stats = fs.statSync(extensionPath);
+    const popupPath = getExtensionPopupPath(manifest);
+    const hasPopup = hasExtensionPopupFile(extensionPath, manifest);
     
     return {
         name: manifest.name,
@@ -232,7 +251,9 @@ export function getExtensionInfo(extensionDir) {
         path: extensionPath,
         size: getDirectorySize(extensionPath),
         lastModified: stats.mtime,
-        manifest: manifest
+        manifest: manifest,
+        popupPath,
+        hasPopup
     };
 }
 

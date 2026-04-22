@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
       
@@ -35,7 +35,7 @@ jobs:
             MINOR=$((MINOR + 1))
           fi
           NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
-          echo "::set-output name=NEW_VERSION::$NEW_VERSION"
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
           
       - name: Get previous tag
         run: |

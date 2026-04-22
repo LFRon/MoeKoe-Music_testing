@@ -1,6 +1,7 @@
 <template>
     <div v-if="showModal" class="modal-overlay">
         <div class="modal-content">
+            <img class="modal-banner" src="/assets/images/banners.png" alt="Banner">
             <h2>{{ $t('yong-hu-tiao-kuan') }}</h2>
             <p>{{ $t('1-ben-cheng-xu-shi-ku-gou-di-san-fang-ke-hu-duan-bing-fei-ku-gou-guan-fang-xu-yao-geng-wan-shan-de-gong-neng-qing-xia-zai-guan-fang-ke-hu-duan-ti-yan') }}</p>
             <p>{{ $t('2-ben-xiang-mu-jin-gong-xue-xi-jiao-liu-shi-yong-nin-zai-shi-yong-guo-cheng-zhong-ying-zun-zhong-ban-quan-bu-de-yong-yu-shang-ye-huo-fei-fa-yong-tu') }}</p>
@@ -49,6 +50,7 @@ const disagree = () => {
     if(isElectron()){
         window.electron.ipcRenderer.send('disclaimer-response', false);
     }
+    window.location.href = 'about:blank';
     window.close();
 };
 </script>
@@ -68,11 +70,23 @@ const disagree = () => {
 }
 
 .modal-content {
+    position: relative;
     background: #fff;
     padding: 20px;
     border-radius: 8px;
     max-width: 750px;
     width: 80%;
+}
+
+.modal-banner {
+    position: absolute;
+    top: 0;
+    right: 15px;
+    width: 180px;
+    max-width: 35%;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
 }
 
 .button-group {

@@ -8,7 +8,8 @@
                 <p class="subtitle">{{ $t('yun-pan-ge-qu-shu') }}: {{ tracks.length }}</p>
                 <div class="storage-info" v-if="storageInfo.totalSize > 0">
                     <div class="storage-progress">
-                        <div class="storage-progress-bar" :style="{width: (storageInfo.usedSize / storageInfo.totalSize * 100) + '%'}"></div>
+                        <div class="storage-progress-bar"
+                            :style="{ width: (storageInfo.usedSize / storageInfo.totalSize * 100) + '%' }"></div>
                     </div>
                     <div class="storage-text">
                         {{ formatStorageSize(storageInfo.usedSize) }} / {{ formatStorageSize(storageInfo.totalSize) }}
@@ -29,7 +30,8 @@
 
         <!-- 导航按钮 -->
         <i class="location-arrow fas fa-location-arrow" @click="scrollToItem" :title="t('dang-qian-bo-fang-ge-qu')"></i>
-        <img :src="`./assets/images/lemon.gif`" class="scroll-bottom-img" @click="scrollToFirstItem" :title="t('fan-hui-ding-bu')"/>
+        <img :src="`./assets/images/lemon.gif`" class="scroll-bottom-img" @click="scrollToFirstItem"
+            :title="t('fan-hui-ding-bu')" />
 
         <!-- 歌曲列表 -->
         <div class="track-list-container">
@@ -37,21 +39,27 @@
                 <h2 class="track-list-title"><span>{{ $t('yun-pan-ge-qu') }}</span> ( {{ tracks.length }} )</h2>
                 <div class="track-list-actions">
                     <div class="batch-action-container">
-                        <button class="batch-action-btn" @click="toggleBatchSelection" :class="{ 'active': batchSelectionMode }">
+                        <button class="batch-action-btn" @click="toggleBatchSelection"
+                            :class="{ 'active': batchSelectionMode }">
                             <input type="checkbox" v-model="batchSelectionMode" /> {{ $t('pi-liang-cao-zuo') }}
-                            <span v-if="selectedTracks.length > 0" class="selected-count">{{ selectedTracks.length }}</span>
+                            <span v-if="selectedTracks.length > 0" class="selected-count">{{ selectedTracks.length
+                                }}</span>
                         </button>
-                        <div v-if="batchSelectionMode && isBatchMenuVisible && selectedTracks.length > 0" class="batch-actions-menu">
+                        <div v-if="batchSelectionMode && isBatchMenuVisible && selectedTracks.length > 0"
+                            class="batch-actions-menu">
                             <ul>
                                 <li @click="appendSelectedToQueue"><i class="fas fa-list"></i> 添加到播放列表</li>
-                                <li @click="deleteSelectedFromCloud"><i class="fas fa-trash-alt"></i> {{ $t('cong-yun-pan-shan-chu') }}</li>
+                                <li @click="deleteSelectedFromCloud"><i class="fas fa-trash-alt"></i> {{
+                                    $t('cong-yun-pan-shan-chu') }}</li>
                             </ul>
                         </div>
                     </div>
-                    <button class="view-mode-btn" @click="toggleListMode" :title="listMode === 'list' ? '切换到网格视图' : '切换到列表视图'">
+                    <button class="view-mode-btn" @click="toggleListMode"
+                        :title="listMode === 'list' ? '切换到网格视图' : '切换到列表视图'">
                         <i class="fas" :class="listMode === 'list' ? 'fa-th' : 'fa-list'"></i>
                     </button>
-                    <input type="text" v-model="searchQuery" @keyup.enter="searchTracks" :placeholder="t('sou-suo-ge-qu')" class="search-input" />
+                    <input type="text" v-model="searchQuery" @keyup.enter="searchTracks"
+                        :placeholder="t('sou-suo-ge-qu')" class="search-input" />
                 </div>
             </div>
 
@@ -75,34 +83,39 @@
                 </div>
             </div>
 
-            <RecycleScroller ref="recycleScrollerRef" :items="filteredTracks" :item-size="listMode === 'list' ? 50 : 70" class="track-list" key-field="hash">
+            <RecycleScroller ref="recycleScrollerRef" :items="filteredTracks" :item-size="listMode === 'list' ? 50 : 70"
+                class="track-list" key-field="hash">
                 <template #default="{ item, index }">
                     <div class="li" :key="item.hash"
                         :class="{ 'cover-view': listMode === 'grid', 'selected': selectedTracks.includes(index) }"
                         @click="batchSelectionMode ? selectTrack(index, $event) : playSong(item.hash, item.name, item.author, item.timelen, item.cover)">
-                        
+
                         <!-- 复选框或序号 -->
                         <div class="track-checkbox" v-if="batchSelectionMode">
-                            <input type="checkbox" :checked="selectedTracks.includes(index)" @click.stop="selectTrack(index, $event)">
+                            <input type="checkbox" :checked="selectedTracks.includes(index)"
+                                @click.stop="selectTrack(index, $event)">
                         </div>
                         <div class="track-number" v-else>{{ index + 1 }}</div>
 
                         <!-- 网格模式封面 -->
                         <div class="track-cover" v-if="listMode === 'grid'">
                             <img :src="item.cover || './assets/images/ico.png'" alt="Cover">
-                            <div class="track-cover-overlay" :class="{ 'playing': props.playerControl?.currentSong.hash == item.hash }">
-                                <i :class="props.playerControl?.currentSong.hash == item.hash ? 'fas fa-music' : 'fas fa-play'"></i>
+                            <div class="track-cover-overlay"
+                                :class="{ 'playing': props.playerControl?.currentSong.hash == item.hash }">
+                                <i
+                                    :class="props.playerControl?.currentSong.hash == item.hash ? 'fas fa-music' : 'fas fa-play'"></i>
                             </div>
                         </div>
 
                         <!-- 歌曲信息 -->
                         <div class="track-title" :title="item.name">{{ item.name }}
-                            <span v-if="item.qualityInfo" class="icon" :class="item.qualityInfo.class">{{ item.qualityInfo.text }}</span>
+                            <span v-if="item.qualityInfo" class="icon" :class="item.qualityInfo.class">{{
+                                item.qualityInfo.text }}</span>
                         </div>
                         <div class="track-artist" :title="item.author">{{ item.author }}</div>
                         <div class="track-size" :title="item.filesize">{{ item.filesize }}</div>
                         <div class="track-timelen">
-                            <button v-if="props.playerControl?.currentSong.hash == item.hash && listMode === 'list'" 
+                            <button v-if="props.playerControl?.currentSong.hash == item.hash && listMode === 'list'"
                                 class="queue-play-btn fas fa-music"></button>
                             {{ $formatMilliseconds(item.timelen) }}
                         </div>
@@ -192,13 +205,13 @@ const loadData = async () => {
 const fetchCloudTracks = async () => {
     let allTracks = [];
     let currentPage = 1;
-    
+
     try {
         const firstPageResponse = await get('/user/cloud', {
             page: currentPage,
             pagesize: pageSize.value
         });
-        
+
         if (firstPageResponse.status === 1) {
             // 处理存储空间信息
             if (firstPageResponse.data.type_size) {
@@ -209,21 +222,21 @@ const fetchCloudTracks = async () => {
                     availableSize: availble_size || 0
                 };
             }
-            
+
             // 处理歌曲列表
             const songList = firstPageResponse.data.list || firstPageResponse.data.info || [];
             allTracks = formatTrackList(songList);
             tracks.value = allTracks;
             filteredTracks.value = allTracks;
             currentPage++;
-            
+
             // 获取剩余页面数据
             if (firstPageResponse.data.list_count > pageSize.value) {
                 const totalPages = Math.ceil(firstPageResponse.data.list_count / pageSize.value);
                 for (let i = 1; i < totalPages && currentPage <= totalPages; i++) {
                     const nextPageData = await fetchCloudPage(currentPage);
                     if (!nextPageData || nextPageData.length === 0) break;
-                    
+
                     allTracks = allTracks.concat(nextPageData);
                     tracks.value = allTracks;
                     filteredTracks.value = allTracks;
@@ -246,7 +259,7 @@ const fetchCloudPage = async (page) => {
             page,
             pagesize: pageSize.value
         });
-        
+
         if (response.status === 1) {
             const songList = response.data.list || response.data.info || [];
             return formatTrackList(songList);
@@ -259,7 +272,7 @@ const fetchCloudPage = async (page) => {
 
 // 获取音质信息
 const getQualityInfo = (bitrate) => {
-    switch(bitrate) {
+    switch (bitrate) {
         case 3:
             return { text: 'HQ', class: 'hq-icon' };
         case 4:
@@ -307,7 +320,7 @@ const formatStorageSize = (bytes) => {
 
 // 搜索歌曲
 const searchTracks = () => {
-    filteredTracks.value = tracks.value.filter(track => 
+    filteredTracks.value = tracks.value.filter(track =>
         track.name.toLowerCase().trim().includes(searchQuery.value.toLowerCase().trim()) ||
         track.author.toLowerCase().trim().includes(searchQuery.value.toLowerCase().trim())
     );
@@ -326,8 +339,8 @@ const addPlaylistToQueue = async (event, append = false) => {
     const note = {
         id: noteId++,
         style: {
-            '--start-x': `${rect.left + rect.width/2}px`,
-            '--start-y': `${rect.top + rect.height/2}px`,
+            '--start-x': `${rect.left + rect.width / 2}px`,
+            '--start-y': `${rect.top + rect.height / 2}px`,
             'left': '0',
             'top': '0'
         }
@@ -357,7 +370,7 @@ const scrollToFirstItem = () => {
     window.scrollTo({
         top: 0,
         behavior: 'smooth',
-        scrollSource: 'manual-button-click' 
+        scrollSource: 'manual-button-click'
     });
 };
 
@@ -396,7 +409,7 @@ const selectTrack = (index, event) => {
         // Shift 键多选
         const start = Math.min(lastSelectedIndex, index);
         const end = Math.max(lastSelectedIndex, index);
-        
+
         for (let i = start; i <= end; i++) {
             if (!selectedTracks.value.includes(i)) {
                 selectedTracks.value.push(i);
@@ -419,7 +432,7 @@ const selectTrack = (index, event) => {
             selectedTracks.value = [];
         }
     }
-    
+
     lastSelectedIndex = index;
 };
 
@@ -438,7 +451,7 @@ const deleteSelectedFromCloud = async () => {
     const result = await window.$modal.confirm(t('que-ren-shan-chu-yun-pan-ge-qu'));
     if (result) {
         $message.info('删除功能正在开发中...');
-        
+
         // selectedTracks.value.sort((a, b) => b - a).forEach(index => {
         //     filteredTracks.value.splice(index, 1);
         //     tracks.value = tracks.value.filter((_, i) => 
@@ -469,10 +482,10 @@ const sortTracks = (field) => {
         sortField.value = field;
         sortOrder.value = 'asc';
     }
-    
+
     filteredTracks.value = [...filteredTracks.value].sort((a, b) => {
         let valueA, valueB;
-        
+
         if (field === 'timelen') {
             valueA = a[field] || 0;
             valueB = b[field] || 0;
@@ -492,14 +505,14 @@ const sortTracks = (field) => {
             valueA = (a[field] || '').toLowerCase();
             valueB = (b[field] || '').toLowerCase();
         }
-        
+
         if (sortOrder.value === 'asc') {
             return valueA > valueB ? 1 : -1;
         } else {
             return valueA < valueB ? 1 : -1;
         }
     });
-    
+
     if (batchSelectionMode.value) {
         selectedTracks.value = [];
     }
@@ -515,12 +528,18 @@ const getSortIconClass = (field) => {
 
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+$primary: var(--primary-color);
+$text-muted: #666;
+$border-light: #eee;
+$bg-light: #e0e0e0;
+$white: white;
+$shadow-light: 0 2px 10px rgba(0, 0, 0, 0.1);
+
 .detail-page {
     padding: 20px;
 }
 
-/* 头部样式 */
 .header {
     display: flex;
     align-items: center;
@@ -548,12 +567,12 @@ const getSortIconClass = (field) => {
     text-overflow: ellipsis;
     white-space: nowrap;
     margin: 0;
-    color: var(--primary-color);
+    color: $primary;
 }
 
 .subtitle {
     font-size: 18px;
-    color: #666;
+    color: $text-muted;
 }
 
 .storage-info {
@@ -564,21 +583,21 @@ const getSortIconClass = (field) => {
 
 .storage-progress {
     height: 6px;
-    background-color: #e0e0e0;
+    background-color: $bg-light;
     border-radius: 3px;
     overflow: hidden;
     margin-bottom: 5px;
-}
 
-.storage-progress-bar {
-    height: 100%;
-    background-color: var(--primary-color);
-    border-radius: 3px;
+    &-bar {
+        height: 100%;
+        background-color: $primary;
+        border-radius: 3px;
+    }
 }
 
 .storage-text {
     font-size: 14px;
-    color: #666;
+    color: $text-muted;
     display: flex;
     justify-content: space-between;
 }
@@ -601,26 +620,26 @@ const getSortIconClass = (field) => {
     gap: 10px;
 }
 
-.primary-btn, .upload-btn {
+.primary-btn,
+.upload-btn {
     background-color: #ff69b4;
-    color: white;
+    color: $white;
     border: none;
     padding: 10px 20px;
     border-radius: 5px;
     cursor: pointer;
     display: flex;
     align-items: center;
+
+    i {
+        margin-right: 5px;
+    }
 }
 
 .upload-btn {
-    background-color: #4CAF50;
+    background-color: #4caf50;
 }
 
-.primary-btn i, .upload-btn i {
-    margin-right: 5px;
-}
-
-/* 歌曲列表样式 */
 .track-list-container {
     margin-top: 30px;
 }
@@ -636,10 +655,9 @@ const getSortIconClass = (field) => {
     font-size: 24px;
     font-weight: bold;
     margin-bottom: 10px;
-    color: var(--primary-color);
+    color: $primary;
 }
 
-/* 搜索和批量操作按钮 */
 .track-list-actions {
     display: flex;
     align-items: center;
@@ -661,11 +679,11 @@ const getSortIconClass = (field) => {
     justify-content: center;
     color: var(--text-color);
     position: relative;
-}
 
-.batch-action-btn.active {
-    background-color: var(--primary-color);
-    color: white;
+    &.active {
+        background-color: $primary;
+        color: $white;
+    }
 }
 
 .selected-count {
@@ -673,7 +691,7 @@ const getSortIconClass = (field) => {
     top: -8px;
     right: -8px;
     background-color: red;
-    color: white;
+    color: $white;
     border-radius: 50%;
     width: 20px;
     height: 20px;
@@ -688,37 +706,37 @@ const getSortIconClass = (field) => {
     position: absolute;
     top: 100%;
     left: 0;
-    background-color: white;
+    background-color: $white;
     border: 1px solid #ccc;
     border-radius: 5px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: $shadow-light;
     z-index: 50;
     margin-top: 5px;
     width: 200px;
-}
 
-.batch-actions-menu ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
+    ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
 
-.batch-actions-menu li {
-    padding: 10px 15px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    white-space: nowrap;
-}
+    li {
+        padding: 10px 15px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        white-space: nowrap;
 
-.batch-actions-menu li i {
-    margin-right: 10px;
-    width: 16px;
-    text-align: center;
-}
+        i {
+            margin-right: 10px;
+            width: 16px;
+            text-align: center;
+        }
 
-.batch-actions-menu li:hover {
-    background-color: #f0f0f0;
+        &:hover {
+            background-color: #f0f0f0;
+        }
+    }
 }
 
 .search-input {
@@ -733,17 +751,17 @@ const getSortIconClass = (field) => {
 .track-list {
     height: 800px;
     scrollbar-width: thin;
-    scrollbar-color: transparent transparent; 
+    scrollbar-color: transparent transparent;
     overflow: auto;
-}
 
-.track-list::-webkit-scrollbar {
-    width: 8px !important; 
-    display: block !important;
-}
+    &::-webkit-scrollbar {
+        width: 8px !important;
+        display: block !important;
+    }
 
-.track-list:hover {
-    scrollbar-color: var(--primary-color) transparent;
+    &:hover {
+        scrollbar-color: $primary transparent;
+    }
 }
 
 .li {
@@ -751,20 +769,66 @@ const getSortIconClass = (field) => {
     justify-content: space-between;
     align-items: center;
     padding: 10px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid $border-light;
     border-radius: 5px;
     cursor: pointer;
+
+    &:hover {
+        background-color: var(--background-color);
+    }
+
+    &.selected {
+        background-color: rgba(var(--primary-color-rgb), 0.1);
+    }
+
+    &.cover-view {
+        height: 60px;
+        padding: 5px 10px;
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid $border-light;
+        border-radius: 5px;
+
+        &:hover {
+            background-color: var(--background-color);
+        }
+
+        .track-title {
+            flex: 2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .track-artist {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 10px;
+        }
+
+        .track-size {
+            flex: 0.5;
+            text-align: center;
+        }
+
+        .track-timelen {
+            width: 95px;
+            text-align: right;
+        }
+
+        .track-checkbox,
+        .track-number {
+            margin-right: 10px;
+            width: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    }
 }
 
-.li:hover {
-    background-color: var(--background-color);
-}
-
-.li.selected {
-    background-color: rgba(var(--primary-color-rgb), 0.1);
-}
-
-/* 歌曲多选 */
 .track-checkbox {
     margin-right: 10px;
     width: 30px;
@@ -786,7 +850,7 @@ const getSortIconClass = (field) => {
     text-overflow: ellipsis;
 }
 
-.track-size{
+.track-size {
     flex: 0.5;
     text-align: center;
 }
@@ -819,36 +883,35 @@ const getSortIconClass = (field) => {
     font-size: 10px;
     padding-left: 6px;
     padding-right: 6px;
-}
 
-.vip-icon {
-    color: #ff6d00;
-}
+    &.vip-icon {
+        color: #ff6d00;
+    }
 
-.hq-icon {
-    color: #0094ff;
-    border-color: #0094ff;
-}
+    &.hq-icon {
+        color: #0094ff;
+        border-color: #0094ff;
+    }
 
-.sq-icon {
-    color: #00c853;
-    border-color: #00c853;
-}
+    &.sq-icon {
+        color: #00c853;
+        border-color: #00c853;
+    }
 
-.hr-icon {
-    color: #ff6d00;
-    border-color: #ff6d00;
+    &.hr-icon {
+        color: #ff6d00;
+        border-color: #ff6d00;
+    }
 }
 
 .queue-play-btn {
     background: none;
     border: none;
     font-size: 16px;
-    color: var(--primary-color);
+    color: $primary;
     cursor: pointer;
 }
 
-/* 歌手简介部分 */
 .content-section {
     margin-top: 50px;
     border-top: 1px dotted var(--secondary-color);
@@ -856,11 +919,11 @@ const getSortIconClass = (field) => {
 
 .intro-section {
     margin-bottom: 30px;
-}
 
-.intro-section h3 {
-    color: var(--primary-color);
-    margin-bottom: 15px;
+    h3 {
+        color: $primary;
+        margin-bottom: 15px;
+    }
 }
 
 .section-content {
@@ -869,7 +932,6 @@ const getSortIconClass = (field) => {
     color: var(--text-color);
 }
 
-/* 导航按钮 */
 .location-arrow {
     position: fixed;
     bottom: 168px;
@@ -877,7 +939,7 @@ const getSortIconClass = (field) => {
     z-index: 1;
     cursor: pointer;
     font-size: 37px;
-    color: var(--primary-color);
+    color: $primary;
 }
 
 .scroll-bottom-img {
@@ -890,37 +952,35 @@ const getSortIconClass = (field) => {
     cursor: pointer;
 }
 
-/* 下拉菜单 */
 .more-btn-container {
     position: relative;
 }
 
 .dropdown-menu {
     position: absolute;
-    background-color: white;
+    background-color: $white;
     border: 1px solid #ccc;
     border-radius: 5px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: $shadow-light;
     top: 50px;
     z-index: 50;
+
+    ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    li {
+        padding: 10px;
+        cursor: pointer;
+
+        &:hover {
+            background-color: #f0f0f0;
+        }
+    }
 }
 
-.dropdown-menu ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.dropdown-menu li {
-    padding: 10px;
-    cursor: pointer;
-}
-
-.dropdown-menu li:hover {
-    background-color: #f0f0f0;
-}
-
-/* 音符动画 */
 .note-container {
     position: fixed;
     top: 0;
@@ -934,7 +994,7 @@ const getSortIconClass = (field) => {
 .flying-note {
     position: absolute;
     font-size: 36px;
-    color: var(--primary-color);
+    color: $primary;
     pointer-events: none;
     transform-origin: center;
 }
@@ -952,26 +1012,31 @@ const getSortIconClass = (field) => {
         transform: translate(var(--start-x), calc(var(--start-y) - 50px)) rotate(0deg) scale(1.2);
         opacity: 0.9;
     }
+
     20% {
         transform: translate(calc(var(--start-x) + 20px), calc(var(--start-y) - 70px)) rotate(45deg) scale(1.3);
         opacity: 0.85;
     }
+
     100% {
         transform: translate(80vw, 100vh) rotate(360deg) scale(0.6);
         opacity: 0;
     }
 }
 
-/* 表头样式 */
 .track-list-header-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 10px;
-    border-bottom: 1px solid var(--primary-color);
+    border-bottom: 1px solid $primary;
     font-weight: bold;
     background-color: rgba(var(--primary-color-rgb), 0.1);
     border-radius: 5px 5px 0 0;
+
+    &:hover {
+        background-color: rgba(var(--primary-color-rgb), 0.15);
+    }
 }
 
 .track-checkbox-header {
@@ -988,7 +1053,11 @@ const getSortIconClass = (field) => {
     width: 30px;
 }
 
-.track-title-header, .track-artist-header, .track-album-header, .track-timelen-header, .track-size-header {
+.track-title-header,
+.track-artist-header,
+.track-album-header,
+.track-timelen-header,
+.track-size-header {
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -996,32 +1065,38 @@ const getSortIconClass = (field) => {
 
 .track-title-header {
     flex: 2;
+
+    i {
+        margin-left: 5px;
+        font-size: 14px;
+    }
 }
 
-.track-size-header{
+.track-size-header {
     flex: 0.5;
     padding: 0 10px;
 }
 
-.track-artist-header, .track-album-header {
+.track-artist-header,
+.track-album-header {
     flex: 1;
     padding: 0 10px;
+
+    i {
+        margin-left: 5px;
+        font-size: 14px;
+    }
 }
 
 .track-timelen-header {
     text-align: right;
+
+    i {
+        margin-left: 5px;
+        font-size: 14px;
+    }
 }
 
-.track-title-header i, .track-artist-header i, .track-album-header i, .track-timelen-header i {
-    margin-left: 5px;
-    font-size: 14px;
-}
-
-.track-list-header-row:hover {
-    background-color: rgba(var(--primary-color-rgb), 0.15);
-}
-
-/* 视图模式切换按钮 */
 .view-mode-btn {
     background-color: transparent;
     border: 1px solid var(--secondary-color);
@@ -1035,28 +1110,14 @@ const getSortIconClass = (field) => {
     width: 36px;
     height: 31px;
     transition: all 0.3s ease;
-}
 
-.view-mode-btn:hover {
-    background-color: rgba(var(--primary-color-rgb), 0.1);
-}
+    &:hover {
+        background-color: rgba(var(--primary-color-rgb), 0.1);
+    }
 
-.view-mode-btn i {
-    font-size: 16px;
-}
-
-/* 网格视图样式 */
-.li.cover-view {
-    height: 60px;
-    padding: 5px 10px;
-    display: flex;
-    align-items: center;
-    border-bottom: 1px solid #eee;
-    border-radius: 5px;
-}
-
-.li.cover-view:hover {
-    background-color: var(--background-color);
+    i {
+        font-size: 16px;
+    }
 }
 
 .track-cover {
@@ -1067,13 +1128,13 @@ const getSortIconClass = (field) => {
     overflow: hidden;
     border-radius: 4px;
     flex-shrink: 0;
-}
 
-.track-cover img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
 }
 
 .li.cover-view:hover .track-cover img {
@@ -1086,56 +1147,21 @@ const getSortIconClass = (field) => {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.5);
     opacity: 0;
     transition: opacity 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: $white;
     font-size: 20px;
+
+    &.playing {
+        opacity: 1;
+    }
 }
 
 .li.cover-view:hover .track-cover-overlay {
     opacity: 1;
-}
-
-.track-cover-overlay.playing {
-    opacity: 1;
-}
-
-/* 调整封面视图下的其他元素样式 */
-.li.cover-view .track-title {
-    flex: 2;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.li.cover-view .track-artist {
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    padding: 0 10px;
-}
-
-.li.cover-view .track-size {
-    flex: 0.5;
-    text-align: center;
-}
-
-.li.cover-view .track-timelen {
-    width: 95px;
-    text-align: right;
-}
-
-.li.cover-view .track-checkbox,
-.li.cover-view .track-number {
-    margin-right: 10px;
-    width: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 </style>

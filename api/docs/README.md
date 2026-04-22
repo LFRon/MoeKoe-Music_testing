@@ -531,6 +531,18 @@ https://long.open.weixin.qq.com/connect/l/qrconnect?f=json&uuid=xxx 该接口直
 
 **调用例子：** `/user/follow`
 
+### 获取关注歌手消息
+
+说明：登录后调用此接口，可以关注的歌手/用户消息
+
+`id`: 需要获取歌手/用户消息的 userid
+
+`pagesize `: 每页页数, 默认为 30
+
+**接口地址：** `/user/follow/message`
+
+**调用例子：** `/user/follow/message`
+
 ### 获取用户云盘
 
 说明：登录后调用此接口可以获取用户上传到云盘的音乐（需要登录）

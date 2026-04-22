@@ -5,34 +5,16 @@
             <div class="controls-wrapper" :class="{ 'locked-controls': isLocked }">
                 <template v-if="!isLocked">
                     <div class="color-controls">
-                        <button 
-                            class="color-button"
-                            title="默认颜色"
-                            @click="$refs.defaultColorInput.click()"
-                        >
+                        <button class="color-button" title="默认颜色" @click="$refs.defaultColorInput.click()">
                             <div class="color-preview" :style="{ backgroundColor: defaultColor }"></div>
                         </button>
-                        <button 
-                            class="color-button"
-                            title="高亮颜色"
-                            @click="$refs.highlightColorInput.click()"
-                        >
+                        <button class="color-button" title="高亮颜色" @click="$refs.highlightColorInput.click()">
                             <div class="color-preview" :style="{ backgroundColor: highlightColor }"></div>
                         </button>
-                        <input
-                            ref="defaultColorInput"
-                            type="color"
-                            :value="defaultColor"
-                            @input="e => handleColorChange(e.target.value, 'default')"
-                            class="hidden-color-input"
-                        >
-                        <input
-                            ref="highlightColorInput"
-                            type="color"
-                            :value="highlightColor"
-                            @input="e => handleColorChange(e.target.value, 'highlight')"
-                            class="hidden-color-input"
-                        >
+                        <input ref="defaultColorInput" type="color" :value="defaultColor"
+                            @input="e => handleColorChange(e.target.value, 'default')" class="hidden-color-input">
+                        <input ref="highlightColorInput" type="color" :value="highlightColor"
+                            @input="e => handleColorChange(e.target.value, 'highlight')" class="hidden-color-input">
                     </div>
                     <button @click="changeFontSize(-2)" class="font-control" title="减小字体">
                         <i class="fas fa-minus"></i>
@@ -66,24 +48,18 @@
             </div>
         </div>
         <!-- 歌词内容 -->
-        <div 
-            class="lyrics-content-wrapper"
-            ref="lyricsContainerRef"
-            :class="{ 'locked': isLocked }"
-            :style="containerStyle"
-        >
+        <div class="lyrics-content-wrapper" ref="lyricsContainerRef" :class="{ 'locked': isLocked }"
+            :style="containerStyle">
             <template v-if="lyrics.length">
                 <div class="lyrics-line">
-                    <div class="lyrics-content" 
-                        ref="activeLyricsContentRef"
-                        :style="currentLineStyle"
-                        :class="{ 'hovering': isHovering && !isLocked }"
-                    >
+                    <div class="lyrics-content" ref="activeLyricsContentRef" :style="currentLineStyle"
+                        :class="{ 'hovering': isHovering && !isLocked }">
                         <span class="lyrics-text">
                             <span class="lyrics-layer lyrics-layer-default" :style="defaultLineStyle">
                                 {{ lyrics[displayedLines[0]]?.text || '' }}
                             </span>
-                            <span class="lyrics-layer lyrics-layer-highlight" :style="getLineHighlightStyle(displayedLines[0])">
+                            <span class="lyrics-layer lyrics-layer-highlight"
+                                :style="getLineHighlightStyle(displayedLines[0])">
                                 {{ lyrics[displayedLines[0]]?.text || '' }}
                             </span>
                         </span>
@@ -104,7 +80,8 @@
                             <span class="lyrics-layer lyrics-layer-default" :style="defaultLineStyle">
                                 {{ lyrics[displayedLines[1]]?.text || '' }}
                             </span>
-                            <span class="lyrics-layer lyrics-layer-highlight" :style="getLineHighlightStyle(displayedLines[1])">
+                            <span class="lyrics-layer lyrics-layer-highlight"
+                                :style="getLineHighlightStyle(displayedLines[1])">
                                 {{ lyrics[displayedLines[1]]?.text || '' }}
                             </span>
                         </span>
@@ -159,7 +136,7 @@ const sendWindowDrag = throttle((mouseX, mouseY) => {
     window.electron.ipcRenderer.send('window-drag', { mouseX, mouseY })
 }, 16)
 
-const displayedLines = ref([0, 1]) 
+const displayedLines = ref([0, 1])
 const defaultColor = ref(localStorage.getItem('lyrics-default-color') || '#D4D4D4')
 const highlightColor = ref(localStorage.getItem('lyrics-highlight-color') || 'var(--primary-color)')
 const FALLBACK_COLOR = '#D4D4D4'
@@ -286,14 +263,14 @@ const toggleLock = () => {
 // 更新当前行索引
 const updateCurrentLineIndex = () => {
     const currentTimeMs = currentTime.value
-    
+
     for (let i = 0; i < lyrics.value.length; i++) {
         const line = lyrics.value[i]
         if (!line?.characters?.length) continue
-        
+
         const lineStartTime = line.characters[0].startTime
         const lineEndTime = line.characters[line.characters.length - 1].endTime
-        
+
         if (currentTimeMs >= lineStartTime && currentTimeMs <= lineEndTime) {
             if (currentLineIndex.value !== i) {
                 currentLineIndex.value = i
@@ -320,7 +297,7 @@ const updateDisplayedLines = () => {
 // 开始拖动
 const startDrag = (event) => {
     if (isLocked.value) return
-    
+
     // 只有在悬停状态下才允许拖动（即只有先碰到歌词文本后才能拖动）
     if (isHovering.value) {
         isDragging.value = true
@@ -337,22 +314,22 @@ const checkMousePosition = (event) => {
         // 检查鼠标是否在歌词文本上或控制按钮上
         // const isMouseOnLyrics = event.target.closest('.lyrics-content') !== null
         const isMouseInControls = event.target.closest('.controls-overlay') !== null || event.target.closest('.lock-button') !== null
-        
+
         // 当鼠标在歌词文本上或者在控制按钮上时，显示控制按钮
         if (isMouseInControls) {
             document.querySelector('.controls-overlay')?.classList.add('show-locked-controls')
         } else {
             document.querySelector('.controls-overlay')?.classList.remove('show-locked-controls')
         }
-        
+
         setIgnoreMouseEvents(!(isMouseInControls))
         return
     }
-    
+
     // 使用更可靠的方法检查鼠标位置
     const lyricsContainer = document.querySelector('.lyrics-container')
     if (!lyricsContainer) return
-    
+
     const rect = lyricsContainer.getBoundingClientRect()
     const isMouseInContainer = (
         event.clientX >= rect.left &&
@@ -360,21 +337,21 @@ const checkMousePosition = (event) => {
         event.clientY >= rect.top &&
         event.clientY <= rect.bottom
     )
-    
+
     // 检查鼠标是否在歌词文本上或控制栏上
     const isMouseOnLyrics = event.target.closest('.lyrics-content') !== null
     const isMouseInControls = event.target.closest('.controls-overlay') !== null
-    
+
     // 如果鼠标在歌词文本上或控制栏上，激活悬停状态
     if ((isMouseOnLyrics || isMouseInControls) && !isLocked.value) {
         isHovering.value = true
     }
-    
+
     // 只有当鼠标完全离开容器时才重置悬停状态
     if (!isMouseInContainer && !isLocked.value) {
         isHovering.value = false
     }
-    
+
     // 设置鼠标事件穿透，当在控制区域或悬停状态时不穿透
     setIgnoreMouseEvents(!(isMouseInControls || isHovering.value))
 }
@@ -390,7 +367,7 @@ window.electron.ipcRenderer.on('lyrics-data', (_event, data) => {
         currentTime.value = 0;
         currentLineScrollX.value = 0;
         displayedLines.value = [0, 1];
-    } 
+    }
     currentTime.value = data.currentTime * 1000;
     updateCurrentLineIndex();
 })
@@ -406,7 +383,7 @@ const processLyricsData = (lyricsData) => {
     });
 }
 
-window.electron.ipcRenderer.on('playing-status', (_event, playing)=>{
+window.electron.ipcRenderer.on('playing-status', (_event, playing) => {
     isPlaying.value = !!playing
 })
 
@@ -419,13 +396,13 @@ const changeFontSize = (delta) => {
 onMounted(() => {
     isLocked.value = localStorage.getItem('lyrics-lock') === 'true'
     setIgnoreMouseEvents(true)
-    
+
     document.addEventListener('mousemove', checkMousePosition)
     document.addEventListener('mousedown', startDrag)
     document.addEventListener('mousemove', onDrag)
     document.addEventListener('mouseup', endDrag)
     fontSize.value = parseInt(localStorage.getItem('lyrics-font-size') || '32')
-    setInterval(() => {isPlaying.value && (currentTime.value += 5)}, 5)
+    setInterval(() => { isPlaying.value && (currentTime.value += 5) }, 5)
 })
 
 const onDrag = (event) => {
@@ -587,7 +564,13 @@ html {
     background-color: rgba(0, 0, 0, 0);
 }
 </style>
-<style scoped>
+<style lang="scss" scoped>
+$white: white;
+$text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+$shadow-light: 0 2px 8px rgba(0, 0, 0, 0.2);
+$bg-overlay: rgba(30, 30, 30, 0.75);
+$bg-button: rgba(50, 50, 50, 0.7);
+
 .lyrics-text {
     display: inline-block;
     position: relative;
@@ -603,21 +586,21 @@ html {
     color: transparent;
     font-weight: bold;
     white-space: pre;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
+    text-shadow: $text-shadow;
 
-.lyrics-layer-default {
-    position: relative;
-}
+    &-default {
+        position: relative;
+    }
 
-.lyrics-layer-highlight {
-    position: absolute;
-    left: 0;
-    top: 0;
-    overflow: hidden;
-    width: 0;
-    max-width: 100%;
-    will-change: width;
+    &-highlight {
+        position: absolute;
+        left: 0;
+        top: 0;
+        overflow: hidden;
+        width: 0;
+        max-width: 100%;
+        will-change: width;
+    }
 }
 
 .lyrics-text-static .lyrics-layer {
@@ -639,18 +622,31 @@ html {
     left: 0;
     right: 0;
     height: auto;
-    transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-    transform: translateZ(0); 
-    /* margin: 8px; 移出事件和窗口缩放冲突，暂未解决 */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateZ(0);
     padding: 8px 0;
     overflow: hidden;
-}
 
-.lyrics-container.hovering {
-    background-color: rgba(0, 0, 0, 0.4);
-    cursor: move;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    &.hovering {
+        background-color: rgba(0, 0, 0, 0.4);
+        cursor: move;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    &.locked {
+        .controls-overlay {
+            opacity: 0;
+        }
+
+        .controls-overlay.show-locked-controls {
+            opacity: 1;
+        }
+    }
+
+    &:not(.locked) .lyrics-content.hovering:hover {
+        cursor: move;
+    }
 }
 
 .lyrics-content-wrapper {
@@ -659,28 +655,20 @@ html {
     justify-content: center;
     align-items: center;
     width: 100%;
-    transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .controls-overlay {
     opacity: 0;
-    transition: opacity 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+    transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     margin-bottom: 10px;
     height: 40px;
     position: relative;
     z-index: 10;
-    pointer-events: auto; /* 确保控制栏可以接收鼠标事件 */
+    pointer-events: auto;
 }
 
 .lyrics-container.hovering .controls-overlay {
-    opacity: 1;
-}
-
-.lyrics-container.locked .controls-overlay {
-    opacity: 0;
-}
-
-.lyrics-container.locked .controls-overlay.show-locked-controls {
     opacity: 1;
 }
 
@@ -688,7 +676,7 @@ html {
     display: flex;
     gap: 15px;
     justify-content: center;
-    background: rgba(30, 30, 30, 0.75);
+    background: $bg-overlay;
     padding: 6px 12px;
     border-radius: 20px;
     backdrop-filter: blur(4px);
@@ -696,54 +684,58 @@ html {
     width: auto;
     min-width: 430px;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: $shadow-light;
+
+    &:not(.locked-controls) {
+        cursor: move;
+    }
+
+    &.locked-controls {
+        background: $bg-overlay;
+        padding: 6px;
+        width: auto;
+        min-width: auto;
+        border-radius: 50%;
+    }
+
+    button {
+        background: $bg-button;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        color: $white;
+        cursor: pointer;
+        width: 28px !important;
+        height: 28px !important;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        transform: scale(1);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+
+        &:hover {
+            transform: scale(1.1);
+            background: rgba(80, 80, 80, 0.8);
+            border-color: rgba(255, 255, 255, 0.25) !important;
+        }
+
+        &:active {
+            transform: scale(0.95);
+        }
+    }
+
+    i {
+        font-size: 16px;
+    }
 }
 
 .lock-button {
     position: relative;
     z-index: 3;
-}
 
-.lock-button i {
-    font-size: 13px !important;
-}
-
-.controls-wrapper.locked-controls {
-    background: rgba(30, 30, 30, 0.75);
-    padding: 6px;
-    width: auto;
-    min-width: auto;
-    border-radius: 50%;
-}
-
-.controls-wrapper button {
-    background: rgba(50, 50, 50, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    color: white;
-    cursor: pointer;
-    width: 28px !important;
-    height: 28px !important;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
-    transform: scale(1);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-.controls-wrapper button:hover {
-    transform: scale(1.1);
-    background: rgba(80, 80, 80, 0.8);
-    border-color: rgba(255, 255, 255, 0.25) !important;
-}
-
-.controls-wrapper button:active {
-    transform: scale(0.95);
-}
-
-.controls-wrapper i {
-    font-size: 16px;
+    i {
+        font-size: 13px !important;
+    }
 }
 
 .lyrics-line {
@@ -758,22 +750,14 @@ html {
 .lyrics-content {
     display: inline-block;
     white-space: nowrap;
-    transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 6px;
     transform: translateX(0);
     background-color: transparent;
 }
 
-.lyrics-container:not(.locked) .lyrics-content.hovering:hover {
-    cursor: move;
-}
-
-.nolyrics{
+.nolyrics {
     margin-bottom: 30px;
-}
-
-.controls-wrapper:not(.locked-controls) {
-    cursor: move;
 }
 
 .font-size-controls {
@@ -787,22 +771,22 @@ html {
     align-items: center;
     gap: 2px;
     width: auto !important;
-    transition: all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     transform: scale(1);
-}
 
-.font-control:hover {
-    opacity: 1;
-    transform: scale(1.05);
-}
+    &:hover {
+        opacity: 1;
+        transform: scale(1.05);
+    }
 
-.font-control i {
-    font-size: 12px;
-}
+    i {
+        font-size: 12px;
 
-.font-control i.fa-font {
-    font-size: 14px;
-    margin: 0 1px;
+        &.fa-font {
+            font-size: 14px;
+            margin: 0 1px;
+        }
+    }
 }
 
 .font-icon {
@@ -823,13 +807,13 @@ html {
     align-items: center;
     justify-content: center;
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    transition: all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     transform: scale(1);
-}
 
-.color-button:hover {
-    transform: scale(1.1);
-    border-color: rgba(255, 255, 255, 0.4) !important;
+    &:hover {
+        transform: scale(1.1);
+        border-color: rgba(255, 255, 255, 0.4) !important;
+    }
 }
 
 .color-preview {
@@ -837,7 +821,7 @@ html {
     height: 16px;
     border-radius: 4px;
     border: 1px solid rgba(255, 255, 255, 0.3);
-    transition: all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 

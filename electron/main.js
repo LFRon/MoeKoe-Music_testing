@@ -9,6 +9,7 @@ import { initializeExtensions, cleanupExtensions } from './extensions/extensions
 import { setupAutoUpdater } from './services/updater.js';
 import apiService from './services/apiService.js';
 import statusBarLyricsService from './services/statusBarLyricsService.js';
+import { setupDesktopShortcutIcon } from './services/desktopShortcutIcon.js';
 import Store from 'electron-store';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -55,6 +56,7 @@ app.on('ready', () => {
             registerProtocolHandler(mainWindow);
             sendHashAfterLoad(mainWindow);
             initializeExtensions();
+            setupDesktopShortcutIcon();
         } catch (error) {
             console.log('初始化应用时发生错误:', error);
             createTray(null);
@@ -151,6 +153,7 @@ ipcMain.on('disclaimer-response', (event, accepted) => {
     if (accepted) {
         store.set('disclaimerAccepted', true);
     } else {
+        app.isQuitting = true;
         app.quit();
     }
 });

@@ -20,7 +20,7 @@ jobs:
       body: ${{ steps.create-release.outputs.RELEASE_BODY }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           submodules: recursive
@@ -37,7 +37,7 @@ jobs:
             MINOR=$((MINOR + 1))
           fi
           NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
-          echo "::set-output name=NEW_VERSION::$NEW_VERSION"
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
 
       - name: Create release body
         id: create-release
@@ -60,14 +60,14 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.set-version.outputs.NEW_VERSION }}
           token: ${{ secrets.GITHUB_TOKEN }}
           name: "Release ${{ steps.set-version.outputs.NEW_VERSION }}"
           body: ${{ steps.create-release.outputs.RELEASE_BODY }}
           prerelease: false
-          draft: false
+          draft: true # 先创建草稿
 
 
   build-and-upload:
@@ -117,9 +117,10 @@ jobs:
           mv "./dist_electron/MoeKoe Music.deb" "./MoeKoe_Music_${{ needs.increment-version.outputs.version }}_amd64.deb"
 
       - name: Upload to Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.increment-version.outputs.version }}
+          draft: false # 这里更新下状态
           files: |
             ./MoeKoe_Music_Setup_${{ needs.increment-version.outputs.version }}.exe
             ./MoeKoe_Music_Setup_${{ needs.increment-version.outputs.version }}.exe.blockmap

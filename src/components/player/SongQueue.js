@@ -84,10 +84,13 @@ export default function useSongQueue(t, musicQueueStore, queueList = null) {
     });
     const NextSong = ref([]);
     const timeoutId = ref(null);
+    let activeSongRequestId = 0;
 
     // 添加歌曲到队列并播放
     const addSongToQueue = async (hash, name, img, author, isReset = true, qualityOverride = '', cachedQualityOptions = []) => {
         if(!hash) return { error: true };
+        const requestId = ++activeSongRequestId;
+        const isStaleRequest = () => requestId !== activeSongRequestId;
         const currentSongHash = currentSong.value.hash;
         if (typeof window !== 'undefined' && typeof window.electron !== 'undefined') {
             window.electron.ipcRenderer.send('set-tray-title', name + ' - ' + author);
@@ -122,6 +125,7 @@ export default function useSongQueue(t, musicQueueStore, queueList = null) {
             if (!isAuth) {
                 data.free_part = 1;
                 response = await get('/song/url', data);
+                if (isStaleRequest()) return { stale: true };
             } else {
                 const q = normalizeQuality(qualityOverride || settings?.quality);
                 const fallbackCandidates = getFallbackChain(q).map(itemQuality => ({
@@ -134,6 +138,7 @@ export default function useSongQueue(t, musicQueueStore, queueList = null) {
                 try {
                     if (qualityOptions.length === 0) {
                         const privilegeResponse = await get(`/privilege/lite`, { hash: hash });
+                        if (isStaleRequest()) return { stale: true };
                         qualityOptions = getQualityOptions(privilegeResponse);
                     }
                     candidates = getPrivilegeCandidates(qualityOptions, q, hash);
@@ -151,8 +156,10 @@ export default function useSongQueue(t, musicQueueStore, queueList = null) {
                     try {
                         const candidateResponse = await get('/song/url', {
                             hash: candidate.hash,
-                            quality: candidate.quality
+                            quality: candidate.quality,
+                            ppage_id: '356753938'
                         });
+                        if (isStaleRequest()) return { stale: true };
 
                         if (candidateResponse.status !== 1) {
                             response = candidateResponse;
@@ -184,6 +191,8 @@ export default function useSongQueue(t, musicQueueStore, queueList = null) {
                     }
                 }
             }
+
+            if (isStaleRequest()) return { stale: true };
 
             if (!response || response.status !== 1) {
                 console.error('[SongQueue] 获取音乐URL失败:', response);
@@ -255,6 +264,7 @@ export default function useSongQueue(t, musicQueueStore, queueList = null) {
             // 返回歌曲对象
             return { song };
         } catch (error) {
+            if (isStaleRequest()) return { stale: true };
             console.error('[SongQueue] 获取音乐地址出错:', error);
             currentSong.value.author = currentSong.value.name = t('huo-qu-yin-le-di-zhi-shi-bai');
             if (error.response?.data?.error?.includes('验证')) {

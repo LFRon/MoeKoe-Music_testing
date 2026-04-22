@@ -16,7 +16,7 @@ const minimizeWindow = () => window.electron.ipcRenderer.send('window-control', 
 const maximizeWindow = () => window.electron.ipcRenderer.send('window-control', 'maximize');
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .titlebar {
   -webkit-app-region: drag;
   height: 32px;
@@ -50,53 +50,53 @@ const maximizeWindow = () => window.electron.ipcRenderer.send('window-control', 
   background-size: 10px;
   background-repeat: no-repeat;
   background-position: center;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  &:focus {
+    outline: none;
+  }
 }
 
 #closeBtn {
   background-color: #ff5f57 !important;
+
+  &:hover {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16"><path fill="black" d="M5 5l6 6M5 11l6-6" stroke="black" stroke-width="1.5" stroke-linecap="round"/></svg>');
+  }
 }
 
 #minBtn {
   background-color: #ffbd2e !important;
+
+  &:hover {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="black" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M2 8a1 1 0 011-1h10a1 1 0 110 2H3a1 1 0 01-1-1z"/></svg>');
+  }
 }
 
 #maxBtn {
   background-color: #28c940 !important;
-}
 
-.control-button:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.control-button:hover#closeBtn {
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16"><path fill="black" d="M5 5l6 6M5 11l6-6" stroke="black" stroke-width="1.5" stroke-linecap="round"/></svg>');
-}
-
-.control-button:hover#minBtn {
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="black" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M2 8a1 1 0 011-1h10a1 1 0 110 2H3a1 1 0 01-1-1z"/></svg>');
-}
-
-.control-button:hover#maxBtn {
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16"><path fill="none" stroke="black" stroke-width="1.5" d="M3 3 L6 3 L3 6 M3 3 L3 6 M13 3 L10 3 L13 6 M13 3 L13 6 M3 13 L6 13 L3 10 M3 13 L3 10 M13 13 L10 13 L13 10 M13 13 L13 10"/></svg>');
-}
-
-.control-button:focus {
-  outline: none;
+  &:hover {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16"><path fill="none" stroke="black" stroke-width="1.5" d="M3 3 L6 3 L3 6 M3 3 L3 6 M13 3 L10 3 L13 6 M13 3 L13 6 M3 13 L6 13 L3 10 M3 13 L3 10 M13 13 L10 13 L13 10 M13 13 L13 10"/></svg>');
+  }
 }
 
 .content {
   padding: 20px;
-}
 
-.content h1 {
-  margin-bottom: 15px;
-  color: #2f3241;
-}
+  h1 {
+    margin-bottom: 15px;
+    color: #2f3241;
+  }
 
-.content p {
-  color: #444;
-  line-height: 1.6;
-  margin-bottom: 10px;
+  p {
+    color: #444;
+    line-height: 1.6;
+    margin-bottom: 10px;
+  }
 }
 
 .titlebar-text {

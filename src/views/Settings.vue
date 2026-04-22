@@ -1,24 +1,21 @@
 <template>
     <div class="settings-page">
         <div class="settings-sidebar">
-            <div v-for="(section, sectionIndex) in settingSections" :key="sectionIndex" 
-                 class="sidebar-item" 
-                 :class="{ active: activeTab === sectionIndex }"
-                 @click="activeTab = sectionIndex">
+            <div v-for="(section, sectionIndex) in settingSections" :key="sectionIndex" class="sidebar-item"
+                :class="{ active: activeTab === sectionIndex }" @click="activeTab = sectionIndex">
                 <i :class="getSectionIcon(section.title)"></i>
                 <span>{{ section.title }}</span>
             </div>
         </div>
-        
+
         <div class="settings-content">
-            <div v-for="(section, sectionIndex) in settingSections" :key="sectionIndex" 
-                 class="setting-section" 
-                 v-show="activeTab === sectionIndex">
+            <div v-for="(section, sectionIndex) in settingSections" :key="sectionIndex" class="setting-section"
+                v-show="activeTab === sectionIndex">
                 <h3>{{ section.title }}</h3>
                 <ExtensionManager v-if="section.title === t('cha-jian')" />
                 <div v-else class="settings-cards">
-                    <div v-for="(item, itemIndex) in section.items" :key="itemIndex"
-                        class="setting-card" @click="item.action ? item.action(item.helpLink) : openSelection(item.key, item.helpLink)">
+                    <div v-for="(item, itemIndex) in section.items" :key="itemIndex" class="setting-card"
+                        @click="item.action ? item.action(item.helpLink) : openSelection(item.key, item.helpLink)">
                         <div class="setting-card-header">
                             <i :class="getItemIcon(item.key)"></i>
                             <span>{{ item.label }}</span>
@@ -48,18 +45,14 @@
 
         <div v-if="isSelectionOpen" class="modal">
             <div class="modal-content">
-                <a
-                    v-if="currentHelpLink"
-                    class="help-link"
-                    @click="openHelpLink"
-                    :title="$t('bang-zhu')"
-                    :aria-label="$t('bang-zhu')"
-                >
+                <a v-if="currentHelpLink" class="help-link" @click="openHelpLink" :title="$t('bang-zhu')"
+                    :aria-label="$t('bang-zhu')">
                     <i class="fas fa-question-circle"></i>
                 </a>
                 <h3>{{ selectionTypeMap[selectionType].title }}</h3>
                 <ul v-if="selectionType !== 'font' && selectionType !== 'audioOutputDevice'">
-                    <li v-for="option in selectionTypeMap[selectionType].options" :key="option" @click="selectOption(option)">
+                    <li v-for="option in selectionTypeMap[selectionType].options" :key="option"
+                        @click="selectOption(option)">
                         {{ option.displayText }}
                     </li>
                 </ul>
@@ -67,7 +60,8 @@
                 <ul v-else-if="selectionType === 'audioOutputDevice'">
                     <li v-if="audioOutputDevicesLoading">正在获取设备列表...</li>
                     <li v-else-if="audioOutputDeviceOptions.length === 0">未检测到音频输出设备</li>
-                    <li v-else v-for="option in audioOutputDeviceOptions" :key="option.value" @click="selectOption(option)">
+                    <li v-else v-for="option in audioOutputDeviceOptions" :key="option.value"
+                        @click="selectOption(option)">
                         {{ option.displayText }}
                     </li>
                 </ul>
@@ -75,25 +69,21 @@
                 <div v-if="selectionType === 'font'" class="api-settings-container" @focusout="handleFontFocusOut">
                     <div class="api-setting-item">
                         <label>{{ $t('zi-ti-url-di-zhi') }}</label>
-                        <input type="text" v-model="fontUrlInput" class="api-input" :placeholder="$t('qing-shu-ru-zi-ti-url-di-zhi')" />
+                        <input type="text" v-model="fontUrlInput" class="api-input"
+                            :placeholder="$t('qing-shu-ru-zi-ti-url-di-zhi')" />
                     </div>
                     <div class="api-setting-item">
                         <label>{{ $t('zi-ti-ming-cheng') }}</label>
-                        <input type="text" v-model="fontFamilyInput" class="api-input" :placeholder="$t('qing-shu-ru-zi-ti-ming-cheng')" />
+                        <input type="text" v-model="fontFamilyInput" class="api-input"
+                            :placeholder="$t('qing-shu-ru-zi-ti-ming-cheng')" />
                     </div>
                 </div>
 
                 <div v-if="selectionType === 'highDpi'" class="scale-slider-container">
-                    <div class="scale-slider-label">{{ $t('suo-fang-yin-zi') }}: {{ dpiScale }} <span class="scale-slider-hint">{{ $t('tiao-zheng-hou-xu-zhong-qi') }}</span></div>
+                    <div class="scale-slider-label">{{ $t('suo-fang-yin-zi') }}: {{ dpiScale }} <span
+                            class="scale-slider-hint">{{ $t('tiao-zheng-hou-xu-zhong-qi') }}</span></div>
                     <div class="scale-slider-wrapper">
-                        <input
-                            type="range"
-                            min="0.5"
-                            max="2"
-                            step="0.1"
-                            v-model="dpiScale"
-                            class="scale-slider"
-                        />
+                        <input type="range" min="0.5" max="2" step="0.1" v-model="dpiScale" class="scale-slider" />
                         <div class="scale-marks">
                             <span>0.5</span>
                             <span>1.0</span>
@@ -103,7 +93,8 @@
                     </div>
                 </div>
 
-                <div v-if="selectionType === 'apiMode' && selectedSettings.apiMode.value === 'on'" class="api-settings-container">
+                <div v-if="selectionType === 'apiMode' && selectedSettings.apiMode.value === 'on'"
+                    class="api-settings-container">
                     <div class="api-setting-item">
                         <label>{{ $t('api-di-zhi') }}</label>
                         <input type="text" :value="defaultApiBaseUrl" readonly class="api-input" />
@@ -116,21 +107,14 @@
                         {{ $t('mo-ren-api-ti-shi') }}
                     </div>
                 </div>
-                <div v-if="selectionType === 'apiBaseUrlMode' && selectedSettings.apiBaseUrlMode.value === 'custom'" class="api-settings-container">
+                <div v-if="selectionType === 'apiBaseUrlMode' && selectedSettings.apiBaseUrlMode.value === 'custom'"
+                    class="api-settings-container">
                     <div class="api-setting-item">
-                        <input
-                            type="text"
-                            v-model="apiBaseUrlForm.url"
-                            class="api-input"
-                            :placeholder="`RPC地址（留空使用默认：${defaultApiBaseUrl}）`"
-                        />
+                        <input type="text" v-model="apiBaseUrlForm.url" class="api-input"
+                            :placeholder="`RPC地址（留空使用默认：${defaultApiBaseUrl}）`" />
                     </div>
                     <div class="proxy-actions">
-                        <button
-                            @click="testApiBaseUrl"
-                            :disabled="apiBaseUrlForm.testing"
-                            class="test-button"
-                        >
+                        <button @click="testApiBaseUrl" :disabled="apiBaseUrlForm.testing" class="test-button">
                             {{ apiBaseUrlForm.testing ? $t('zheng-zai-ce-shi') : $t('ce-shi-lian-jie') }}
                         </button>
                         <button class="primary" @click="saveApiBaseUrl">
@@ -141,21 +125,14 @@
                         {{ apiBaseUrlForm.testResult }}
                     </div>
                 </div>
-                <div v-if="selectionType === 'proxy' && selectedSettings.proxy.value === 'on'" class="proxy-settings-container">
+                <div v-if="selectionType === 'proxy' && selectedSettings.proxy.value === 'on'"
+                    class="proxy-settings-container">
                     <div class="api-setting-item">
-                        <input
-                            type="text"
-                            v-model="proxyForm.url"
-                            class="api-input"
-                            :placeholder="$t('dai-li-placeholder')"
-                        />
+                        <input type="text" v-model="proxyForm.url" class="api-input"
+                            :placeholder="$t('dai-li-placeholder')" />
                     </div>
                     <div class="proxy-actions">
-                        <button
-                            @click="testProxyConnection"
-                            :disabled="proxyForm.testing"
-                            class="test-button"
-                        >
+                        <button @click="testProxyConnection" :disabled="proxyForm.testing" class="test-button">
                             {{ proxyForm.testing ? $t('zheng-zai-ce-shi') : $t('ce-shi-lian-jie') }}
                         </button>
                         <button class="primary" @click="saveProxy">
@@ -177,13 +154,11 @@
                 <div class="shortcut-list">
                     <div class="shortcut-item" v-for="(config, key) in shortcutConfigs" :key="key">
                         <span>{{ config.label }}</span>
-                        <div class="shortcut-input"
-                             @click="startRecording(key)"
-                             :class="{ 'recording': recordingKey === key }">
-                            {{ shortcuts[key] || $t('dian-ji-she-zhi-kuai-jie-jian') }}
-                            <div v-if="shortcuts[key]"
-                                 class="clear-shortcut"
-                                 @click.stop="clearShortcut(key)">
+                        <div class="shortcut-input" @click="startRecording(key)"
+                            :class="{ 'recording': recordingKey === key }">
+                            <!-- {{ displayShortcut(key) || $t('dian-ji-she-zhi-kuai-jie-jian') }} -->
+                            <span v-html="displayShortcut(key) || $t('dian-ji-she-zhi-kuai-jie-jian')" />
+                            <div v-if="shortcuts[key]" class="clear-shortcut" @click.stop="clearShortcut(key)">
                                 ×
                             </div>
                         </div>
@@ -240,6 +215,7 @@ const selectedSettings = ref({
     startMinimized: { displayText: t('guan-bi'), value: 'off' },
     preventAppSuspension: { displayText: t('guan-bi'), value: 'off' },
     networkMode: { displayText: t('zhu-wang'), value: 'mainnet' },
+    startupPage: { displayText: t('shou-ye'), value: 'home' },
     proxy: { displayText: t('guan-bi'), value: 'off' },
     proxyUrl: { displayText: '', value: '' },
     apiBaseUrlMode: { displayText: '默认', value: 'default' },
@@ -279,7 +255,11 @@ const settingSections = computed(() => [
                 label: t('zi-ti-she-zhi'),
                 showRefreshHint: true,
                 refreshHintText: t('shua-xin-hou-sheng-xiao'),
-                helpLink:'https://music.moekoe.cn/guide/font-settings.html'
+                helpLink: 'https://music.moekoe.cn/guide/font-settings.html'
+            },
+            {
+                key: 'startupPage',
+                label: '启动页'
             }
         ]
     },
@@ -302,13 +282,13 @@ const settingSections = computed(() => [
                 key: 'pauseOnAudioOutputChange',
                 label: '输出设备变化自动暂停',
                 icon: '🎧 ',
-                helpLink:'https://music.moekoe.cn/guide/auto-pause-on-output-device-change.html'
+                helpLink: 'https://music.moekoe.cn/guide/auto-pause-on-output-device-change.html'
             },
             {
                 key: 'audioOutputDevice',
                 label: '音频输出设备',
                 icon: '🔊 ',
-                helpLink:'https://music.moekoe.cn/guide/audio-output-device.html'
+                helpLink: 'https://music.moekoe.cn/guide/audio-output-device.html'
             },
             {
                 key: 'greetings',
@@ -321,7 +301,7 @@ const settingSections = computed(() => [
                 icon: '🔌 ',
                 showRefreshHint: true,
                 refreshHintText: t('zhong-qi-hou-sheng-xiao'),
-                helpLink:'https://music.moekoe.cn/guide/data-source.html'
+                helpLink: 'https://music.moekoe.cn/guide/data-source.html'
             }
         ]
     },
@@ -392,7 +372,7 @@ const settingSections = computed(() => [
                 label: t('wang-luo-mo-shi'),
                 showRefreshHint: true,
                 refreshHintText: t('zhong-qi-hou-sheng-xiao'),
-                helpLink:'https://music.moekoe.cn/guide/network-modes.html'
+                helpLink: 'https://music.moekoe.cn/guide/network-modes.html'
             },
             {
                 key: 'startMinimized',
@@ -410,13 +390,13 @@ const settingSections = computed(() => [
                 showRefreshHint: true,
                 refreshHintText: t('zhong-qi-hou-sheng-xiao')
             },
-             {
+            {
                 key: 'apiBaseUrlMode',
                 label: 'RPC地址',
                 showRefreshHint: true,
                 refreshHintText: t('shua-xin-hou-sheng-xiao'),
-                helpLink:'https://music.moekoe.cn/guide/rpc-api-base-url.html'
-             },
+                helpLink: 'https://music.moekoe.cn/guide/rpc-api-base-url.html'
+            },
             {
                 key: 'touchBar',
                 label: 'TouchBar',
@@ -440,7 +420,7 @@ const settingSections = computed(() => [
                 label: t('wang-luo-dai-li'),
                 showRefreshHint: true,
                 refreshHintText: t('zhong-qi-hou-sheng-xiao'),
-                helpLink:'https://music.moekoe.cn/guide/proxy-settings.html'
+                helpLink: 'https://music.moekoe.cn/guide/proxy-settings.html'
             }
         ]
     }
@@ -488,7 +468,8 @@ const getItemIcon = (key) => {
         'touchBar': 'fas fa-tablet-alt',
         'shortcuts': 'fas fa-keyboard',
         'pwa': 'fas fa-mobile-alt',
-        'proxy': 'fas fa-random'
+        'proxy': 'fas fa-random',
+        'startupPage': 'fas fa-home'
     };
     return iconMap[key] || 'fas fa-sliders-h';
 };
@@ -687,6 +668,14 @@ const selectionTypeMap = {
             { displayText: t('kai-fa-wang'), value: 'devnet' }
         ]
     },
+    startupPage: {
+        title: '启动页',
+        options: [
+            { displayText: t('shou-ye'), value: 'Index' },
+            { displayText: t('fa-xian'), value: 'Discover' },
+            { displayText: t('yin-le-ku'), value: 'Library' }
+        ]
+    },
     proxy: {
         title: t('wang-luo-dai-li'),
         options: [
@@ -706,7 +695,7 @@ const selectionTypeMap = {
         ]
     },
     loudnessNormalization: {
-        title: t('ping-heng-yin-pin-xiang-du')+'(实验性)',
+        title: t('ping-heng-yin-pin-xiang-du') + '(实验性)',
         options: [
             { displayText: t('da-kai'), value: 'on' },
             { displayText: t('guan-bi'), value: 'off' }
@@ -814,7 +803,7 @@ const openSelection = (type, helpLink) => {
         fontUrlInput.value = selectedSettings.value.fontUrl?.value || '';
         fontFamilyInput.value = selectedSettings.value.font?.value || '';
     }
-    
+
     if (type === 'proxy') {
         proxyForm.url = selectedSettings.value.proxyUrl?.value || '';
     }
@@ -840,17 +829,17 @@ const openHelpLink = () => {
     }
 };
 
-    const selectOption = async (option) => {
+const selectOption = async (option) => {
     const electronFeatures = ['desktopLyrics', 'statusBarLyrics', 'gpuAcceleration', 'minimizeToTray', 'highDpi', 'nativeTitleBar', 'touchBar', 'autoStart', 'startMinimized', 'preventAppSuspension', 'networkMode', 'poxySettings', 'apiMode', 'dataSource', 'statusBarLyrics'];
     if (!isElectron() && electronFeatures.includes(selectionType.value)) {
         window.$modal.alert(t('fei-ke-hu-duan-huan-jing-wu-fa-qi-yong'));
         return;
     }
-    if(selectionType.value == 'touchBar' && window.electron.platform != 'darwin'){
+    if (selectionType.value == 'touchBar' && window.electron.platform != 'darwin') {
         window.$modal.alert(t('fei-mac-bu-zhi-chi-touchbar'));
         return;
     }
-    if(selectionType.value == 'statusBarLyrics' && window.electron.platform != 'darwin'){
+    if (selectionType.value == 'statusBarLyrics' && window.electron.platform != 'darwin') {
         window.$modal.alert(t('zhuang-tai-lan-ge-ci-jin-zhi-chi-mac'));
         return;
     }
@@ -917,8 +906,8 @@ const openHelpLink = () => {
     };
     await actions[selectionType.value]?.();
     saveSettings();
-    if(!['apiMode','font','fontUrl', 'proxy', 'apiBaseUrlMode'].includes(selectionType.value)) closeSelection();
-    const refreshHintTypes = ['nativeTitleBar','lyricsBackground', 'lyricsFontSize', 'gpuAcceleration', 'highDpi', 'apiMode', 'apiBaseUrlMode', 'touchBar', 'preventAppSuspension', 'networkMode', 'font', 'proxy', 'dataSource', 'loudnessNormalization', 'statusBarLyrics'];
+    if (!['apiMode', 'font', 'fontUrl', 'proxy', 'apiBaseUrlMode'].includes(selectionType.value)) closeSelection();
+    const refreshHintTypes = ['nativeTitleBar', 'lyricsBackground', 'lyricsFontSize', 'gpuAcceleration', 'highDpi', 'apiMode', 'apiBaseUrlMode', 'touchBar', 'preventAppSuspension', 'networkMode', 'font', 'proxy', 'dataSource', 'loudnessNormalization', 'statusBarLyrics'];
     if (refreshHintTypes.includes(selectionType.value)) {
         showRefreshHint.value[selectionType.value] = true;
     }
@@ -958,7 +947,7 @@ const closeSelection = () => {
 
 onMounted(() => {
     const savedSettings = JSON.parse(localStorage.getItem('settings'));
-    
+
     if (savedSettings) {
         if (savedSettings.apiBaseUrlMode === undefined) {
             const legacyUrl = savedSettings.apiBaseUrl || '';
@@ -1019,7 +1008,7 @@ onMounted(() => {
             return acc;
         }, {});
     }
-    if(isElectron()){
+    if (isElectron()) {
         appVersion.value = localStorage.getItem('version');
         platform.value = window.electron.platform;
     }
@@ -1032,7 +1021,7 @@ onMounted(() => {
 const showShortcutModal = ref(false);
 const recordingKey = ref('');
 const shortcuts = ref({});
-const proxyForm = reactive({url: '', testing: false, testResult: '', testStatus: '' });
+const proxyForm = reactive({ url: '', testing: false, testResult: '', testStatus: '' });
 const apiBaseUrlForm = reactive({ url: '', testing: false, testResult: '', testStatus: '' });
 
 const testApiBaseUrl = async () => {
@@ -1130,7 +1119,7 @@ const testProxyConnection = async () => {
                 protocol: proxyUrl.protocol,
                 host: proxyUrl.hostname,
                 port: proxyUrl.port,
-                auth: proxyUrl.username && proxyUrl.password ? 
+                auth: proxyUrl.username && proxyUrl.password ?
                     `${proxyUrl.username}:${proxyUrl.password}` : undefined
             }
         };
@@ -1179,7 +1168,7 @@ const saveProxy = () => {
         displayText: proxyUrl ? t('qi-yong') : t('jin-yong'),
         value: proxyUrl ? 'on' : 'off'
     };
-    
+
     // 更新代理地址
     selectedSettings.value.proxyUrl = {
         displayText: proxyUrl,
@@ -1246,6 +1235,35 @@ const closeShortcutSettings = () => {
     recordingKey.value = '';
 };
 
+const displayShortcut = (key) => {
+    if (!shortcuts.value?.[key]) return false;
+    const keys = {
+        'Meta': isElectron() ?
+            window?.electron.platform === 'darwin' ? '⌘' : '<i class="fab fa-windows"></i>' :
+            '⌘/<i class="fab fa-windows"></i>',
+        'num0': 'Num0',
+        'num1': 'Num1',
+        'num2': 'Num2',
+        'num3': 'Num3',
+        'num4': 'Num4',
+        'num5': 'Num5',
+        'num6': 'Num6',
+        'num7': 'Num7',
+        'num8': 'Num8',
+        'num9': 'Num9',
+        'numdec': 'Num.',
+        'numadd': 'Num+',
+        'numsub': 'Num-',
+        'nummult': 'Num*',
+        'numdiv': 'Num/',
+    };
+    let display = shortcuts.value[key];
+    Object.keys(keys).forEach(k => {
+        display = display.replace(k, keys[k]);
+    });
+    return display;
+};
+
 const startRecording = (key) => {
     recordingKey.value = key;
     shortcuts.value[key] = t('qing-an-xia-xiu-shi-jian');
@@ -1259,7 +1277,7 @@ const recordShortcut = (e) => {
     const keys = [];
 
     // 修饰键
-    if (e.metaKey) keys.push('CommandOrControl');
+    if (e.metaKey) keys.push('Meta');
     if (e.ctrlKey) keys.push('Ctrl');
     if (e.altKey) keys.push('Alt');
     if (e.shiftKey) keys.push('Shift');
@@ -1272,7 +1290,7 @@ const recordShortcut = (e) => {
 
     // 特殊键映射
     const specialKeys = {
-        ' ': 'Space',
+        'Space': 'Space',
         'ArrowUp': 'Up',
         'ArrowDown': 'Down',
         'ArrowLeft': 'Left',
@@ -1286,16 +1304,26 @@ const recordShortcut = (e) => {
         'PageDown': 'PageDown',
         'Home': 'Home',
         'End': 'End',
-        '+': 'numadd',
-        '-': 'numsub',
-        '*': 'nummult',
-        '/': 'numdiv',
-        '=': 'Equal',
-        '.': 'Dot',
-        'NumpadDecimal': 'numdec'
+
+        // Numpad
+        'Numpad0': 'num0',
+        'Numpad1': 'num1',
+        'Numpad2': 'num2',
+        'Numpad3': 'num3',
+        'Numpad4': 'num4',
+        'Numpad5': 'num5',
+        'Numpad6': 'num6',
+        'Numpad7': 'num7',
+        'Numpad8': 'num8',
+        'Numpad9': 'num9',
+        'NumpadDecimal': 'numdec',
+        'NumpadAdd': 'numadd',
+        'NumpadSubtract': 'numsub',
+        'NumpadMultiply': 'nummult',
+        'NumpadDivide': 'numdiv',
     };
 
-    const key = specialKeys[e.key] || e.key.toUpperCase();
+    const key = specialKeys[e.code] || e.key.toUpperCase();
 
     // 只有当按下的不是单独的修饰键时才结束记录
     if (!['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) {
@@ -1303,7 +1331,7 @@ const recordShortcut = (e) => {
 
         if (keys.length > 0) {
             // 检查是否包含必要的修饰键
-            if (!keys.some(k => ['Ctrl', 'Alt', 'Shift', 'CommandOrControl'].includes(k))) {
+            if (!keys.some(k => ['Ctrl', 'Alt', 'Shift', 'Meta'].includes(k))) {
                 window.$modal.alert(t('kuai-jie-jian-bi-xu-bao-han-zhi-shao-yi-ge-xiu-shi-jian-ctrlaltshiftcommand'));
                 return;
             }
@@ -1315,7 +1343,7 @@ const recordShortcut = (e) => {
             );
 
             if (conflictKey) {
-                window.$modal.alert(t('gai-kuai-jie-jian-yu')+conflictKey[0]+t('de-kuai-jie-jian-chong-tu'));
+                window.$modal.alert(t('gai-kuai-jie-jian-yu') + conflictKey[0] + t('de-kuai-jie-jian-chong-tu'));
                 return;
             }
 
@@ -1329,7 +1357,7 @@ const recordShortcut = (e) => {
 // 添加快捷键验证函数
 const validateShortcut = (shortcut) => {
     const keys = shortcut.split('+');
-    return keys.some(k => ['Ctrl', 'Alt', 'Shift', 'Command'].includes(k));
+    return keys.some(k => ['Ctrl', 'Alt', 'Shift', 'Meta'].includes(k));
 };
 
 // 修改 saveShortcuts 函数，添加检查
@@ -1353,7 +1381,7 @@ const saveShortcuts = () => {
         let settingsToSave = JSON.parse(localStorage.getItem('settings')) || {};
         settingsToSave.shortcuts = shortcuts.value;
         localStorage.setItem('settings', JSON.stringify(settingsToSave));
-        window.electron.ipcRenderer.send('save-settings',  JSON.parse(JSON.stringify(settingsToSave)));
+        window.electron.ipcRenderer.send('save-settings', JSON.parse(JSON.stringify(settingsToSave)));
         window.electron.ipcRenderer.send('custom-shortcut');
     } catch (error) {
         console.error('保存设置失败:', error);
@@ -1375,7 +1403,7 @@ const dpiScale = ref(1.0);
 
 const openResetConfirmation = async () => {
     const result = await window.$modal.confirm(t('ni-que-ren-hui-fu-chu-chang'));
-    if(result){
+    if (result) {
         localStorage.clear();
         isElectron() && window.electron.ipcRenderer.send('clear-settings');
         window.$modal.alert(t('hui-fu-chu-chang-she-zhi-cheng-gong'));
@@ -1383,7 +1411,7 @@ const openResetConfirmation = async () => {
 };
 
 let deferredPrompt;
-if(!isElectron()){
+if (!isElectron()) {
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
@@ -1391,13 +1419,13 @@ if(!isElectron()){
 }
 
 const installPWA = async () => {
-    if(isElectron()){
+    if (isElectron()) {
         window.$modal.alert(t('qing-zai-web-huan-jing-xia-an-zhuang'));
         return;
     }
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    
+
     if (outcome === 'accepted') {
         console.log('User accepted the PWA installation');
         deferredPrompt = null;
@@ -1407,19 +1435,26 @@ const installPWA = async () => {
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+$primary: var(--color-primary);
+$primary-light: var(--color-primary-light);
+$text-muted: #666;
+$border-light: #eaeaea;
+$shadow-light: rgba(0, 0, 0, 0.15);
+$shadow-medium: rgba(0, 0, 0, 0.18);
+
 .settings-page {
     display: flex;
     height: 100vh;
     overflow: hidden;
-    box-shadow: 0 0 30px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 0 30px $shadow-light;
     border-radius: 8px;
     margin-bottom: -80px;
 }
 
 .settings-sidebar {
     width: 220px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 0 10px $shadow-light;
     padding: 20px 0;
     overflow-y: auto;
 }
@@ -1432,23 +1467,23 @@ const installPWA = async () => {
     display: flex;
     align-items: center;
     transition: all 0.2s ease;
-}
 
-.sidebar-item i {
-    margin-right: 12px;
-    font-size: 16px;
-    width: 20px;
-    text-align: center;
-}
+    i {
+        margin-right: 12px;
+        font-size: 16px;
+        width: 20px;
+        text-align: center;
+    }
 
-.sidebar-item.active {
-    background-color: var(--color-primary-light, rgba(255, 105, 180, 0.1));
-    color: var(--color-primary, #ff69b4);
-    font-weight: 500;
-}
+    &.active {
+        background-color: $primary-light;
+        color: $primary;
+        font-weight: 500;
+    }
 
-.sidebar-item:hover:not(.active) {
-    background-color: var(--hover-color, #efefef);
+    &:hover:not(.active) {
+        background-color: var(--hover-color, #efefef);
+    }
 }
 
 .settings-content {
@@ -1459,60 +1494,64 @@ const installPWA = async () => {
 
 .setting-section {
     animation: fadeIn 0.3s ease;
-}
 
-.setting-section h3 {
-    font-size: 22px;
-    font-weight: 600;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border-color, #eaeaea);
+    h3 {
+        font-size: 22px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid $border-light;
+    }
 }
 
 .settings-cards {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 16px;
+
+    .setting-card-header i {
+        color: var(--primary-color);
+    }
 }
 
 .setting-card {
     border-radius: 12px;
     padding: 16px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 16px $shadow-light;
     transition: all 0.2s ease;
     cursor: pointer;
-}
 
-.setting-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
-}
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px $shadow-medium;
+    }
 
-.setting-card-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 12px;
-}
+    &-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 12px;
 
-.setting-card-header i {
-    color: var(--color-primary, #ff69b4);
-    margin-right: 10px;
-    font-size: 16px;
-}
+        i {
+            color: $primary;
+            margin-right: 10px;
+            font-size: 16px;
+        }
+    }
 
-.setting-card-value {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 14px;
-    border: 1px solid var(--border-color, #eaeaea);
-}
+    &-value {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 14px;
+        border: 1px solid $border-light;
 
-.setting-card-value i {
-    color: #999;
-    font-size: 12px;
+        i {
+            color: #999;
+            font-size: 12px;
+        }
+    }
 }
 
 .refresh-hint {
@@ -1545,71 +1584,81 @@ const installPWA = async () => {
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     animation: slideIn 0.3s ease-in-out;
     position: relative;
-}
 
-.modal-content h3 {
-    font-size: 20px;
-    margin-bottom: 20px;
-    color: #333;
-}
+    h3 {
+        font-size: 20px;
+        margin-bottom: 20px;
+        color: #333;
+    }
 
-.modal-content ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
+    ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
 
-.modal-content li {
-    padding: 12px;
-    margin: 6px 0;
-    background-color: var(--background-color);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
+    li {
+        padding: 12px;
+        margin: 6px 0;
+        background-color: var(--background-color);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.2s;
 
-.modal-content li:hover {
-    background-color:var(--secondary-color);
-}
+        &:hover {
+            background-color: var(--secondary-color);
+        }
+    }
 
-.modal-content button {
-    margin-top: 20px;
-    padding: 10px 20px;
-    background-color: var(--color-primary);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: background-color 0.3s;
-}
+    button {
+        margin-top: 20px;
+        padding: 10px 20px;
+        background-color: $primary;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s;
 
-.modal-content button:hover {
-    background-color: var(--color-primary)
+        &:hover {
+            background-color: $primary;
+        }
+    }
 }
 
 .help-link {
     position: absolute;
     top: 12px;
     right: 12px;
-    color: var(--color-primary);
+    color: $primary;
     cursor: pointer;
     text-decoration: none;
     font-size: 18px;
-}
 
-.help-link:hover {
-    opacity: 0.85;
+    &:hover {
+        opacity: 0.85;
+    }
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes slideIn {
-    from { transform: translateY(-20px); }
-    to { transform: translateY(0); }
+    from {
+        transform: translateY(-20px);
+    }
+
+    to {
+        transform: translateY(0);
+    }
 }
 
 .shortcut-modal {
@@ -1631,12 +1680,12 @@ const installPWA = async () => {
     padding: 20px;
     width: 90%;
     max-width: 500px;
-}
 
-.shortcut-modal-content h3 {
-    margin: 0 0 20px 0;
-    font-size: 18px;
-    text-align: center;
+    h3 {
+        margin: 0 0 20px 0;
+        font-size: 18px;
+        text-align: center;
+    }
 }
 
 .shortcut-list {
@@ -1666,21 +1715,21 @@ const installPWA = async () => {
     justify-content: center;
     gap: 8px;
     font-size: 15px;
-}
 
-.shortcut-input.recording {
-    background: var(--color-primary);
-    color: white;
-}
+    &.recording {
+        background: $primary;
+        color: white;
 
-.shortcut-input.recording .clear-shortcut {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-}
+        .clear-shortcut {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
 
-.shortcut-input.recording .clear-shortcut:hover {
-    background: rgba(255, 255, 255, 0.3);
-    color: white;
+            &:hover {
+                background: rgba(255, 255, 255, 0.3);
+                color: white;
+            }
+        }
+    }
 }
 
 .clear-shortcut {
@@ -1693,7 +1742,7 @@ const installPWA = async () => {
     background: rgba(0, 0, 0, 0.1);
     cursor: pointer;
     font-size: 14px;
-    color: #666;
+    color: $text-muted;
     transition: all 0.2s;
     position: absolute;
     right: 5px;
@@ -1704,25 +1753,25 @@ const installPWA = async () => {
     justify-content: flex-end;
     gap: 12px;
     margin-top: 20px;
-}
 
-.shortcut-modal-footer button {
-    padding: 8px 20px;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-}
+    button {
+        padding: 8px 20px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
 
-.shortcut-modal-footer button.primary {
-    background: var(--color-primary);
-    color: white;
+        &.primary {
+            background: $primary;
+            color: white;
+        }
+    }
 }
 
 .version-info {
     text-align: center;
     margin-top: 20px;
     font-size: 14px;
-    color: #666;
+    color: $text-muted;
 }
 
 .reset-settings-container {
@@ -1744,10 +1793,10 @@ const installPWA = async () => {
     display: flex;
     align-items: center;
     gap: 8px;
-}
 
-.reset-settings-button:hover {
-    background-color: #e53935;
+    &:hover {
+        background-color: #e53935;
+    }
 }
 
 .scale-slider-container {
@@ -1765,7 +1814,7 @@ const installPWA = async () => {
 
 .scale-slider-hint {
     font-size: 12px;
-    color: #666;
+    color: $text-muted;
 }
 
 .scale-slider-wrapper {
@@ -1781,25 +1830,25 @@ const installPWA = async () => {
     background: #ddd;
     outline: none;
     border-radius: 3px;
-}
 
-.scale-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: var(--color-primary);
-    cursor: pointer;
-}
+    &::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: $primary;
+        cursor: pointer;
+    }
 
-.scale-slider::-moz-range-thumb {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: var(--color-primary);
-    cursor: pointer;
-    border: none;
+    &::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: $primary;
+        cursor: pointer;
+        border: none;
+    }
 }
 
 .scale-marks {
@@ -1807,70 +1856,69 @@ const installPWA = async () => {
     justify-content: space-between;
     margin-top: 5px;
     font-size: 12px;
-    color: #666;
+    color: $text-muted;
 }
 
 .api-settings-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-}
 
-.api-settings-container .api-setting-item {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    margin-bottom: 10px;
-    width: 100%;
-}
+    .api-setting-item {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        margin-bottom: 10px;
+        width: 100%;
 
-.api-settings-container .api-setting-item label {
-    font-size: 14px;
-    color: #333;
-    margin-bottom: 5px;
-}
+        label {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 5px;
+        }
 
-.api-settings-container .api-setting-item .api-input, .proxy-settings-container .api-input {
-    width: 100%;
-    height: 35px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    padding: 5px;
-    padding-left: 10px;
-    box-sizing: border-box;
-}
+        .api-input {
+            width: 100%;
+            height: 35px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 5px;
+            padding-left: 10px;
+            box-sizing: border-box;
+        }
+    }
 
-.api-settings-container .api-hint {
-    font-size: 12px;
-    color: #999;
-    text-align: center;
+    .api-hint {
+        font-size: 12px;
+        color: #999;
+        text-align: center;
+    }
 }
 
 .proxy-actions {
     display: flex;
     gap: 12px;
     width: 100%;
-}
 
-.proxy-actions button {
-    flex: 1;
-    min-width: 0;
-    padding: 8px 0;
-    border-radius: 6px;
+    button {
+        flex: 1;
+        min-width: 0;
+        padding: 8px 0;
+        border-radius: 6px;
+    }
 }
 
 .proxy-test-result {
     font-size: 13px;
     line-height: 18px;
     margin-top: 5px;
-}
 
-.proxy-test-result.success {
-    color: #4caf50;
-}
+    &.success {
+        color: #4caf50;
+    }
 
-.proxy-test-result.error {
-    color: #e53935;
+    &.error {
+        color: #e53935;
+    }
 }
 </style>
-

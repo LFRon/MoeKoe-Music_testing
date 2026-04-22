@@ -28,7 +28,7 @@
 
         <!-- 导航按钮 -->
         <i class="location-arrow fas fa-location-arrow" @click="scrollToItem" title="当前播放歌曲"></i>
-        <img :src="`./assets/images/lemon.gif`" class="scroll-bottom-img" @click="scrollToFirstItem" title="返回顶部"/>
+        <img :src="`./assets/images/lemon.gif`" class="scroll-bottom-img" @click="scrollToFirstItem" title="返回顶部" />
 
         <!-- 歌曲列表 -->
         <div class="track-list-container" v-if="!loading">
@@ -36,20 +36,25 @@
                 <h2 class="track-list-title"><span>本地歌曲</span> ( {{ filteredTracks.length }} )</h2>
                 <div class="track-list-actions">
                     <div class="batch-action-container">
-                        <button class="batch-action-btn" @click="toggleBatchSelection" :class="{ 'active': batchSelectionMode }">
+                        <button class="batch-action-btn" @click="toggleBatchSelection"
+                            :class="{ 'active': batchSelectionMode }">
                             <input type="checkbox" v-model="batchSelectionMode" /> 批量操作
-                            <span v-if="selectedTracks.length > 0" class="selected-count">{{ selectedTracks.length }}</span>
+                            <span v-if="selectedTracks.length > 0" class="selected-count">{{ selectedTracks.length
+                                }}</span>
                         </button>
-                        <div v-if="batchSelectionMode && isBatchMenuVisible && selectedTracks.length > 0" class="batch-actions-menu">
+                        <div v-if="batchSelectionMode && isBatchMenuVisible && selectedTracks.length > 0"
+                            class="batch-actions-menu">
                             <ul>
                                 <li @click="appendSelectedToQueue"><i class="fas fa-list"></i> 添加到播放列表</li>
                             </ul>
                         </div>
                     </div>
-                    <button class="view-mode-btn" @click="toggleListMode" :title="listMode === 'list' ? '切换到网格视图' : '切换到列表视图'">
+                    <button class="view-mode-btn" @click="toggleListMode"
+                        :title="listMode === 'list' ? '切换到网格视图' : '切换到列表视图'">
                         <i class="fas" :class="listMode === 'list' ? 'fa-th' : 'fa-list'"></i>
                     </button>
-                    <input type="text" v-model="searchQuery" @keyup.enter="searchTracks" placeholder="搜索歌曲" class="search-input" />
+                    <input type="text" v-model="searchQuery" @keyup.enter="searchTracks" placeholder="搜索歌曲"
+                        class="search-input" />
                 </div>
             </div>
 
@@ -76,35 +81,40 @@
                 </div>
             </div>
 
-            <RecycleScroller ref="recycleScrollerRef" :items="filteredTracks" :item-size="listMode === 'list' ? 50 : 70" class="track-list" key-field="name" v-if="musicFiles.length > 0">
+            <RecycleScroller ref="recycleScrollerRef" :items="filteredTracks" :item-size="listMode === 'list' ? 50 : 70"
+                class="track-list" key-field="name" v-if="musicFiles.length > 0">
                 <template #default="{ item, index }">
                     <div class="li" :key="item.name"
                         :class="{ 'cover-view': listMode === 'grid', 'selected': selectedTracks.includes(index) }"
                         @click="batchSelectionMode ? selectTrack(index, $event) : playSong(item)">
-                        
+
                         <!-- 复选框或序号 -->
                         <div class="track-checkbox" v-if="batchSelectionMode">
-                            <input type="checkbox" :checked="selectedTracks.includes(index)" @click.stop="selectTrack(index, $event)">
+                            <input type="checkbox" :checked="selectedTracks.includes(index)"
+                                @click.stop="selectTrack(index, $event)">
                         </div>
                         <div class="track-number" v-else>{{ index + 1 }}</div>
 
                         <!-- 网格模式封面 -->
                         <div class="track-cover" v-if="listMode === 'grid'">
                             <img :src="item.cover || './assets/images/ico.png'" alt="Cover">
-                            <div class="track-cover-overlay" :class="{ 'playing': props.playerControl?.currentSong.name == item.name }">
-                                <i :class="props.playerControl?.currentSong.name == item.name ? 'fas fa-music' : 'fas fa-play'"></i>
+                            <div class="track-cover-overlay"
+                                :class="{ 'playing': props.playerControl?.currentSong.name == item.name }">
+                                <i
+                                    :class="props.playerControl?.currentSong.name == item.name ? 'fas fa-music' : 'fas fa-play'"></i>
                             </div>
                         </div>
 
                         <!-- 歌曲信息 -->
                         <div class="track-title" :title="item.name">{{ item.displayName }}
-                            <span v-if="item.qualityInfo" class="icon" :class="item.qualityInfo.class">{{ item.qualityInfo.text }}</span>
+                            <span v-if="item.qualityInfo" class="icon" :class="item.qualityInfo.class">{{
+                                item.qualityInfo.text }}</span>
                         </div>
                         <div class="track-artist" :title="item.author">{{ item.author }}</div>
                         <div class="track-album" :title="item.album">{{ item.album }}</div>
                         <div class="track-size" :title="item.filesize">{{ item.filesize }}</div>
                         <div class="track-timelen">
-                            <button v-if="props.playerControl?.currentSong.name == item.name && listMode === 'list'" 
+                            <button v-if="props.playerControl?.currentSong.name == item.name && listMode === 'list'"
                                 class="queue-play-btn fas fa-music"></button>
                             {{ formatDuration(item.duration) }}
                         </div>
@@ -202,10 +212,10 @@ onBeforeUnmount(() => {
 const initDB = () => {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, DB_VERSION);
-        
+
         request.onerror = () => reject(request.error);
         request.onsuccess = () => resolve(request.result);
-        
+
         request.onupgradeneeded = (event) => {
             const db = event.target.result;
             if (!db.objectStoreNames.contains(STORE_NAME)) {
@@ -221,14 +231,14 @@ const saveFolderHandle = async (handle) => {
         const db = await initDB();
         const transaction = db.transaction([STORE_NAME], 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
-        
+
         await store.put({
             id: 'lastSelectedFolder',
             handle: handle,
             name: handle.name,
             timestamp: Date.now()
         });
-        
+
         console.log('文件夹句柄已保存');
     } catch (error) {
         console.error('保存文件夹句柄失败:', error);
@@ -241,7 +251,7 @@ const loadFolderHandle = async () => {
         const db = await initDB();
         const transaction = db.transaction([STORE_NAME], 'readonly');
         const store = transaction.objectStore(STORE_NAME);
-        
+
         return new Promise((resolve, reject) => {
             const request = store.get('lastSelectedFolder');
             request.onsuccess = () => {
@@ -272,7 +282,7 @@ const checkFileSystemSupport = () => {
 // 加载上次选择的文件夹
 const loadLastFolder = async () => {
     if (!checkFileSystemSupport()) return;
-    
+
     try {
         loading.value = true;
         const savedHandle = await loadFolderHandle();
@@ -307,13 +317,13 @@ const selectFolder = async () => {
         loading.value = true;
         const dirHandle = await window.showDirectoryPicker();
         currentFolder.value = dirHandle;
-        
+
         // 保存句柄到 IndexedDB
         await saveFolderHandle(dirHandle);
-        
+
         // 扫描音乐文件
         await scanMusicFiles(dirHandle);
-        
+
         console.log(`已选择文件夹: ${dirHandle.name}`);
     } catch (error) {
         if (error.name !== 'AbortError') {
@@ -327,7 +337,7 @@ const selectFolder = async () => {
 // 刷新文件夹
 const refreshFolder = async () => {
     if (!currentFolder.value) return;
-    
+
     try {
         refreshing.value = true;
         await scanMusicFiles(currentFolder.value);
@@ -344,16 +354,16 @@ const refreshFolder = async () => {
 const readAudioMetadata = async (file) => {
     try {
         const metadata = await parseBlob(file);
-        
+
         let coverUrl = './assets/images/ico.png';
-        
+
         // 提取封面图片
         if (metadata.common.picture && metadata.common.picture.length > 0) {
             const picture = metadata.common.picture[0];
             const blob = new Blob([picture.data], { type: picture.format });
             coverUrl = URL.createObjectURL(blob);
         }
-        
+
         return {
             title: file.name || '未知',
             artist: metadata.common.artist || '未知',
@@ -379,16 +389,16 @@ const scanDirectory = async (dirHandle, files = []) => {
             if (entry.kind === 'file') {
                 const file = await entry.getFile();
                 const extension = '.' + getFileExtension(file.name).toLowerCase();
-                
+
                 if (supportedFormats.includes(extension)) {
                     // 读取音频元数据
                     const metadata = await readAudioMetadata(file);
-                    
+
                     if (metadata === null) {
                         console.log(`跳过无法解析的歌曲: ${file.name}`);
                         continue;
                     }
-                    
+
                     files.push({
                         name: file.name,
                         displayName: metadata.title,
@@ -418,7 +428,7 @@ const scanDirectory = async (dirHandle, files = []) => {
     } catch (error) {
         console.error('扫描目录失败:', error);
     }
-    
+
     return files;
 };
 
@@ -427,17 +437,17 @@ const scanMusicFiles = async (dirHandle) => {
     try {
         // 递归扫描所有子文件夹
         const files = await scanDirectory(dirHandle);
-        
+
         // 按艺术家和标题排序
         files.sort((a, b) => {
             const artistCompare = a.author.localeCompare(b.author);
             if (artistCompare !== 0) return artistCompare;
             return a.displayName.localeCompare(b.displayName);
         });
-        
+
         musicFiles.value = files;
         filteredTracks.value = files;
-        
+
     } catch (error) {
         console.error('扫描文件失败:', error);
     }
@@ -453,8 +463,8 @@ const getQualityInfo = (extension, bitrate, sampleRate) => {
             return { text: 'SQ', class: 'sq-icon' }; // Studio Quality
         }
     }
-    
-    
+
+
     // 有损格式根据比特率判断
     if (bitrate) {
         if (bitrate >= 320) {
@@ -463,9 +473,9 @@ const getQualityInfo = (extension, bitrate, sampleRate) => {
             return { text: 'MQ', class: 'mq-icon' }; // Medium Quality
         }
     }
-    
+
     // 特殊格式标识
-    switch(extension) {
+    switch (extension) {
         case '.m4a':
         case '.aac':
             return { text: 'AAC', class: 'hq-icon' };
@@ -491,14 +501,14 @@ const playSong = async (item) => {
 
 // 添加整个播放列表到队列
 const addPlaylistToQueue = async (event, append = false) => {
-    $message.warning('建设中');return;
+    $message.warning('建设中'); return;
     const playButton = event.currentTarget;
     const rect = playButton.getBoundingClientRect();
     const note = {
         id: noteId++,
         style: {
-            '--start-x': `${rect.left + rect.width/2}px`,
-            '--start-y': `${rect.top + rect.height/2}px`,
+            '--start-x': `${rect.left + rect.width / 2}px`,
+            '--start-y': `${rect.top + rect.height / 2}px`,
             'left': '0',
             'top': '0'
         }
@@ -507,7 +517,7 @@ const addPlaylistToQueue = async (event, append = false) => {
     setTimeout(() => {
         flyingNotes.value = flyingNotes.value.filter(n => n.id !== note.id);
     }, 1500);
-    
+
     if (props.playerControl) {
         console.log('[LocalMusic] 添加本地播放列表到队列:', filteredTracks.value.length, '首歌曲');
         await props.playerControl.addLocalPlaylistToQueue(filteredTracks.value, append);
@@ -516,7 +526,7 @@ const addPlaylistToQueue = async (event, append = false) => {
 
 // 搜索歌曲
 const searchTracks = () => {
-    filteredTracks.value = musicFiles.value.filter(track => 
+    filteredTracks.value = musicFiles.value.filter(track =>
         track.name.toLowerCase().trim().includes(searchQuery.value.toLowerCase().trim()) ||
         track.author.toLowerCase().trim().includes(searchQuery.value.toLowerCase().trim())
     );
@@ -566,7 +576,7 @@ const scrollToFirstItem = () => {
     window.scrollTo({
         top: 0,
         behavior: 'smooth',
-        scrollSource: 'manual-button-click' 
+        scrollSource: 'manual-button-click'
     });
 };
 
@@ -600,7 +610,7 @@ const selectTrack = (index, event) => {
     if (event.shiftKey && lastSelectedIndex !== -1) {
         const start = Math.min(lastSelectedIndex, index);
         const end = Math.max(lastSelectedIndex, index);
-        
+
         for (let i = start; i <= end; i++) {
             if (!selectedTracks.value.includes(i)) {
                 selectedTracks.value.push(i);
@@ -621,13 +631,13 @@ const selectTrack = (index, event) => {
             selectedTracks.value = [];
         }
     }
-    
+
     lastSelectedIndex = index;
 };
 
 // 将选中歌曲添加到播放队列
 const appendSelectedToQueue = async () => {
-    $message.warning('还未完善');return;
+    $message.warning('还未完善'); return;
     if (selectedTracks.value.length === 0) return;
     const selectedSongs = selectedTracks.value.map(index => filteredTracks.value[index]);
     if (props.playerControl) {
@@ -657,10 +667,10 @@ const sortTracks = (field) => {
         sortField.value = field;
         sortOrder.value = 'asc';
     }
-    
+
     filteredTracks.value = [...filteredTracks.value].sort((a, b) => {
         let valueA, valueB;
-        
+
         if (field === 'timelen') {
             valueA = a.duration || 0;
             valueB = b.duration || 0;
@@ -671,14 +681,14 @@ const sortTracks = (field) => {
             valueA = (a[field] || '').toLowerCase();
             valueB = (b[field] || '').toLowerCase();
         }
-        
+
         if (sortOrder.value === 'asc') {
             return valueA > valueB ? 1 : -1;
         } else {
             return valueA < valueB ? 1 : -1;
         }
     });
-    
+
     if (batchSelectionMode.value) {
         selectedTracks.value = [];
     }
@@ -692,7 +702,7 @@ const getSortIconClass = (field) => {
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .detail-page {
     padding: 20px;
 }
@@ -742,10 +752,10 @@ const getSortIconClass = (field) => {
     gap: 8px;
     color: #666;
     font-size: 14px;
-}
 
-.folder-path i {
-    color: var(--primary-color);
+    i {
+        color: var(--primary-color);
+    }
 }
 
 .description {
@@ -766,7 +776,8 @@ const getSortIconClass = (field) => {
     gap: 10px;
 }
 
-.primary-btn, .upload-btn {
+.primary-btn,
+.upload-btn {
     background-color: var(--primary-color);
     color: white;
     border: none;
@@ -781,16 +792,18 @@ const getSortIconClass = (field) => {
     background-color: var(--primary-color);
 }
 
-.primary-btn i, .upload-btn i {
-    margin-right: 5px;
+.primary-btn,
+.upload-btn {
+    i {
+        margin-right: 5px;
+    }
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
 }
 
-.primary-btn:disabled, .upload-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-/* 歌曲列表样式 */
 .track-list-container {
     margin-top: 30px;
 }
@@ -830,11 +843,11 @@ const getSortIconClass = (field) => {
     justify-content: center;
     color: var(--text-color);
     position: relative;
-}
 
-.batch-action-btn.active {
-    background-color: var(--primary-color);
-    color: white;
+    &.active {
+        background-color: var(--primary-color);
+        color: white;
+    }
 }
 
 .selected-count {
@@ -864,30 +877,30 @@ const getSortIconClass = (field) => {
     z-index: 50;
     margin-top: 5px;
     width: 200px;
-}
 
-.batch-actions-menu ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
+    ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
 
-.batch-actions-menu li {
-    padding: 10px 15px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    white-space: nowrap;
-}
+    li {
+        padding: 10px 15px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        white-space: nowrap;
 
-.batch-actions-menu li i {
-    margin-right: 10px;
-    width: 16px;
-    text-align: center;
-}
+        i {
+            margin-right: 10px;
+            width: 16px;
+            text-align: center;
+        }
 
-.batch-actions-menu li:hover {
-    background-color: #f0f0f0;
+        &:hover {
+            background-color: #f0f0f0;
+        }
+    }
 }
 
 .view-mode-btn {
@@ -903,14 +916,14 @@ const getSortIconClass = (field) => {
     width: 36px;
     height: 31px;
     transition: all 0.3s ease;
-}
 
-.view-mode-btn:hover {
-    background-color: rgba(var(--primary-color-rgb), 0.1);
-}
+    &:hover {
+        background-color: rgba(var(--primary-color-rgb), 0.1);
+    }
 
-.view-mode-btn i {
-    font-size: 16px;
+    i {
+        font-size: 16px;
+    }
 }
 
 .search-input {
@@ -925,17 +938,17 @@ const getSortIconClass = (field) => {
 .track-list {
     height: 800px;
     scrollbar-width: thin;
-    scrollbar-color: transparent transparent; 
+    scrollbar-color: transparent transparent;
     overflow: auto;
-}
 
-.track-list::-webkit-scrollbar {
-    width: 8px !important; 
-    display: block !important;
-}
+    &::-webkit-scrollbar {
+        width: 8px !important;
+        display: block !important;
+    }
 
-.track-list:hover {
-    scrollbar-color: var(--primary-color) transparent;
+    &:hover {
+        scrollbar-color: var(--primary-color) transparent;
+    }
 }
 
 .li {
@@ -946,17 +959,71 @@ const getSortIconClass = (field) => {
     border-bottom: 1px solid #eee;
     border-radius: 5px;
     cursor: pointer;
+
+    &:hover {
+        background-color: var(--background-color);
+    }
+
+    &.selected {
+        background-color: rgba(var(--primary-color-rgb), 0.1);
+    }
+
+    &.cover-view {
+        height: 60px;
+        padding: 5px 10px;
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid #eee;
+        border-radius: 5px;
+
+        &:hover {
+            background-color: var(--background-color);
+        }
+
+        .track-title {
+            flex: 2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .track-artist {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 10px;
+        }
+
+        .track-album {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 10px;
+        }
+
+        .track-size {
+            flex: 0.5;
+            text-align: center;
+        }
+
+        .track-timelen {
+            width: 95px;
+            text-align: right;
+        }
+
+        .track-checkbox,
+        .track-number {
+            margin-right: 10px;
+            width: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    }
 }
 
-.li:hover {
-    background-color: var(--background-color);
-}
-
-.li.selected {
-    background-color: rgba(var(--primary-color-rgb), 0.1);
-}
-
-/* 歌曲多选 */
 .track-checkbox {
     margin-right: 10px;
     width: 30px;
@@ -978,7 +1045,7 @@ const getSortIconClass = (field) => {
     text-overflow: ellipsis;
 }
 
-.track-size{
+.track-size {
     flex: 0.5;
     text-align: center;
 }
@@ -997,11 +1064,6 @@ const getSortIconClass = (field) => {
     overflow: hidden;
     text-overflow: ellipsis;
     padding: 0 10px;
-}
-
-.track-size{
-    flex: 0.5;
-    text-align: center;
 }
 
 .icon {
@@ -1031,7 +1093,6 @@ const getSortIconClass = (field) => {
     cursor: pointer;
 }
 
-/* 导航按钮 */
 .location-arrow {
     position: fixed;
     bottom: 168px;
@@ -1052,7 +1113,6 @@ const getSortIconClass = (field) => {
     cursor: pointer;
 }
 
-/* 音符动画 */
 .note-container {
     position: fixed;
     top: 0;
@@ -1084,17 +1144,18 @@ const getSortIconClass = (field) => {
         transform: translate(var(--start-x), calc(var(--start-y) - 50px)) rotate(0deg) scale(1.2);
         opacity: 0.9;
     }
+
     20% {
         transform: translate(calc(var(--start-x) + 20px), calc(var(--start-y) - 70px)) rotate(45deg) scale(1.3);
         opacity: 0.85;
     }
+
     100% {
         transform: translate(80vw, 100vh) rotate(360deg) scale(0.6);
         opacity: 0;
     }
 }
 
-/* 表头样式 */
 .track-list-header-row {
     display: flex;
     justify-content: space-between;
@@ -1104,6 +1165,10 @@ const getSortIconClass = (field) => {
     font-weight: bold;
     background-color: rgba(var(--primary-color-rgb), 0.1);
     border-radius: 5px 5px 0 0;
+
+    &:hover {
+        background-color: rgba(var(--primary-color-rgb), 0.15);
+    }
 }
 
 .track-checkbox-header {
@@ -1120,7 +1185,10 @@ const getSortIconClass = (field) => {
     width: 30px;
 }
 
-.track-title-header, .track-artist-header, .track-timelen-header, .track-size-header {
+.track-title-header,
+.track-artist-header,
+.track-timelen-header,
+.track-size-header {
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -1128,48 +1196,50 @@ const getSortIconClass = (field) => {
 
 .track-title-header {
     flex: 2;
+
+    i {
+        margin-left: 5px;
+        font-size: 14px;
+    }
 }
 
-.track-size-header{
+.track-size-header {
     flex: 0.5;
     padding: 0 10px;
+
+    i {
+        margin-left: 5px;
+        font-size: 14px;
+    }
 }
 
 .track-artist-header {
     flex: 1;
     padding: 0 10px;
+
+    i {
+        margin-left: 5px;
+        font-size: 14px;
+    }
 }
 
 .track-album-header {
     flex: 1;
     padding: 0 10px;
+
+    i {
+        margin-left: 5px;
+        font-size: 14px;
+    }
 }
 
 .track-timelen-header {
     text-align: right;
-}
 
-.track-title-header i, .track-artist-header i, .track-album-header i, .track-timelen-header i, .track-size-header i {
-    margin-left: 5px;
-    font-size: 14px;
-}
-
-.track-list-header-row:hover {
-    background-color: rgba(var(--primary-color-rgb), 0.15);
-}
-
-/* 网格视图样式 */
-.li.cover-view {
-    height: 60px;
-    padding: 5px 10px;
-    display: flex;
-    align-items: center;
-    border-bottom: 1px solid #eee;
-    border-radius: 5px;
-}
-
-.li.cover-view:hover {
-    background-color: var(--background-color);
+    i {
+        margin-left: 5px;
+        font-size: 14px;
+    }
 }
 
 .track-cover {
@@ -1180,13 +1250,13 @@ const getSortIconClass = (field) => {
     overflow: hidden;
     border-radius: 4px;
     flex-shrink: 0;
-}
 
-.track-cover img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
 }
 
 .li.cover-view:hover .track-cover img {
@@ -1199,7 +1269,7 @@ const getSortIconClass = (field) => {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.5);
     opacity: 0;
     transition: opacity 0.3s ease;
     display: flex;
@@ -1217,71 +1287,29 @@ const getSortIconClass = (field) => {
     opacity: 1;
 }
 
-.li.cover-view .track-title {
-    flex: 2;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.li.cover-view .track-artist {
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    padding: 0 10px;
-}
-
-.li.cover-view .track-album {
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    padding: 0 10px;
-}
-
-.li.cover-view .track-size {
-    flex: 0.5;
-    text-align: center;
-}
-
-.li.cover-view .track-timelen {
-    width: 95px;
-    text-align: right;
-}
-
-.li.cover-view .track-checkbox,
-.li.cover-view .track-number {
-    margin-right: 10px;
-    width: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* 空状态和欢迎状态 */
 .empty-state,
 .welcome-state {
     text-align: center;
     padding: 60px 20px;
     color: #666;
+
+    i {
+        font-size: 48px;
+        color: #ddd;
+        margin-bottom: 20px;
+    }
 }
 
-.empty-state i,
-.welcome-state i {
-    font-size: 48px;
-    color: #ddd;
-    margin-bottom: 20px;
-}
+.welcome-state {
+    h3 {
+        margin: 0px 0 10px;
+        color: #333;
+    }
 
-.welcome-state h3 {
-    margin: 0px 0 10px;
-    color: #333;
-}
-
-.welcome-state p {
-    margin-bottom: 30px;
-    color: #666;
+    p {
+        margin-bottom: 30px;
+        color: #666;
+    }
 }
 
 .hint {
@@ -1290,15 +1318,14 @@ const getSortIconClass = (field) => {
     margin-top: 10px;
 }
 
-/* 加载状态 */
 .loading-state {
     text-align: center;
     padding: 60px 20px;
     color: #666;
-}
 
-.loading-state p {
-    margin-top: 20px;
+    p {
+        margin-top: 20px;
+    }
 }
 
 .loading-spinner {
@@ -1312,7 +1339,12 @@ const getSortIconClass = (field) => {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 </style>

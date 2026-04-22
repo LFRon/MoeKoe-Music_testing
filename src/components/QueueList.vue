@@ -18,12 +18,11 @@
                             <span class="queue-artist">{{ $formatMilliseconds(item.timeLength) }}</span>
                         </div>
                         <div class="queue-actions">
-                            <button v-if="currentSong.hash == item.hash"
-                                class="queue-play-btn fas fa-music"></button>
+                            <button v-if="currentSong.hash == item.hash" class="queue-play-btn fas fa-music"></button>
                             <template v-else>
-                                <button class="queue-play-btn" @click="playQueueItem(item)"><i class="fas fa-play"></i></button>
-                                <i class="fas fa-times close-store"
-                                    @click="removeSongFromQueue(index);"></i>
+                                <button class="queue-play-btn" @click="playQueueItem(item)"><i
+                                        class="fas fa-play"></i></button>
+                                <i class="fas fa-times close-store" @click="removeSongFromQueue(index);"></i>
                             </template>
                         </div>
                     </li>
@@ -68,7 +67,7 @@ const playQueueItem = (item) => {
     showQueue.value = false; // 点击后关闭播放队列面板
     if (item.isCloud) {
         emit('addCloudMusicToQueue', item.hash, item.name, item.author, item.timeLength, item.img);
-    }else if(item.isLocal){
+    } else if (item.isLocal) {
         emit('addLocalMusicToQueue', item);
     } else {
         emit('addSongToQueue', item.hash, item.name, item.img, item.author);
@@ -107,7 +106,7 @@ defineExpose({
     removeSongFromQueue
 });
 </script>
-<style scoped>
+<style lang="scss" scoped>
 .queue-popup {
     position: fixed;
     right: 20px;
@@ -134,14 +133,12 @@ defineExpose({
     padding: 5px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
+    h3 {
+        margin: 0;
+        font-size: 1.2em;
+        color: var(--text-color);
+    }
 }
-
-.queue-header h3 {
-    margin: 0;
-    font-size: 1.2em;
-    color: var(--text-color);
-}
-
 
 .queue-list {
     list-style: none;
@@ -158,6 +155,17 @@ defineExpose({
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid #ddd;
+
+    &.playing {
+        .queue-song-title {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .queue-artist {
+            color: var(--primary-color);
+        }
+    }
 }
 
 .queue-song-info {
@@ -195,14 +203,5 @@ defineExpose({
     margin-left: 8px;
     cursor: pointer;
     font-size: 14px;
-}
-
-.queue-item.playing .queue-song-title {
-    color: var(--primary-color);
-    font-weight: bold;
-}
-
-.queue-item.playing .queue-artist {
-    color: var(--primary-color);
 }
 </style>

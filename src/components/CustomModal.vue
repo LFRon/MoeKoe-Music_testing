@@ -130,7 +130,7 @@ defineExpose({
 });
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -151,11 +151,11 @@ defineExpose({
     text-align: center;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     width: 400px;
-}
 
-.modal h3{
-    overflow-wrap: anywhere;
-    color: var(--primary-color);
+    h3 {
+        overflow-wrap: anywhere;
+        color: var(--primary-color);
+    }
 }
 
 .buttons {
@@ -185,7 +185,6 @@ defineExpose({
     width: auto;
 }
 
-
 .loading-overlay {
     position: fixed;
     top: 0;
@@ -208,7 +207,7 @@ defineExpose({
     height: 40px;
     animation: spin 1s linear infinite;
 }
-/* 文字样式 */
+
 .loading-text {
     margin-top: 11px;
     font-size: 1.1rem;

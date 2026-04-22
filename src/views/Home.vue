@@ -110,7 +110,7 @@
 import { ref, onMounted, computed, onUpdated } from "vue";
 import { get } from '../utils/request';
 import ContextMenu from '../components/ContextMenu.vue';
-import { useRoute,useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { getCover } from '../utils/utils';
 
 const router = useRouter();
@@ -218,16 +218,16 @@ onMounted(() => {
 
 onUpdated(async () => {
     await new Promise(resolve => setTimeout(resolve, 1000));
-    if(!window.electron){
-        if(route.query.hash){
-            privilegeSong(route.query.hash).then(res=>{
-                if(res.status==1){
+    if (!window.electron) {
+        if (route.query.hash) {
+            privilegeSong(route.query.hash).then(res => {
+                if (res.status == 1) {
                     const songInfo = res.data[0];
-                    playSong(songInfo.hash,songInfo.albumname,getCover(songInfo.info.image, 480),songInfo.singername)
+                    playSong(songInfo.hash, songInfo.albumname, getCover(songInfo.info.image, 480), songInfo.singername)
                     router.push('/');
                 }
             })
-        }else if(route.query.listid){
+        } else if (route.query.listid) {
             router.push({
                 path: '/PlaylistDetail',
                 query: { global_collection_id: route.query.listid }
@@ -252,7 +252,7 @@ const playlist = async () => {
 }
 
 const privilegeSong = async (hash) => {
-    const response = await get(`/privilege/lite`,{hash:hash});
+    const response = await get(`/privilege/lite`, { hash: hash });
     return response;
 }
 const addAllSongsToQueue = () => {
@@ -267,7 +267,7 @@ const addAllSongsToQueue = () => {
 
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .container {
     max-width: 1400px;
     margin: 0 auto;
@@ -279,14 +279,15 @@ const addAllSongsToQueue = () => {
     font-weight: bold;
     margin-bottom: 30px;
     color: var(--primary-color);
+
+    .mama {
+        position: absolute;
+        height: 40px;
+        margin-left: 117px;
+        cursor: cell;
+    }
 }
 
-.section-title .mama{
-    position: absolute;
-    height: 40px;
-    margin-left: 117px;
-    cursor: cell;
-}
 .recommendations {
     display: flex;
     gap: 35px;
@@ -299,11 +300,16 @@ const addAllSongsToQueue = () => {
     border-radius: 15px;
     overflow: hidden;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
 
-.recommend-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    &:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    &.gradient-background {
+        background: linear-gradient(135deg, var(--primary-color), #8ff2ff);
+        color: white;
+    }
 }
 
 .recommend-image {
@@ -343,10 +349,10 @@ const addAllSongsToQueue = () => {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease;
     cursor: pointer;
-}
 
-.song-item:hover {
-    transform: translateY(-5px);
+    &:hover {
+        transform: translateY(-5px);
+    }
 }
 
 .song-cover {
@@ -384,6 +390,26 @@ const addAllSongsToQueue = () => {
     gap: 35px;
     flex-wrap: wrap;
     justify-content: space-evenly;
+
+    @media screen and (max-width: 1400px) {
+        gap: 25px;
+    }
+
+    @media screen and (max-width: 1200px) {
+        gap: 20px;
+    }
+
+    @media screen and (max-width: 1024px) {
+        gap: 18px;
+    }
+
+    @media screen and (max-width: 768px) {
+        gap: 15px;
+    }
+
+    @media screen and (max-width: 576px) {
+        gap: 12px;
+    }
 }
 
 .playlist-item {
@@ -394,70 +420,33 @@ const addAllSongsToQueue = () => {
     cursor: pointer;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     width: calc(16.666% - 30px);
-}
 
-@media screen and (max-width: 1400px) {
-    .playlist-grid {
-        gap: 25px;
-    }
-    
-    .playlist-item {
+    @media screen and (max-width: 1400px) {
         width: calc(20% - 20px);
     }
-}
 
-@media screen and (max-width: 1200px) {
-    .playlist-grid {
-        gap: 20px;
-    }
-    
-    .playlist-item {
+    @media screen and (max-width: 1200px) {
         width: calc(25% - 15px);
     }
-}
 
-@media screen and (max-width: 1024px) {
-    .playlist-grid {
-        gap: 18px;
-    }
-    
-    .playlist-item {
+    @media screen and (max-width: 1024px) {
         width: calc(25% - 14px);
     }
-}
 
-@media screen and (max-width: 768px) {
-    .playlist-grid {
-        gap: 15px;
-    }
-    
-    .playlist-item {
+    @media screen and (max-width: 768px) {
         width: calc(33.333% - 10px);
         min-width: 150px;
     }
-    
-    .playlist-title {
-        font-size: 14px;
-    }
-    
-    .playlist-description {
-        font-size: 12px;
-    }
-}
 
-@media screen and (max-width: 576px) {
-    .playlist-grid {
-        gap: 12px;
-    }
-    
-    .playlist-item {
+    @media screen and (max-width: 576px) {
         width: calc(50% - 6px);
         min-width: 140px;
     }
-}
-.playlist-item:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px var(--color-box-shadow);
+
+    &:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px var(--color-box-shadow);
+    }
 }
 
 .playlist-cover {
@@ -475,6 +464,10 @@ const addAllSongsToQueue = () => {
     margin-bottom: 5px;
     font-size: 16px;
     color: var(--primary-color);
+
+    @media screen and (max-width: 768px) {
+        font-size: 14px;
+    }
 }
 
 .playlist-description {
@@ -487,6 +480,10 @@ const addAllSongsToQueue = () => {
     text-overflow: ellipsis;
     max-height: 50px;
     line-height: 25px;
+
+    @media screen and (max-width: 768px) {
+        font-size: 12px;
+    }
 }
 
 .skeleton-loader {
@@ -589,26 +586,30 @@ const addAllSongsToQueue = () => {
     background: #4a90e2;
     border-radius: 3px;
     animation: sound-wave 1.2s ease-in-out infinite;
-}
 
-.bar:nth-child(1) {
-    height: 15px;
-    animation-delay: 0s;
-}
+    @for $i from 1 through 4 {
+        &:nth-child(#{$i}) {
+            @if $i ==1 {
+                height: 15px;
+                animation-delay: 0s;
+            }
 
-.bar:nth-child(2) {
-    height: 20px;
-    animation-delay: 0.2s;
-}
+            @else if $i ==2 {
+                height: 20px;
+                animation-delay: 0.2s;
+            }
 
-.bar:nth-child(3) {
-    height: 12px;
-    animation-delay: 0.4s;
-}
+            @else if $i ==3 {
+                height: 12px;
+                animation-delay: 0.4s;
+            }
 
-.bar:nth-child(4) {
-    height: 18px;
-    animation-delay: 0.6s;
+            @else if $i ==4 {
+                height: 18px;
+                animation-delay: 0.6s;
+            }
+        }
+    }
 }
 
 @keyframes sound-wave {
@@ -639,26 +640,23 @@ const addAllSongsToQueue = () => {
     position: relative;
     font-size: 20px;
     color: #333;
-}
 
-.play-button::after {
-    content: '♪';
-    transition: all 0.2s ease;
-}
+    &::after {
+        content: '♪';
+        transition: all 0.2s ease;
+        border: none;
+        margin-left: 0;
+    }
 
-.play-button:hover {
-    transform: scale(1.05);
-    background: var(--primary-color);
-    color: #fff;
-}
+    &:hover {
+        transform: scale(1.05);
+        background: var(--primary-color);
+        color: #fff;
 
-.play-button:hover::after {
-    border-color: none;
-}
-
-.play-button::after {
-    border: none;
-    margin-left: 0;
+        &::after {
+            border-color: none;
+        }
+    }
 }
 
 .radio-title {
@@ -680,11 +678,11 @@ const addAllSongsToQueue = () => {
     color: #666;
     cursor: pointer;
     transition: transform 0.3s ease;
-}
 
-.shuffle-icon:hover {
-    transform: scale(1.1);
-    color: var(--primary-color);
+    &:hover {
+        transform: scale(1.1);
+        color: var(--primary-color);
+    }
 }
 
 .radio-subtitle {
@@ -756,8 +754,8 @@ const addAllSongsToQueue = () => {
     position: relative;
 }
 
-.ranking-icon{
-    width: 135px
+.ranking-icon {
+    width: 135px;
 }
 
 .ranking-title {
@@ -772,11 +770,6 @@ const addAllSongsToQueue = () => {
     opacity: 0.9;
 }
 
-.recommend-card.gradient-background {
-    background: linear-gradient(135deg, var(--primary-color), #8ff2ff);
-    color: white;
-}
-
 .playlist-entry {
     display: flex;
     flex-direction: column;
@@ -789,10 +782,10 @@ const addAllSongsToQueue = () => {
     color: white;
     text-align: center;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
 
-.playlist-entry:hover {
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    &:hover {
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
 }
 
 .playlist-content {
@@ -808,10 +801,10 @@ const addAllSongsToQueue = () => {
 .playlist-icon {
     width: 144px;
     height: 144px;
-}
 
-.playlist-icon img {
-    width: 100%;
-    height: 100%;
+    img {
+        width: 100%;
+        height: 100%;
+    }
 }
 </style>

@@ -27,7 +27,7 @@ const routes = [
             { path: '/login', name: 'Login', component: Login },
             { path: '/settings', name: 'Settings', component: Settings },
             { path: '/playlistDetail', name: 'PlaylistDetail', component: PlaylistDetail },
-            { path: '/search', name: 'Search', component: Search },
+            { path: '/search', name: 'Search', component: Search, meta: { requiresAuth: true } },
             { path: '/ranking', name: 'Ranking', component: Ranking },
             { path: '/CloudDrive', name: 'CloudDrive', component: CloudDrive },
             { path: '/LocalMusic', name: 'LocalMusic', component: LocalMusic },
@@ -55,7 +55,7 @@ const router = createRouter({
             return {
                 el: to.hash,
                 behavior: 'smooth',
-                top: 80, 
+                top: 80,
             };
         }
         if (to.path === from.path && JSON.stringify(to.params) === JSON.stringify(from.params)) {
@@ -72,16 +72,26 @@ const router = createRouter({
 // 全局导航守卫
 router.beforeEach((to, from, next) => {
     console.log('完整的路由地址:', to.fullPath);
-    const MoeAuth = MoeAuthStore()
-    // 检查是否需要登录
+
+    const MoeAuth = MoeAuthStore();
+    const settings = JSON.parse(localStorage.getItem('settings')) || {};
+    const startupPage = settings.startupPage || 'Index';
+
+    const isFirstEnter = from.matched.length === 0;
+
+    if (isFirstEnter && to.path === '/' && startupPage !== 'Index') {
+        return next({ name: startupPage });
+    }
+
     if (to.matched.some(record => record.meta.requiresAuth)) {
         if (!MoeAuth.isAuthenticated) {
-            next({
-                path: '/login',
-                query: { redirect: to.fullPath } 
+            return next({
+                name: 'Login',
+                query: { redirect: to.fullPath }
             });
-        } 
-    } 
+        }
+    }
+
     next();
 });
 

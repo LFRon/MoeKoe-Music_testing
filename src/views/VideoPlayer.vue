@@ -2,23 +2,16 @@
     <div class="video-player-page">
         <div class="video-container">
             <div class="video-header">
-                <button class="back-btn" @click="() => isElectron? closeWindow(): goBack()">
+                <button class="back-btn" @click="() => isElectron ? closeWindow() : goBack()">
                     <i class="fas" :class="{ 'fa-xmark': isElectron, 'fa-arrow-left': !isElectron }"></i>
-                    {{ isElectron? '关闭': '返回' }}
+                    {{ isElectron ? '关闭' : '返回' }}
                 </button>
                 <h2 class="video-title">{{ videoTitle }}</h2>
             </div>
 
             <div class="video-wrapper" v-if="videoUrl">
-                <video
-                    ref="videoPlayer"
-                    class="video-element"
-                    :src="videoUrl"
-                    controls
-                    autoplay
-                    @error="handleVideoError"
-                    @loadedmetadata="handleVideoLoaded"
-                >
+                <video ref="videoPlayer" class="video-element" :src="videoUrl" controls autoplay
+                    @error="handleVideoError" @loadedmetadata="handleVideoLoaded">
                     您的浏览器不支持视频播放
                 </video>
             </div>
@@ -133,7 +126,7 @@ onBeforeUnmount(() => {
 });
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .video-player-page {
     width: 100%;
     height: 100vh;
@@ -167,10 +160,10 @@ onBeforeUnmount(() => {
     padding: 8px 16px;
     border-radius: 4px;
     transition: background-color 0.3s;
-}
 
-.back-btn:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    &:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
 }
 
 .video-title {
@@ -204,22 +197,23 @@ onBeforeUnmount(() => {
     justify-content: center;
     color: white;
     gap: 15px;
+
+    i {
+        font-size: 48px;
+    }
+
+    p {
+        font-size: 16px;
+        margin: 0;
+    }
 }
 
 .loading-container i {
-    font-size: 48px;
     color: #42b983;
 }
 
 .error-container i {
-    font-size: 48px;
     color: #ff6b6b;
-}
-
-.loading-container p,
-.error-container p {
-    font-size: 16px;
-    margin: 0;
 }
 
 .retry-btn {
@@ -231,13 +225,13 @@ onBeforeUnmount(() => {
     font-size: 14px;
     cursor: pointer;
     transition: background-color 0.3s;
-}
 
-.retry-btn:hover {
-    background-color: #35a372;
-}
+    &:hover {
+        background-color: #35a372;
+    }
 
-.retry-btn i {
-    margin-right: 5px;
+    i {
+        margin-right: 5px;
+    }
 }
 </style>

@@ -74,7 +74,9 @@ export function registerExtensionIPC() {
                     permissions: ext.manifest?.permissions || [],
                     iconData: iconData,
                     moeKoeAdapted: ext.manifest?.moekoe === true || scannedExt?.manifest?.moekoe === true,
-                    minversion: ext.manifest?.minversion || scannedExt?.manifest?.minversion || ''
+                    minversion: ext.manifest?.minversion || scannedExt?.manifest?.minversion || '',
+                    popupPath: scannedExt?.popupPath || '',
+                    hasPopup: scannedExt?.hasPopup === true
                 };
             });
             
@@ -126,9 +128,13 @@ export function registerExtensionIPC() {
     });
 
     // 打开插件弹窗
-    ipcMain.handle('open-extension-popup', (event, extensionId, extensionName) => {
+    ipcMain.handle('open-extension-popup', (event, extensionId) => {
         try {
-            
+            const extension = extensionManager.getLoadedExtensions()
+                .find(item => item.id === extensionId);
+            const manifest = extension?.manifest || {};
+            const popupPath = manifest?.action?.default_popup || '';
+            const popupUrl = `chrome-extension://${extensionId}/${popupPath}`;
             // 创建新的弹窗窗口
             const popupWindow = new BrowserWindow({
                 width: 400,
@@ -141,7 +147,7 @@ export function registerExtensionIPC() {
                     sandbox: false,
                     webSecurity: false // 允许加载插件内容
                 },
-                title: extensionName || '插件弹窗',
+                title: '插件弹窗',
                 resizable: true,
                 minimizable: true,
                 maximizable: false,
@@ -159,9 +165,6 @@ export function registerExtensionIPC() {
                 popupWindow,
                 (url) => /^(https?:|mailto:|tel:)/i.test(url)
             );
-
-            // 构建插件弹窗URL
-            const popupUrl = `chrome-extension://${extensionId}/popup.html`;
             
             popupWindow.loadURL(popupUrl).then(() => {
                 popupWindow.show();

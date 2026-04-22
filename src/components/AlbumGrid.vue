@@ -2,7 +2,7 @@
   <div class="album-grid">
     <div v-for="(album, index) in albums" :key="index" class="album-card" @click="onAlbumClick(album)">
       <div class="album-cover">
-        <img :src="(album.img || './assets/images/ico.png').replace('/240/','/480/')"/>
+        <img :src="(album.img || './assets/images/ico.png').replace('/240/', '/480/')" />
         <div class="album-overlay">
           <button class="play-button">
             <i class="fas fa-play"></i>
@@ -13,8 +13,7 @@
         <h3 class="album-name" :title="album.albumname">{{ album.albumname }}</h3>
         <div class="album-artist">
           <span v-for="(singer, idx) in album.singers" :key="idx">
-            {{ singer.name }}{{ idx < album.singers.length - 1 ? '、' : '' }}
-          </span>
+            {{ singer.name }}{{ idx < album.singers.length - 1 ? '、' : '' }} </span>
         </div>
         <div class="album-meta">
           <div class="meta-item">
@@ -51,7 +50,7 @@ const onAlbumClick = (album) => {
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .album-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -69,32 +68,36 @@ const onAlbumClick = (album) => {
   transition: transform 0.3s, box-shadow 0.3s;
   cursor: pointer;
   height: 100%;
-}
 
-.album-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+
+    .album-cover img {
+      transform: scale(1.05);
+    }
+
+    .album-overlay {
+      opacity: 1;
+    }
+  }
 }
 
 .album-cover {
   position: relative;
   width: 100%;
-  padding-top: 100%; /* 1:1 宽高比 */
+  padding-top: 100%;
   overflow: hidden;
-}
 
-.album-cover img {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s;
-}
-
-.album-card:hover .album-cover img {
-  transform: scale(1.05);
+  img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s;
+  }
 }
 
 .album-overlay {
@@ -111,10 +114,6 @@ const onAlbumClick = (album) => {
   transition: opacity 0.3s;
 }
 
-.album-card:hover .album-overlay {
-  opacity: 1;
-}
-
 .play-button {
   width: 50px;
   height: 50px;
@@ -127,15 +126,15 @@ const onAlbumClick = (album) => {
   align-items: center;
   cursor: pointer;
   transition: transform 0.2s, background-color 0.2s;
-}
 
-.play-button:hover {
-  transform: scale(1.1);
-  background-color: var(--primary-color-dark, #d81e06);
-}
+  &:hover {
+    transform: scale(1.1);
+    background-color: var(--primary-color-dark, #d81e06);
+  }
 
-.play-button i {
-  font-size: 20px;
+  i {
+    font-size: 20px;
+  }
 }
 
 .album-info {
@@ -180,28 +179,27 @@ const onAlbumClick = (album) => {
   background-color: #f5f5f5;
   padding: 4px 8px;
   border-radius: 4px;
+
+  i {
+    font-size: 12px;
+    color: var(--primary-color);
+  }
 }
 
-.meta-item i {
-  font-size: 12px;
-  color: var(--primary-color);
-}
-
-/* 响应式调整 */
 @media (max-width: 768px) {
   .album-grid {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 15px;
   }
-  
+
   .album-name {
     font-size: 14px;
   }
-  
+
   .album-artist {
     font-size: 12px;
   }
-  
+
   .meta-item {
     font-size: 10px;
     padding: 3px 6px;

@@ -2,13 +2,8 @@
     <div class="ranking-container">
         <!-- 添加榜单选择区域 -->
         <div class="rank-selector">
-            <div 
-                v-for="rank in allRanks" 
-                :key="rank.rankid"
-                class="rank-chip"
-                :class="{ active: selectedRankIds.includes(rank.rankid) }"
-                @click="toggleRank(rank)"
-            >
+            <div v-for="rank in allRanks" :key="rank.rankid" class="rank-chip"
+                :class="{ active: selectedRankIds.includes(rank.rankid) }" @click="toggleRank(rank)">
                 {{ rank.rankname }}
             </div>
         </div>
@@ -29,9 +24,10 @@
                     </div>
                 </div>
                 <div class="song-list" @scroll="handleScroll($event, rank.rankid)">
-                    <div class="song-item" v-for="(song, sIndex) in rank.songs" :key="sIndex" @click="props.playerControl.addSongToQueue(song.deprecated.hash, song.songname, $getCover(song.trans_param.union_cover, 480), song.author_name)">
+                    <div class="song-item" v-for="(song, sIndex) in rank.songs" :key="sIndex"
+                        @click="props.playerControl.addSongToQueue(song.deprecated.hash, song.songname, $getCover(song.trans_param.union_cover, 480), song.author_name)">
                         <div class="song-rank">
-                            <span class="song-index" :class="{'top-three': sIndex < 3}">{{ sIndex + 1 }}</span>
+                            <span class="song-index" :class="{ 'top-three': sIndex < 3 }">{{ sIndex + 1 }}</span>
                         </div>
                         <div class="song-cover">
                             <img :src="$getCover(song.trans_param.union_cover, 120)">
@@ -52,13 +48,14 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div v-if="rankPagination[rank.rankid]?.loading" class="loading-indicator">
                         <div class="loading-spinner"></div>
                         <span>加载中...</span>
                     </div>
-                    
-                    <div v-else-if="!rankPagination[rank.rankid]?.hasMore && rank.songs?.length > 0" class="no-more-indicator">
+
+                    <div v-else-if="!rankPagination[rank.rankid]?.hasMore && rank.songs?.length > 0"
+                        class="no-more-indicator">
                         <span>已加载全部歌曲</span>
                     </div>
                 </div>
@@ -99,15 +96,15 @@ const initRankPagination = (rankId) => {
 const loadRankSongs = async (rankId, page = 1, append = false) => {
     const pagination = rankPagination.value[rankId];
     if (pagination.loading) return;
-    
+
     pagination.loading = true;
-    
+
     try {
         const songsResponse = await get(`/rank/audio?rankid=${rankId}&page=${page}&pagesize=${pagesize}`);
         if (songsResponse.status === 1) {
             const newSongs = songsResponse.data.songlist || [];
             const rank = displayedRanks.value.find(r => r.rankid === rankId);
-            
+
             if (rank) {
                 if (append) {
                     rank.songs = [...(rank.songs || []), ...newSongs];
@@ -115,12 +112,12 @@ const loadRankSongs = async (rankId, page = 1, append = false) => {
                     rank.songs = newSongs;
                 }
             }
-            
+
             // 如果返回的歌曲数量少于pagesize，说明没有更多数据了
             if (newSongs.length < pagesize) {
                 pagination.hasMore = false;
             }
-            
+
             pagination.currentPage = page;
         }
     } catch (error) {
@@ -146,7 +143,7 @@ const loadSelectedRanks = async (rankList, rankIds) => {
 // 随机选择并加载榜单
 const loadRandomRanks = async (rankList, count = 4) => {
     const randomRanks = rankList.sort(() => 0.5 - Math.random()).slice(0, count);
-    
+
     for (const rank of randomRanks) {
         selectedRankIds.value.push(rank.rankid);
         initRankPagination(rank.rankid);
@@ -159,7 +156,7 @@ const loadRandomRanks = async (rankList, count = 4) => {
 // 切换榜单选择状态
 const toggleRank = async (rank) => {
     const index = selectedRankIds.value.indexOf(rank.rankid);
-    
+
     if (index === -1 && selectedRankIds.value.length < 6) {
         selectedRankIds.value.push(rank.rankid);
         initRankPagination(rank.rankid);
@@ -179,7 +176,7 @@ const formatIntro = (intro) => {
     const parts = intro.split('\n');
     const sortRule = parts.find(p => p.includes('排序方式：'))?.replace('排序方式：', '').trim() || '';
     const updateFreq = parts.find(p => p.includes('更新频率：'))?.replace('更新频率：', '').trim() || '';
-    
+
     if (sortRule && updateFreq) {
         return `${sortRule} (${updateFreq})`;
     }
@@ -189,9 +186,9 @@ const formatIntro = (intro) => {
 // 添加播放整个榜单
 const playRankSongs = (songs) => {
     if (props.playerControl && songs?.length) {
-        const newTracks = songs.map(song => ({ 
+        const newTracks = songs.map(song => ({
             hash: song.deprecated.hash,
-            author: song.author_name, 
+            author: song.author_name,
             name: song.songname,
             cover: song.trans_param.union_cover?.replace("{size}", 120),
             timelen: song.deprecated.duration
@@ -204,16 +201,16 @@ const playRankSongs = (songs) => {
 const handleScroll = (event, rankId) => {
     const element = event.target;
     const pagination = rankPagination.value[rankId];
-    
+
     if (!pagination || pagination.loading || !pagination.hasMore) {
         return;
     }
-    
+
     // 检查是否滚动到底部附近（距离底部50px时开始加载）
     const scrollTop = element.scrollTop;
     const scrollHeight = element.scrollHeight;
     const clientHeight = element.clientHeight;
-    
+
     if (scrollTop + clientHeight >= scrollHeight - 50) {
         const nextPage = pagination.currentPage + 1;
         loadRankSongs(rankId, nextPage, true);
@@ -228,23 +225,23 @@ const handlePlayClick = (event, songs) => {
     const y = event.clientY;
     note.style.left = x + 'px';
     note.style.top = y + 'px';
-    
+
     document.body.appendChild(note);
     const targetX = window.innerWidth - 300;
     const targetY = window.innerHeight - 100;
-    
+
     const deltaX = targetX - x;
     const deltaY = targetY - y;
-    
+
     requestAnimationFrame(() => {
         note.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
         note.style.opacity = '0';
     });
-    
+
     setTimeout(() => {
         document.body.removeChild(note);
     }, 1000);
-    
+
     playRankSongs(songs);
 };
 
@@ -252,7 +249,7 @@ onMounted(async () => {
     const response = await get('/rank/list');
     if (response.status === 1) {
         allRanks.value = response.data.info;
-        
+
         const savedRankIds = localStorage.getItem('selectedRankIds');
         if (savedRankIds) {
             const rankIds = JSON.parse(savedRankIds);
@@ -264,7 +261,7 @@ onMounted(async () => {
 });
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .ranking-container {
     display: flex;
     flex-direction: column;
@@ -290,16 +287,16 @@ onMounted(async () => {
     font-size: 14px;
     cursor: pointer;
     transition: all 0.3s ease;
-}
 
-.rank-chip:hover {
-    background: #eeeeee;
-    transform: translateY(-2px);
-}
+    &:hover {
+        background: #eeeeee;
+        transform: translateY(-2px);
+    }
 
-.rank-chip.active {
-    background: var(--primary-color)!important;
-    color: white;
+    &.active {
+        background: var(--primary-color) !important;
+        color: white;
+    }
 }
 
 .ranking-list {
@@ -318,11 +315,11 @@ onMounted(async () => {
     height: 600px;
     display: flex;
     flex-direction: column;
-}
 
-.ranking-item:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    }
 }
 
 .rank-header {
@@ -330,7 +327,7 @@ onMounted(async () => {
     align-items: center;
     padding: 20px;
     position: relative;
-    background: linear-gradient(to right, rgba(100, 61, 73, 0.133), transparent)
+    background: linear-gradient(to right, rgba(100, 61, 73, 0.133), transparent);
 }
 
 .rank-cover {
@@ -339,17 +336,17 @@ onMounted(async () => {
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
 
-.rank-cover img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-}
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
 
-.rank-cover:hover img {
-    transform: scale(1.05);
+    &:hover img {
+        transform: scale(1.05);
+    }
 }
 
 .rank-info {
@@ -382,27 +379,40 @@ onMounted(async () => {
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
-}
 
-.rank-play-btn:hover {
-    transform: scale(1.1);
-    background: var(--primary-color);
-}
+    &:hover {
+        transform: scale(1.1);
+        background: var(--primary-color);
 
-.rank-play-btn:hover i {
-    color: white;
-}
+        i {
+            color: white;
+        }
+    }
 
-.rank-play-btn i {
-    font-size: 20px;
-    color: var(--primary-color);
-    transition: color 0.3s ease;
+    i {
+        font-size: 20px;
+        color: var(--primary-color);
+        transition: color 0.3s ease;
+    }
 }
 
 .song-list {
     flex: 1;
     overflow-y: auto;
     padding: 0 12px;
+
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: #ddd;
+        border-radius: 3px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: #f5f5f5;
+    }
 }
 
 .song-item {
@@ -412,10 +422,14 @@ onMounted(async () => {
     border-radius: 8px;
     transition: all 0.2s ease;
     cursor: pointer;
-}
 
-.song-item:hover {
-    background: #f8f9fa;
+    &:hover {
+        background: #f8f9fa;
+
+        .hover-play {
+            opacity: 1;
+        }
+    }
 }
 
 .song-rank {
@@ -427,14 +441,14 @@ onMounted(async () => {
     font-size: 16px;
     font-weight: 500;
     color: #999;
-}
 
-.song-index.top-three {
-    font-size: 18px;
-    font-weight: 600;
-    background: linear-gradient(45deg, #ff6b6b, #ff8787);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    &.top-three {
+        font-size: 18px;
+        font-weight: 600;
+        background: linear-gradient(45deg, #ff6b6b, #ff8787);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
 }
 
 .song-cover {
@@ -444,12 +458,12 @@ onMounted(async () => {
     border-radius: 8px;
     overflow: hidden;
     margin: 0 16px;
-}
 
-.song-cover img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
 }
 
 .hover-play {
@@ -464,15 +478,11 @@ onMounted(async () => {
     justify-content: center;
     opacity: 0;
     transition: opacity 0.2s ease;
-}
 
-.song-item:hover .hover-play {
-    opacity: 1;
-}
-
-.hover-play i {
-    color: white;
-    font-size: 24px;
+    i {
+        color: white;
+        font-size: 24px;
+    }
 }
 
 .song-info {
@@ -538,20 +548,6 @@ onMounted(async () => {
     text-align: right;
 }
 
-/* 自定义滚动条 */
-.song-list::-webkit-scrollbar {
-    width: 6px;
-}
-
-.song-list::-webkit-scrollbar-thumb {
-    background: #ddd;
-    border-radius: 3px;
-}
-
-.song-list::-webkit-scrollbar-track {
-    background: #f5f5f5;
-}
-
 .loading-indicator {
     display: flex;
     align-items: center;
@@ -572,8 +568,13 @@ onMounted(async () => {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 .no-more-indicator {
@@ -593,25 +594,25 @@ onMounted(async () => {
         gap: 15px;
         padding: 15px;
     }
-    
+
     .ranking-item {
         height: 500px;
         min-height: 500px;
     }
-    
+
     .rank-header {
         padding: 15px;
     }
-    
+
     .rank-cover {
         width: 80px;
         height: 80px;
     }
-    
+
     .rank-title {
         font-size: 20px;
     }
-    
+
     .rank-update {
         font-size: 12px;
     }
@@ -621,59 +622,59 @@ onMounted(async () => {
     .ranking-container {
         padding: 10px;
     }
-    
+
     .rank-selector {
         padding: 12px;
         gap: 8px;
     }
-    
+
     .rank-chip {
         padding: 6px 12px;
         font-size: 12px;
     }
-    
+
     .ranking-list {
         gap: 10px;
         padding: 10px;
         grid-template-columns: 1fr;
     }
-    
+
     .ranking-item {
         height: 400px;
     }
-    
+
     .rank-cover {
         width: 60px;
         height: 60px;
     }
-    
+
     .rank-info {
         margin-left: 10px;
     }
-    
+
     .rank-title {
         font-size: 16px;
         margin: 0 0 4px 0;
     }
-    
+
     .song-cover {
         width: 40px;
         height: 40px;
         margin: 0 10px;
     }
-    
+
     .song-rank {
         width: 30px;
     }
-    
+
     .song-name {
         font-size: 13px;
     }
-    
+
     .song-author {
         font-size: 12px;
     }
-    
+
     .album {
         display: none;
     }
