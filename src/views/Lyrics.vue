@@ -88,7 +88,7 @@
                     </div>
                 </div>
             </template>
-            <div v-else class="lyrics-content hovering nolyrics">暂无歌词</div>
+            <div v-else class="lyrics-content hovering nolyrics">MoeKoe Music - 听你想听</div>
         </div>
     </div>
 </template>
@@ -758,6 +758,7 @@ $bg-button: rgba(50, 50, 50, 0.7);
 
 .nolyrics {
     margin-bottom: 30px;
+    color: var(--primary-color);
 }
 
 .font-size-controls {

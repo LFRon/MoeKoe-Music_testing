@@ -215,7 +215,7 @@ const selectedSettings = ref({
     startMinimized: { displayText: t('guan-bi'), value: 'off' },
     preventAppSuspension: { displayText: t('guan-bi'), value: 'off' },
     networkMode: { displayText: t('zhu-wang'), value: 'mainnet' },
-    startupPage: { displayText: t('shou-ye'), value: 'home' },
+    startupPage: { displayText: t('shou-ye'), value: 'Index' },
     proxy: { displayText: t('guan-bi'), value: 'off' },
     proxyUrl: { displayText: '', value: '' },
     apiBaseUrlMode: { displayText: '默认', value: 'default' },

@@ -442,7 +442,7 @@ let autoSwitchTimer = null;
 let lyricScrollTimer = null;
 // 自动切换计数器和最大重试次数
 let autoSwitchCount = 0;
-const maxAutoSwitchRetries = 3;
+const maxAutoSwitchRetries = 5;
 
 // 处理自动切换逻辑的函数
 const handleAutoSwitch = () => {
@@ -596,6 +596,10 @@ const playSong = async (song) => {
                 playing.value = true;
             }
         } catch (playError) {
+            if(playError.name.includes('NotSupportedError')) {
+                console.error('[PlayerControl] 播放失败，浏览器不支持该音频格式,正在降低音质重试:', playError);
+                return;
+            }
             console.warn('[PlayerControl] 播放被中断，尝试重新播放:', playError);
             // 等待一小段时间后重试
             await new Promise(resolve => setTimeout(resolve, 100));
@@ -666,7 +670,10 @@ const togglePlayPause = async () => {
                     addLocalMusicToQueue(song);
                 } else {
                     console.log('[PlayerControl] 歌曲没有URL，重新获取');
-                    addSongToQueue(song.hash, song.name, song.img, song.author);
+                    const result = await addSongToQueue(song.hash, song.name, song.img, song.author);
+                    if (result && result.song) {
+                        playSong(result.song);
+                    }
                     return;
                 }
             } else {
@@ -1300,11 +1307,14 @@ onMounted(() => {
         if (isElectron()) window.electron.ipcRenderer.send('play-pause-action', playing.value, audio.currentTime);
     });
 
-    audio.addEventListener('error', (e) => {
+    audio.addEventListener('error', async (e) => {
         console.log('[PlayerControl] 音频错误代码:', audio.error?.code);
         console.error('[PlayerControl] 音频错误:', e);
         if(audio.error?.code == 4){
-            addSongToQueue(currentSong.value.hash, currentSong.value.name, currentSong.value.img, currentSong.value.author);
+            const result = await addSongToQueue(currentSong.value.hash, currentSong.value.name, currentSong.value.img, currentSong.value.author, true, 'flac');
+            if (result && result.song) {
+                playSong(result.song);
+            }
         }else{
             window.$modal.alert(t('yin-pin-jia-zai-shi-bai'));
         }

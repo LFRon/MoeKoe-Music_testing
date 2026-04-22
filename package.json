@@ -34,7 +34,7 @@
       "owner": "iAJue",
       "repo": "MoeKoeMusic"
     },
-    "compression": "maximum",
+    "compression": "normal",
     "extraResources": [
       {
         "from": "build/icons/",
@@ -145,7 +145,7 @@
   "devDependencies": {
     "@types/node": "^25.6.0",
     "@vitejs/plugin-vue": "^6.0.6",
-    "@vue/compiler-sfc": "^3.5.32",
+    "@vue/compiler-sfc": "^3.5.33",
     "cross-env": "^10.1.0",
     "electron": "^41.2.2",
     "electron-builder": "^26.8.1",
@@ -167,9 +167,9 @@
     "pinia": "^3.0.4",
     "pinia-plugin-persistedstate": "^4.7.1",
     "tree-kill": "^1.2.2",
-    "vue": "^3.5.32",
+    "vue": "^3.5.33",
     "vue-i18n": "^11.3.2",
-    "vue-router": "^5.0.4",
+    "vue-router": "^5.0.6",
     "vue3-virtual-scroller": "^0.2.3",
     "ws": "^8.20.0"
   }

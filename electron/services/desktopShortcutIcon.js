@@ -89,10 +89,9 @@ $Shortcut.Description = '${escapePowerShellString(description)}'
 ${iconPath ? `$Shortcut.IconLocation = '${escapePowerShellString(iconPath)}'` : ''}
 $Shortcut.Save()
 `;
-    const psPath = 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
     const encoded = Buffer.from(psScript, 'utf16le').toString('base64');
 
-    exec(`${psPath} -NoProfile -EncodedCommand ${encoded}`, (err, stdout, stderr) => {
+    exec(`powershell -NoProfile -EncodedCommand ${encoded}`, (err, stdout, stderr) => {
         if (err) {
             console.error('桌面快捷方式重建失败:', err);
             if (stderr) {

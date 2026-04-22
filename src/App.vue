@@ -3,7 +3,7 @@
         <TitleBar v-if="showTitleBar && !isLyricsRoute" />
         <RouterView />
         <Disclaimer v-if="!isLyricsRoute" />
-        <StatusBarLyrics ref="statusBarLyricsRef" />
+        <StatusBarLyrics v-if="!isLyricsRoute" ref="statusBarLyricsRef" />
     </div>
 </template>
 

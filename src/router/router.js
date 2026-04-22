@@ -75,7 +75,8 @@ router.beforeEach((to, from, next) => {
 
     const MoeAuth = MoeAuthStore();
     const settings = JSON.parse(localStorage.getItem('settings')) || {};
-    const startupPage = settings.startupPage || 'Index';
+    const allowedStartupPages = ['Index', 'Discover', 'Library'];
+    const startupPage = allowedStartupPages.includes(settings.startupPage) ? settings.startupPage : 'Index';
 
     const isFirstEnter = from.matched.length === 0;
 
