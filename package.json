@@ -129,8 +129,7 @@
     "linux": {
       "icon": "build/icons/linux",
       "target": [
-        "AppImage",
-        "deb"
+        "AppImage"
       ],
       "category": "Utility",
       "artifactName": "${productName}-${arch}.${ext}"
