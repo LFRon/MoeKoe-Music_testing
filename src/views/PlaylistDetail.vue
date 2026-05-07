@@ -1444,12 +1444,15 @@ $shadow-light: 0 2px 10px rgba(0, 0, 0, 0.1);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    height: 50px;
     padding: 10px;
+    box-sizing: border-box;
     border-bottom: 1px solid $border-light;
     border-radius: 5px;
     cursor: pointer;
 
     &:hover {
+        border: none;
         background-color: var(--background-color);
     }
 
@@ -1458,7 +1461,7 @@ $shadow-light: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
 
     &.cover-view {
-        height: 60px;
+        height: 70px;
         padding: 5px 10px;
         display: flex;
         align-items: center;
@@ -1778,12 +1781,7 @@ $shadow-light: 0 2px 10px rgba(0, 0, 0, 0.1);
     padding: 10px;
     border-bottom: 1px solid $primary;
     font-weight: bold;
-    background-color: rgba(var(--primary-color-rgb), 0.1);
     border-radius: 5px 5px 0 0;
-
-    &:hover {
-        background-color: rgba(var(--primary-color-rgb), 0.15);
-    }
 }
 
 .track-checkbox-header {

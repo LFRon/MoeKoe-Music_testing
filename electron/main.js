@@ -6,10 +6,11 @@ import {
     registerProtocolHandler, sendHashAfterLoad, getTray, createMvWindow
 } from './appServices.js';
 import { initializeExtensions, cleanupExtensions } from './extensions/extensions.js';
-import { setupAutoUpdater } from './services/updater.js';
+import { setupAutoUpdater, startUpdateDownload } from './services/updater.js';
 import apiService from './services/apiService.js';
 import statusBarLyricsService from './services/statusBarLyricsService.js';
 import { setupDesktopShortcutIcon } from './services/desktopShortcutIcon.js';
+import { openLogPath, exportLog } from './services/logHelper.js';
 import Store from 'electron-store';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -300,4 +301,21 @@ ipcMain.handle('open-mv-window', (e, url) => {
             throw error;
         }
     })();
+});
+
+ipcMain.handle('open-log-path', async (e) => {
+    try {
+        const result = await openLogPath();
+        return result ? { error: result } : { success: true };
+    }
+    catch (err) { return { error: err }; }
+});
+
+ipcMain.handle('export-log', async (e) => {
+    try { return await exportLog(); }
+    catch (err) { return { error: err }; }
+});
+
+ipcMain.handle('start-update-download', async () => {
+    return await startUpdateDownload();
 });

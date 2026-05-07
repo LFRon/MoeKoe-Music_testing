@@ -48,15 +48,7 @@
         <h2 v-if="isLoading || listenHistory.length > 0" class="section-title" @click="addAllSongsToQueue">{{ $t('wo-xi-huan-ting') }}</h2>
         <div v-if="isLoading || listenHistory.length > 0" class="favorite-section">
             <div class="song-list">
-                <div v-if="isLoading" class="skeleton-loader">
-                    <div v-for="n in 16" :key="n" class="skeleton-item">
-                        <div class="skeleton-cover"></div>
-                        <div class="skeleton-info">
-                            <div class="skeleton-line"></div>
-                            <div class="skeleton-line short"></div>
-                        </div>
-                    </div>
-                </div>
+                <CommonSkeleton v-if="isLoading" variant="compact-grid" :count="16" />
                 <ul v-else>
                     <li v-for="(song, index) in listenHistory" :key="index" class="song-item"
                         @click="playSong(song['hash'], song.name.split(' - ')[1] || song.name, $getCover(song.image, 480), song.singername)">
@@ -157,6 +149,7 @@ import { MoeAuthStore } from '../stores/store';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import BirthdayEasterEgg from '../components/BirthdayEasterEgg.vue';
+import CommonSkeleton from '../components/CommonSkeleton.vue';
 const { t } = useI18n();
 const router = useRouter();
 const MoeAuth = MoeAuthStore();
@@ -743,47 +736,6 @@ const addAllSongsToQueue = () => {
 .singer-name {
     font-size: 12px;
     color: #666;
-}
-
-.skeleton-loader {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    margin-top: 10px;
-}
-
-.skeleton-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-    width: 250px;
-    border-radius: 10px;
-    padding-left: 10px;
-    background-color: #f0f0f0;
-    height: 68px;
-}
-
-.skeleton-cover {
-    width: 50px;
-    height: 50px;
-    margin-right: 10px;
-    border-radius: 10px;
-    background-color: #e0e0e0;
-}
-
-.skeleton-info {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    max-width: 190px;
-}
-
-.skeleton-line {
-    height: 10px;
-    background-color: #e0e0e0;
-    margin-bottom: 5px;
-    border-radius: 5px;
-    width: 150px;
 }
 
 .create-playlist-button {

@@ -59,8 +59,7 @@
 - [x] 📺  支持MV播放
 - [x] 🌚 Light/Dark Mode  自動切換
 - [x] 👆  支持Touch Bar
-- [x] 🖥️  支持PWA，可在Chrome/Edge裏點擊地址欄右邊的 ➕  安裝到電腦
-- [ ] 🎧  支持Mpris
+- [x] 🖥️  支持PWA
 - [x] ⌨️  全域快速鍵
 - [x] 🤟  多語言支持
 - [x] 📻  案頭歌詞

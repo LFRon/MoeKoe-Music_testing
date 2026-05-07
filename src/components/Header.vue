@@ -19,13 +19,18 @@
             </div>
             <div class="search-profile">
                 <div class="search-bar">
-                    <input v-model="searchQuery" type="text" :placeholder="$t('sou-suo-yin-le-ge-shou-ge-dan')"
-                        @keydown.enter="getSearch">
+                    <input
+                        v-model="searchQuery"
+                        type="text"
+                        :placeholder="$t('sou-suo-yin-le-ge-shou-ge-dan')"
+                        :readonly="searchMode === 'recommend'"
+                        @click="getSearch"
+                        @keydown.enter="getSearch"
+                    >
                 </div>
                 <div class="profile" @click="toggleProfile">
-                    <img :src="MoeAuth.UserInfo ? MoeAuth.UserInfo.pic : './assets/images/profile.jpg'"
-                        alt="Profile Picture">
-                    <div class="profile-menu" v-if="showProfile">
+                    <img :src="MoeAuth.UserInfo ? MoeAuth.UserInfo.pic : './assets/images/profile.jpg'" alt="Profile Picture">
+                    <div v-if="showProfile" class="profile-menu">
                         <ul>
                             <li>
                                 <router-link to="/settings">
@@ -33,15 +38,13 @@
                                 </router-link>
                             </li>
                             <li>
-                                <a v-if="MoeAuth.isAuthenticated" @click="logout"><i class="fas fa-sign-out-alt"></i>{{
-                                    $t('tui-chu') }}</a>
-                                <router-link to="/login" v-else>
+                                <a v-if="MoeAuth.isAuthenticated" @click="logout"><i class="fas fa-sign-out-alt"></i>{{ $t('tui-chu') }}</a>
+                                <router-link v-else to="/login">
                                     <i class="fas fa-sign-in-alt"></i> {{ $t('deng-lu') }}
                                 </router-link>
                             </li>
                             <li>
-                                <a @click="openRegisterUrl(downloadUrl || 'https://github.com/iAJue/MoeKoeMusic/releases')"
-                                    style="position: relative;">
+                                <a style="position: relative;" @click="handleUpdateEntryClick">
                                     <i class="fab fa-github"></i> {{ $t('geng-xin') }}
                                     <i v-if="showNewBadge" class="new-badge">new</i>
                                 </a>
@@ -61,43 +64,28 @@
         <div class="modal-content" @click.stop>
             <img class="modal-banner" src="/assets/images/banners.png" alt="Banner">
             <h2>{{ $t('mian-ze-sheng-ming') }}</h2>
-            <p>{{
-                $t('0-ben-cheng-xu-shi-ku-gou-di-san-fang-ke-hu-duan-bing-fei-ku-gou-guan-fang-xu-yao-geng-wan-shan-de-gong-neng-qing-xia-zai-guan-fang-ke-hu-duan-ti-yan')
-                }}</p>
-            <p>{{
-                $t('1-ben-xiang-mu-jin-gong-xue-xi-shi-yong-qing-zun-zhong-ban-quan-qing-wu-li-yong-ci-xiang-mu-cong-shi-shang-ye-hang-wei-ji-fei-fa-yong-tu')
-                }}</p>
-            <p>{{
-                $t('2-shi-yong-ben-xiang-mu-de-guo-cheng-zhong-ke-neng-hui-chan-sheng-ban-quan-shu-ju-dui-yu-zhe-xie-ban-quan-shu-ju-ben-xiang-mu-bu-yong-you-ta-men-de-suo-you-quan-wei-le-bi-mian-qin-quan-shi-yong-zhe-wu-bi-zai-24-xiao-shi-nei-qing-chu-shi-yong-ben-xiang-mu-de-guo-cheng-zhong-suo-chan-sheng-de-ban-quan-shu-ju')
-                }}</p>
-            <p>{{
-                $t('3-you-yu-shi-yong-ben-xiang-mu-chan-sheng-de-bao-kuo-you-yu-ben-xie-yi-huo-you-yu-shi-yong-huo-wu-fa-shi-yong-ben-xiang-mu-er-yin-qi-de-ren-he-xing-zhi-de-ren-he-zhi-jie-jian-jie-te-shu-ou-ran-huo-jie-guo-xing-sun-hai-bao-kuo-dan-bu-xian-yu-yin-shang-yu-sun-shi-ting-gong-ji-suan-ji-gu-zhang-huo-gu-zhang-yin-qi-de-sun-hai-pei-chang-huo-ren-he-ji-suo-you-qi-ta-shang-ye-sun-hai-huo-sun-shi-you-shi-yong-zhe-fu-ze')
-                }}
-            </p>
-            <p>{{
-                $t('4-jin-zhi-zai-wei-fan-dang-di-fa-lv-fa-gui-de-qing-kuang-xia-shi-yong-ben-xiang-mu-dui-yu-shi-yong-zhe-zai-ming-zhi-huo-bu-zhi-dang-di-fa-lv-fa-gui-bu-yun-xu-de-qing-kuang-xia-shi-yong-ben-xiang-mu-suo-zao-cheng-de-ren-he-wei-fa-wei-gui-hang-wei-you-shi-yong-zhe-cheng-dan-ben-xiang-mu-bu-cheng-dan-you-ci-zao-cheng-de-ren-he-zhi-jie-jian-jie-te-shu-ou-ran-huo-jie-guo-xing-ze-ren')
-                }}
-            </p>
+            <p>{{ $t('0-ben-cheng-xu-shi-ku-gou-di-san-fang-ke-hu-duan-bing-fei-ku-gou-guan-fang-xu-yao-geng-wan-shan-de-gong-neng-qing-xia-zai-guan-fang-ke-hu-duan-ti-yan') }}</p>
+            <p>{{ $t('1-ben-xiang-mu-jin-gong-xue-xi-shi-yong-qing-zun-zhong-ban-quan-qing-wu-li-yong-ci-xiang-mu-cong-shi-shang-ye-hang-wei-ji-fei-fa-yong-tu') }}</p>
+            <p>{{ $t('2-shi-yong-ben-xiang-mu-de-guo-cheng-zhong-ke-neng-hui-chan-sheng-ban-quan-shu-ju-dui-yu-zhe-xie-ban-quan-shu-ju-ben-xiang-mu-bu-yong-you-ta-men-de-suo-you-quan-wei-le-bi-mian-qin-quan-shi-yong-zhe-wu-bi-zai-24-xiao-shi-nei-qing-chu-shi-yong-ben-xiang-mu-de-guo-cheng-zhong-suo-chan-sheng-de-ban-quan-shu-ju') }}</p>
+            <p>{{ $t('3-you-yu-shi-yong-ben-xiang-mu-chan-sheng-de-bao-kuo-you-yu-ben-xie-yi-huo-you-yu-shi-yong-huo-wu-fa-shi-yong-ben-xiang-mu-er-yin-qi-de-ren-he-xing-zhi-de-ren-he-zhi-jie-jian-jie-te-shu-ou-ran-huo-jie-guo-xing-sun-hai-bao-kuo-dan-bu-xian-yu-yin-shang-yu-sun-shi-ting-gong-ji-suan-ji-gu-zhang-huo-gu-zhang-yin-qi-de-sun-hai-pei-chang-huo-ren-he-ji-suo-you-qi-ta-shang-ye-sun-hai-huo-sun-shi-you-shi-yong-zhe-fu-ze') }}</p>
+            <p>{{ $t('4-jin-zhi-zai-wei-fan-dang-di-fa-lv-fa-gui-de-qing-kuang-xia-shi-yong-ben-xiang-mu-dui-yu-shi-yong-zhe-zai-ming-zhi-huo-bu-zhi-dang-di-fa-lv-fa-gui-bu-yun-xu-de-qing-kuang-xia-shi-yong-ben-xiang-mu-suo-zao-cheng-de-ren-he-wei-fa-wei-gui-hang-wei-you-shi-yong-zhe-cheng-dan-ben-xiang-mu-bu-cheng-dan-you-ci-zao-cheng-de-ren-he-zhi-jie-jian-jie-te-shu-ou-ran-huo-jie-guo-xing-ze-ren') }}</p>
             <p>{{ $t('5-yin-le-ping-tai-bu-yi-qing-zun-zhong-ban-quan-zhi-chi-zheng-ban') }}</p>
-            <p>{{
-                $t('6-ben-xiang-mu-jin-yong-yu-dui-ji-shu-ke-hang-xing-de-tan-suo-ji-yan-jiu-bu-jie-shou-ren-he-shang-ye-bao-kuo-dan-bu-xian-yu-guang-gao-deng-he-zuo-ji-juan-zeng')
-                }}</p>
-            <p>{{
-                $t('7-ru-guo-guan-fang-yin-le-ping-tai-jue-de-ben-xiang-mu-bu-tuo-ke-lian-xi-ben-xiang-mu-geng-gai-huo-yi-chu')
-                }}</p>
+            <p>{{ $t('6-ben-xiang-mu-jin-yong-yu-dui-ji-shu-ke-hang-xing-de-tan-suo-ji-yan-jiu-bu-jie-shou-ren-he-shang-ye-bao-kuo-dan-bu-xian-yu-guang-gao-deng-he-zuo-ji-juan-zeng') }}</p>
+            <p>{{ $t('7-ru-guo-guan-fang-yin-le-ping-tai-jue-de-ben-xiang-mu-bu-tuo-ke-lian-xi-ben-xiang-mu-geng-gai-huo-yi-chu') }}</p>
             <button @click="Disclaimer">{{ $t('guan-bi-an-niu') }}</button>
-            <div class="version-number">© MoeKoe Music <span v-if="appVersion">V{{ appVersion }} - {{ platform }}</span>
-            </div>
+            <div class="version-number">© MoeKoe Music <span v-if="appVersion">V{{ appVersion }} - {{ platform }}</span></div>
         </div>
     </div>
+    <AppUpdateDialog ref="updateDialogRef" :app-version="appVersion" :platform="platform" @badge-change="showNewBadge = $event" />
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { MoeAuthStore } from '../stores/store';
-import { openRegisterUrl } from '../utils/utils';
 import { useI18n } from 'vue-i18n';
+import AppUpdateDialog from './AppUpdateDialog.vue';
+
 const MoeAuth = MoeAuthStore();
 const searchQuery = ref('');
 const isDisclaimerVisible = ref(false);
@@ -108,27 +96,37 @@ const canGoForward = ref(false);
 const forwardStack = ref([]);
 const { t } = useI18n();
 const showNewBadge = ref(false);
-const downloadUrl = ref('');
 const appVersion = ref('');
 const platform = ref('');
+const searchMode = ref('quick');
+const showProfile = ref(false);
+const updateDialogRef = ref(null);
+
 onMounted(() => {
     updateNavigationStatus();
     if (window.electron) {
         window.electron.ipcRenderer.on('version', (_event, version) => {
             appVersion.value = version;
-            fetchLatestVersion();
             platform.value = window.electron.platform;
             localStorage.setItem('version', version);
         });
     }
+    document.addEventListener('click', handleClickOutside);
 });
+
+onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside);
+});
+
 const Disclaimer = () => {
     isDisclaimerVisible.value = !isDisclaimerVisible.value;
 };
+
 const updateNavigationStatus = () => {
     canGoBack.value = window.history.length > 1;
     canGoForward.value = forwardStack.value.length > 0;
 };
+
 const goBack = () => {
     if (canGoBack.value) {
         forwardStack.value.push(route.fullPath);
@@ -136,6 +134,7 @@ const goBack = () => {
     }
     updateNavigationStatus();
 };
+
 const goForward = () => {
     if (canGoForward.value) {
         const forwardRoute = forwardStack.value.pop();
@@ -143,46 +142,58 @@ const goForward = () => {
     }
     updateNavigationStatus();
 };
+
 router.afterEach(() => {
     updateNavigationStatus();
 });
+
 const refreshPage = () => {
     window.location.reload();
 };
+
 const logout = async () => {
     const result = await window.$modal.confirm(t('ni-que-ren-yao-tui-chu-deng-lu-ma'));
     if (result) {
         MoeAuth.clearData();
         router.push({ path: '/' });
     }
-}
-const showProfile = ref(false);
+};
 
 const toggleProfile = () => {
     showProfile.value = !showProfile.value;
 };
+
 const getSearch = () => {
-    if (searchQuery.value.trim() !== '') {
-        if (searchQuery.value.includes('collection_')) {
+    const keyword = searchQuery.value.trim();
+    const settings = JSON.parse(localStorage.getItem('settings')) || {};
+    searchMode.value = settings?.searchMode === 'recommend' ? 'recommend' : 'quick';
+
+    if (searchMode.value === 'recommend') {
+        const nextQuery = keyword ? { q: keyword } : {};
+        if (route.path === '/search/recommend' && JSON.stringify(route.query) === JSON.stringify(nextQuery)) {
+            return;
+        }
+        router.push({
+            path: '/search/recommend',
+            query: nextQuery
+        });
+        return;
+    }
+
+    if (keyword !== '') {
+        if (keyword.includes('collection_')) {
             router.push({
                 path: '/PlaylistDetail',
-                query: { global_collection_id: searchQuery.value }
+                query: { global_collection_id: keyword }
             });
             return;
         }
         router.push({
             path: '/search',
-            query: { q: searchQuery.value }
+            query: { q: keyword }
         });
     }
 };
-onMounted(() => {
-    document.addEventListener('click', handleClickOutside);
-});
-
-onUnmounted(() => {
-    document.removeEventListener('click', handleClickOutside);
-});
 
 const handleClickOutside = (event) => {
     const queueProfile = document.querySelector('.profile-menu');
@@ -191,33 +202,12 @@ const handleClickOutside = (event) => {
     }
 };
 
-const fetchLatestVersion = async () => {
-    try {
-        const response = await fetch('https://api.github.com/repos/iAJue/MoeKoeMusic/releases/latest');
-        const data = await response.json();
-        downloadUrl.value = data.html_url;
-        const latestVersion = data.tag_name.replace(/^v/, '');
-        if (isVersionLower(appVersion.value, latestVersion)) {
-            showNewBadge.value = true;
-        }
-    } catch (error) {
-        console.error('获取最新版本号失败:', error);
-    }
-};
-
-const isVersionLower = (current, latest) => {
-    const currentParts = current.split('.').map(Number);
-    const latestParts = latest.split('.').map(Number);
-    for (let i = 0; i < Math.max(currentParts.length, latestParts.length); i++) {
-        if ((latestParts[i] || 0) > (currentParts[i] || 0)) {
-            return true;
-        } else if ((latestParts[i] || 0) < (currentParts[i] || 0)) {
-            return false;
-        }
-    }
-    return false;
+const handleUpdateEntryClick = () => {
+    showProfile.value = false;
+    updateDialogRef.value?.handleEntryClick();
 };
 </script>
+
 <style lang="scss" scoped>
 .navigation {
     display: flex;
@@ -442,7 +432,7 @@ header {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     text-align: left;
     animation: fadeIn 0.3s ease;
-    
+
     .modal-banner {
         position: absolute;
         top: 0;

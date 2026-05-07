@@ -38,7 +38,7 @@ const translations = {
     'update-ready-msg': '新版本已下载完成，立即安装？',
     'install-now': '现在安装',
     'install-later': '稍后安装',
-    'non-windows-update': '非 Windows 平台暂不支持在线更新，请前往官网或应用市场下载最新版本。'
+    'non-update': '当前环境暂不支持在线更新，请前往官网或应用市场下载最新版本。'
   },
   'zh-TW': {
     'project-home': '專案首頁',
@@ -74,7 +74,7 @@ const translations = {
     'update-ready-msg': '新版本已下載完成，立即安裝？',
     'install-now': '現在安裝',
     'install-later': '稍後安裝',
-    'non-windows-update': '非 Windows 平台暫不支持線上更新，請前往官網或應用市場下載最新版本。'
+    'non-update': '當前環境暫不支持線上更新，請前往官網或應用市場下載最新版本。'
   },
   'en': {
     'project-home': 'Project Homepage',
@@ -110,7 +110,7 @@ const translations = {
     'update-ready-msg': 'Update downloaded. Install now?',
     'install-now': 'Install Now',
     'install-later': 'Later',
-    'non-windows-update': 'Auto-update is only available on Windows. Please download from the official website.'
+    'non-update': 'Online update is not available in the current environment. Please download the latest version from the official website or app store.'
   },
   'ru': {
     'project-home': 'Страница проекта',
@@ -146,7 +146,7 @@ const translations = {
     'update-ready-msg': 'Обновление загружено. Установить сейчас?',
     'install-now': 'Установить',
     'install-later': 'Позже',
-    'non-windows-update': 'Автообновление доступно только на Windows. Скачайте с официального сайта.'
+    'non-update': 'Онлайн-обновление недоступно в текущей среде. Скачайте последнюю версию с официального сайта или из магазина приложений.'
   },
   'ja': {
     'project-home': 'プロジェクトホーム',
@@ -182,7 +182,7 @@ const translations = {
     'update-ready-msg': '更新がダウンロードされました。今すぐインストールしますか？',
     'install-now': '今すぐインストール',
     'install-later': '後で',
-    'non-windows-update': '自動更新はWindowsでのみ利用可能です。公式サイトからダウンロードしてください。'
+    'non-update': '現在の環境ではオンライン更新は利用できません。公式サイトまたはアプリストアから最新版をダウンロードしてください。'
   },
   'ko': {
     'project-home': '프로젝트 홈',
@@ -218,7 +218,7 @@ const translations = {
     'update-ready-msg': '업데이트가 다운로드되었습니다. 지금 설치하시겠습니까?',
     'install-now': '지금 설치',
     'install-later': '나중에',
-    'non-windows-update': '자동 업데이트는 Windows에서만 사용 가능합니다. 공식 웹사이트에서 다운로드하세요.'
+    'non-update': '현재 환경에서는 온라인 업데이트를 지원하지 않습니다. 공식 웹사이트 또는 앱 스토어에서 최신 버전을 다운로드하세요.'
   }
 };
 

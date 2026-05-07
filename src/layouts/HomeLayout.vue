@@ -60,6 +60,8 @@ onUnmounted(() => {
 :root {
     /* 粉红色主色调 - 用于主要按钮、强调元素 */
     --primary-color: #FF69B4;
+    /* 粉红色主色调的RGB值 - 用于需要RGB格式的样式 */
+    --primary-color-rgb: '255, 105, 180';
     /* 浅粉红色辅助色 - 用于次要按钮、提示信息 */
     --secondary-color: #FFB6C1;
     /* 文本颜色 - 用于正文内容 */

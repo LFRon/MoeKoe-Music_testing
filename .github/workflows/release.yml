@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - "package.json"
   workflow_dispatch:
 
 permissions:
@@ -99,35 +101,16 @@ jobs:
           npm run build
           npm run electron:build:${{ env.os }}
 
-      - name: Rename files - win
-        if: runner.os == 'Windows'
-        run: |
-          mv "./dist_electron/MoeKoe_Music_Setup_${{ needs.increment-version.outputs.version }}.exe" "./MoeKoe_Music_Setup_${{ needs.increment-version.outputs.version }}.exe"
-          mv "./dist_electron/MoeKoe_Music_Setup_${{ needs.increment-version.outputs.version }}.exe.blockmap" "./MoeKoe_Music_Setup_${{ needs.increment-version.outputs.version }}.exe.blockmap"
-          mv "./dist_electron/latest.yml" "./latest.yml"
-      - name: Rename files - mac
-        if: runner.os == 'macOS'
-        run: |
-          mv "./dist_electron/MoeKoe Music-arm64.dmg" "./MoeKoe_Music_${{ needs.increment-version.outputs.version }}-arm64.dmg"
-          mv "./dist_electron/MoeKoe Music-x64.dmg" "./MoeKoe_Music_${{ needs.increment-version.outputs.version }}-x64.dmg"
-      - name: Rename files - linux
-        if: runner.os == 'Linux'
-        run: |
-          mv "./dist_electron/MoeKoe Music.AppImage" "./MoeKoe_Music_${{ needs.increment-version.outputs.version }}.AppImage"
-          mv "./dist_electron/MoeKoe Music.deb" "./MoeKoe_Music_${{ needs.increment-version.outputs.version }}_amd64.deb"
-
       - name: Upload to Release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.increment-version.outputs.version }}
           draft: false # 这里更新下状态
           files: |
-            ./MoeKoe_Music_Setup_${{ needs.increment-version.outputs.version }}.exe
-            ./MoeKoe_Music_Setup_${{ needs.increment-version.outputs.version }}.exe.blockmap
-            ./latest.yml
-
-            ./MoeKoe_Music_${{ needs.increment-version.outputs.version }}-arm64.dmg
-            ./MoeKoe_Music_${{ needs.increment-version.outputs.version }}-x64.dmg
-
-            ./MoeKoe_Music_${{ needs.increment-version.outputs.version }}.AppImage
-            ./MoeKoe_Music_${{ needs.increment-version.outputs.version }}_amd64.deb
+            ./dist_electron/*.exe
+            ./dist_electron/*.zip
+            ./dist_electron/*.dmg
+            ./dist_electron/*.AppImage
+            ./dist_electron/*.deb
+            ./dist_electron/*.blockmap
+            ./dist_electron/latest*.yml

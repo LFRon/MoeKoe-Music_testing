@@ -1,3 +1,4 @@
+import fs from 'fs';
 import { app } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -108,8 +109,11 @@ function syncDesktopShortcutIcon() {
     const exePath = path.dirname(app.getPath('exe'));
     const desktopPath = app.getPath('desktop');
     const shortcutPath = path.join(desktopPath, DESKTOP_SHORTCUT_NAME);
-    const iconPath = getDesktopShortcutIconPath();
+    if (!fs.existsSync(shortcutPath)) {
+        return;
+    }
 
+    const iconPath = getDesktopShortcutIconPath();
     createShortcut(app.getPath('exe'), shortcutPath, path.basename(exePath), iconPath);
     // refreshIconCache();
 }

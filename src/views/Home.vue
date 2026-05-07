@@ -67,15 +67,7 @@
             <img :src="`./assets/images/home/mama.png`" class="mama" @click="addAllSongsToQueue">
             {{ $t('mei-ri-tui-jian') }}
         </h2>
-        <div v-if="isLoading" class="skeleton-loader">
-            <div v-for="n in 16" :key="n" class="skeleton-item">
-                <div class="skeleton-cover"></div>
-                <div class="skeleton-info">
-                    <div class="skeleton-line"></div>
-                    <div class="skeleton-line short"></div>
-                </div>
-            </div>
-        </div>
+        <CommonSkeleton v-if="isLoading" variant="compact-grid" :count="16" />
         <div v-else class="song-list">
             <div class="song-item" v-for="(song, index) in songs" :key="index"
                 @click="playSong(song['hash'], song.ori_audio_name, $getCover(song.sizable_cover, 480), song.author_name)"
@@ -110,6 +102,7 @@
 import { ref, onMounted, computed, onUpdated } from "vue";
 import { get } from '../utils/request';
 import ContextMenu from '../components/ContextMenu.vue';
+import CommonSkeleton from '../components/CommonSkeleton.vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getCover } from '../utils/utils';
 
@@ -484,47 +477,6 @@ const addAllSongsToQueue = () => {
     @media screen and (max-width: 768px) {
         font-size: 12px;
     }
-}
-
-.skeleton-loader {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    margin-top: 10px;
-}
-
-.skeleton-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-    width: 250px;
-    border-radius: 10px;
-    padding-left: 10px;
-    background-color: #f0f0f0;
-    height: 68px;
-}
-
-.skeleton-cover {
-    width: 50px;
-    height: 50px;
-    margin-right: 10px;
-    border-radius: 10px;
-    background-color: #e0e0e0;
-}
-
-.skeleton-info {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    max-width: 190px;
-}
-
-.skeleton-line {
-    height: 10px;
-    background-color: #e0e0e0;
-    margin-bottom: 5px;
-    border-radius: 5px;
-    width: 150px;
 }
 
 .radio-card {

@@ -60,8 +60,7 @@ I said on my personal introduction page that I particularly enjoy listening to m
 - [x]  📺  Support MV playback
 - [x]  🌚 Light/Dark Mode  Automatic switching
 - [x]  👆  Support Touch Bar
-- [x]  🖥️  Support PWA, you can click on the right side of the address bar in Chrome/Edge ➕  Install to computer
-- [ ]  🎧  Support Mpris
+- [x]  🖥️  Support PWA
 - [x]  ⌨️   Global shortcut keys
 - [x]  🤟  Multi language support
 - [x]  📻  Desktop Lyrics

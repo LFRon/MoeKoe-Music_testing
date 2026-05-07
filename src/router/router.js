@@ -7,6 +7,7 @@ import Login from '@/views/Login.vue';
 import Settings from '@/views/Settings.vue';
 import PlaylistDetail from '@/views/PlaylistDetail.vue';
 import Search from '@/views/Search.vue';
+import RecommendedSearch from '@/views/RecommendedSearch.vue';
 import Lyrics from '@/views/Lyrics.vue';
 import Ranking from '@/views/Ranking.vue';
 import CloudDrive from '@/views/CloudDrive.vue';
@@ -28,6 +29,7 @@ const routes = [
             { path: '/settings', name: 'Settings', component: Settings },
             { path: '/playlistDetail', name: 'PlaylistDetail', component: PlaylistDetail },
             { path: '/search', name: 'Search', component: Search, meta: { requiresAuth: true } },
+            { path: '/search/recommend', name: 'RecommendedSearch', component: RecommendedSearch, meta: { requiresAuth: true } },
             { path: '/ranking', name: 'Ranking', component: Ranking },
             { path: '/CloudDrive', name: 'CloudDrive', component: CloudDrive },
             { path: '/LocalMusic', name: 'LocalMusic', component: LocalMusic },
