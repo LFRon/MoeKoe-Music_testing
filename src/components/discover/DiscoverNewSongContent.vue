@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="discover-new-song-content">
         <CommonSkeleton v-if="isLoading" variant="song-list" :count="10" />
 
         <div v-else-if="newSongList.length > 0" class="song-section">
@@ -210,6 +210,26 @@ watch(() => route.query.songPage, async (songPage) => {
 </script>
 
 <style lang="scss" scoped>
+.discover-new-song-content {
+    --discover-page-bg: #f5f5f5;
+    --discover-page-border: #ddd;
+    --discover-page-text: #333;
+    --discover-page-muted: #999;
+    --discover-placeholder-bg: #fff;
+    --discover-placeholder-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    --discover-placeholder-text: #8b8f9c;
+
+    &:is(.dark .discover-new-song-content) {
+        --discover-page-bg: #2a2a2a;
+        --discover-page-border: #333;
+        --discover-page-text: rgba(255, 255, 255, 0.86);
+        --discover-page-muted: rgba(255, 255, 255, 0.42);
+        --discover-placeholder-bg: #1d1d1d;
+        --discover-placeholder-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+        --discover-placeholder-text: rgba(255, 255, 255, 0.6);
+    }
+}
+
 .song-section {
     display: grid;
     gap: 20px;
@@ -230,11 +250,11 @@ watch(() => route.query.songPage, async (songPage) => {
 
 .page-number {
     padding: 8px 12px;
-    background-color: #f5f5f5;
-    border: 1px solid #ddd;
+    background-color: var(--discover-page-bg);
+    border: 1px solid var(--discover-page-border);
     border-radius: 4px;
     cursor: pointer;
-    color: #333;
+    color: var(--discover-page-text);
     min-width: 40px;
     transition: all 0.3s;
 
@@ -259,16 +279,16 @@ watch(() => route.query.songPage, async (songPage) => {
 
         &:hover {
             background-color: transparent;
-            color: #333;
+            color: var(--discover-page-text);
         }
     }
 }
 
 .pagination button {
     padding: 8px 15px;
-    background-color: white;
-    color: #333;
-    border: 1px solid #ddd;
+    background-color: var(--discover-placeholder-bg);
+    color: var(--discover-page-text);
+    border: 1px solid var(--discover-page-border);
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s;
@@ -279,10 +299,10 @@ watch(() => route.query.songPage, async (songPage) => {
     }
 
     &:disabled {
-        background-color: white;
-        color: #999;
+        background-color: var(--discover-placeholder-bg);
+        color: var(--discover-page-muted);
         cursor: not-allowed;
-        border-color: #ddd;
+        border-color: var(--discover-page-border);
     }
 }
 
@@ -296,9 +316,9 @@ watch(() => route.query.songPage, async (songPage) => {
     min-width: 260px;
     padding: 40px 48px;
     text-align: center;
-    background: #fff;
+    background: var(--discover-placeholder-bg);
     border-radius: 18px;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    box-shadow: var(--discover-placeholder-shadow);
 
     h3 {
         margin: 0 0 12px;
@@ -308,7 +328,7 @@ watch(() => route.query.songPage, async (songPage) => {
 
     p {
         margin: 0;
-        color: #8b8f9c;
+        color: var(--discover-placeholder-text);
         font-size: 14px;
     }
 }

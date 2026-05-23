@@ -77,9 +77,38 @@ defineProps({
 .card-cover,
 .card-title,
 .card-text {
-    background: linear-gradient(to right, #f0f0f0 8%, #e0e0e0 18%, #f0f0f0 33%);
+    background: linear-gradient(
+        to right,
+        var(--skeleton-shimmer-start) 8%,
+        var(--skeleton-shimmer-middle) 18%,
+        var(--skeleton-shimmer-end) 33%
+    );
     background-size: 800px 104px;
     animation: shimmer 1.5s linear infinite forwards;
+}
+
+.skeleton-card-grid,
+.skeleton-song-list,
+.skeleton-search-grid,
+.skeleton-compact-grid {
+    --skeleton-surface: #f5f5f5;
+    --skeleton-surface-strong: #f0f0f0;
+    --skeleton-border: #f0f0f0;
+    --skeleton-shimmer-start: #f0f0f0;
+    --skeleton-shimmer-middle: #e0e0e0;
+    --skeleton-shimmer-end: #f0f0f0;
+
+    &:is(.dark .skeleton-card-grid),
+    &:is(.dark .skeleton-song-list),
+    &:is(.dark .skeleton-search-grid),
+    &:is(.dark .skeleton-compact-grid) {
+        --skeleton-surface: #1d1d1d;
+        --skeleton-surface-strong: #242424;
+        --skeleton-border: #333;
+        --skeleton-shimmer-start: #2a2a2a;
+        --skeleton-shimmer-middle: #353535;
+        --skeleton-shimmer-end: #2a2a2a;
+    }
 }
 
 .skeleton-card-grid {
@@ -90,7 +119,7 @@ defineProps({
 }
 
 .card {
-    background-color: #f0f0f0;
+    background-color: var(--skeleton-surface);
     border-radius: 10px;
     padding: 10px;
     width: 200px;
@@ -130,7 +159,7 @@ defineProps({
     display: flex;
     align-items: center;
     padding: 10px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--skeleton-border);
     border-radius: 5px;
     gap: 10px;
     margin-bottom: 15px;
@@ -194,7 +223,7 @@ defineProps({
     height: 68px;
     padding-left: 10px;
     border-radius: 10px;
-    background-color: #f0f0f0;
+    background-color: var(--skeleton-surface);
 }
 
 .compact-cover {
@@ -217,7 +246,7 @@ defineProps({
     flex-direction: column;
     align-items: center;
     padding: 15px;
-    background-color: #f9f9f9;
+    background-color: var(--skeleton-surface-strong);
     border-radius: 8px;
 }
 

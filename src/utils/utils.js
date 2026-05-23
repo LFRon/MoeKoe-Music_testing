@@ -71,6 +71,51 @@ export const getCover = (coverUrl, size) => {
     return coverUrl.replace("{size}", size);
 };
 
+export const getProfileBgColor = (src, tone = 0.52) => new Promise((resolve, reject) => {
+    const image = new Image();
+    image.crossOrigin = 'anonymous';
+    image.referrerPolicy = 'no-referrer';
+    image.onload = () => {
+        try {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            if (!context) {
+                reject(new Error('Canvas context unavailable'));
+                return;
+            }
+            const sampleWidth = Math.max(8, Math.floor(image.naturalWidth * 0.12));
+            const sampleHeight = Math.max(8, image.naturalHeight);
+            canvas.width = 24;
+            canvas.height = 24;
+            context.drawImage(image, 0, 0, sampleWidth, sampleHeight, 0, 0, canvas.width, canvas.height);
+            const { data } = context.getImageData(0, 0, canvas.width, canvas.height);
+            let red = 0;
+            let green = 0;
+            let blue = 0;
+            let alphaTotal = 0;
+            for (let i = 0; i < data.length; i += 4) {
+                const alpha = data[i + 3] / 255;
+                red += data[i] * alpha;
+                green += data[i + 1] * alpha;
+                blue += data[i + 2] * alpha;
+                alphaTotal += alpha;
+            }
+            if (!alphaTotal) {
+                reject(new Error('No visible pixels'));
+                return;
+            }
+            const averageRed = Math.round((red / alphaTotal) * tone);
+            const averageGreen = Math.round((green / alphaTotal) * tone);
+            const averageBlue = Math.round((blue / alphaTotal) * tone);
+            resolve(`rgb(${averageRed}, ${averageGreen}, ${averageBlue})`);
+        } catch (error) {
+            reject(error);
+        }
+    };
+    image.onerror = () => reject(new Error('Image load failed'));
+    image.src = src;
+});
+
 export const formatMilliseconds = (time) => {
     const milliseconds = time > 3600 ? time : time * 1000;
     const totalSeconds = Math.floor(milliseconds / 1000);
@@ -163,6 +208,37 @@ export const openRegisterUrl = (registerUrl) => {
     } else {
         window.open(registerUrl, '_blank');
     }
+};
+
+export const openMvPlayer = async (router, hash, title = '视频播放') => {
+    const resolved = router.resolve({
+        path: '/video',
+        query: { hash, title }
+    });
+    const base = window.location.href.split('#')[0];
+    const href = resolved.href || '';
+    const fullUrl = href.startsWith('#')
+        ? `${base}${href}`
+        : `${base}#${href.startsWith('/') ? href : `/${href}`}`;
+
+    if (window.electronAPI) {
+        await window.electronAPI.openMvWindow(fullUrl);
+        return;
+    }
+
+    const width = 960;
+    const height = 620;
+    const left = Math.max(0, Math.round((window.screen.width - width) / 2));
+    const top = Math.max(0, Math.round((window.screen.height - height) / 2));
+    const features = `popup=yes,width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=no`;
+
+    const popup = window.open(fullUrl, 'moekoe-mv', features);
+    if (popup) {
+        popup.focus?.();
+        return;
+    }
+
+    await router.push(resolved);
 };
 
 // 分享

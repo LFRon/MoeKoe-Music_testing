@@ -34,6 +34,20 @@ const emit = defineEmits(['song-click', 'song-contextmenu']);
 
 <style lang="scss" scoped>
 .song-list {
+  --search-result-text: var(--text-color);
+  --search-result-secondary: #666;
+  --search-result-meta: #888;
+  --search-result-meta-muted: #999;
+
+  &:is(.dark .song-list) {
+    --search-result-text: rgba(255, 255, 255, 0.86);
+    --search-result-secondary: rgba(255, 255, 255, 0.62);
+    --search-result-meta: rgba(255, 255, 255, 0.56);
+    --search-result-meta-muted: rgba(255, 255, 255, 0.42);
+  }
+}
+
+.song-list {
   margin: 0;
   padding: 0;
   list-style: none;
@@ -96,6 +110,7 @@ const emit = defineEmits(['song-click', 'song-contextmenu']);
 }
 
 .result-name-text {
+  color: var(--search-result-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -114,23 +129,23 @@ const emit = defineEmits(['song-click', 'song-contextmenu']);
 .result-duration,
 .result-publish-date {
   font-size: 14px;
-  color: #888;
+  color: var(--search-result-meta);
   margin: 0;
   white-space: nowrap;
 }
 
 .result-duration {
-  color: #666;
+  color: var(--search-result-secondary);
 }
 
 .result-publish-date {
   font-size: 12px;
-  color: #999;
+  color: var(--search-result-meta-muted);
 }
 
 .result-type {
   font-size: 14px;
-  color: #666;
+  color: var(--search-result-secondary);
   margin: 6px 0 0 0;
   overflow: hidden;
   text-overflow: ellipsis;

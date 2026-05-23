@@ -72,6 +72,7 @@ import ArtistGrid from '../components/search/ArtistGrid.vue';
 import MvGrid from '../components/search/MvGrid.vue';
 import ComplexSearchResults from '../components/search/ComplexSearchResults.vue';
 import { get } from '../utils/request';
+import { openMvPlayer } from '../utils/utils';
 import { useRoute, useRouter } from 'vue-router';
 const route = useRoute();
 const router = useRouter();
@@ -281,14 +282,14 @@ const handleArtistClick = (artist) => {
     });
 };
 
-const handleMvClick = (mv) => {
-    router.push({
-        path: '/video',
-        query: {
-            hash: mv.MvHash,
-            title: encodeURIComponent(mv.MvName || mv.FileName || '')
-        }
-    });
+const handleMvClick = async (mv) => {
+    try {
+        props.playerControl?.pause?.();
+        const title = mv?.MvName || mv?.FileName || '视频播放';
+        await openMvPlayer(router, mv?.MvHash, title);
+    } catch (error) {
+        $message.error('打开视频播放器失败');
+    }
 };
 
 const handleProgramClick = (program) => {

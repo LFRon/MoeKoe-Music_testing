@@ -1,5 +1,5 @@
 <template>
-    <header>
+    <header class="app-header">
         <nav class="navigation">
             <div class="navigation">
                 <button class="nav-arrow" @click="goBack" :disabled="!canGoBack">
@@ -209,6 +209,22 @@ const handleUpdateEntryClick = () => {
 </script>
 
 <style lang="scss" scoped>
+.app-header {
+    --header-surface: #fff;
+    --header-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    --header-nav-icon: #333;
+    --header-nav-disabled: #ccc;
+    --header-nav-hover-bg: #f0f0f0;
+
+    &:is(.dark .app-header) {
+        --header-surface: rgba(24, 24, 24, 0.96);
+        --header-shadow: 0 2px 14px rgba(0, 0, 0, 0.28);
+        --header-nav-icon: rgba(255, 255, 255, 0.72);
+        --header-nav-disabled: #4a4a4a;
+        --header-nav-hover-bg: rgba(255, 255, 255, 0.08);
+    }
+}
+
 .navigation {
     display: flex;
     gap: 10px;
@@ -224,17 +240,17 @@ const handleUpdateEntryClick = () => {
     justify-content: center;
 
     &:disabled i {
-        color: #ccc;
+        color: var(--header-nav-disabled);
         cursor: not-allowed;
     }
 
     i {
         font-size: 24px;
-        color: #333;
+        color: var(--header-nav-icon);
     }
 
     &:hover {
-        background-color: #f0f0f0;
+        background-color: var(--header-nav-hover-bg);
     }
 }
 
@@ -268,9 +284,9 @@ button {
 }
 
 header {
-    background-color: #fff;
+    background-color: var(--header-surface);
     padding: 15px 0;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--header-shadow);
     position: fixed;
     width: 100%;
     top: 0px;

@@ -69,6 +69,19 @@ const handleDiscoverTabClick = (tab) => {
 .discover-page {
     position: relative;
     padding: 40px 20px 20px;
+    --discover-switch-bg: #f3f4f7;
+    --discover-switch-border: #e8eaf0;
+    --discover-switch-text: #8b8f9c;
+    --discover-switch-active-bg: #fff;
+    --discover-switch-active-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+
+    &:is(.dark .discover-page) {
+        --discover-switch-bg: #1d1f24;
+        --discover-switch-border: rgba(255, 255, 255, 0.08);
+        --discover-switch-text: rgba(255, 255, 255, 0.62);
+        --discover-switch-active-bg: #2a2d35;
+        --discover-switch-active-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+    }
 }
 
 .discover-floating-arona {
@@ -88,8 +101,8 @@ const handleDiscoverTabClick = (tab) => {
     gap: 6px;
     padding: 5px;
     margin-bottom: 24px;
-    background: #f3f4f7;
-    border: 1px solid #e8eaf0;
+    background: var(--discover-switch-bg);
+    border: 1px solid var(--discover-switch-border);
     border-radius: 14px;
 }
 
@@ -99,7 +112,7 @@ const handleDiscoverTabClick = (tab) => {
     border: none;
     border-radius: 10px;
     background: transparent;
-    color: #8b8f9c;
+    color: var(--discover-switch-text);
     font-size: 14px;
     font-weight: 600;
     line-height: 40px;
@@ -107,9 +120,9 @@ const handleDiscoverTabClick = (tab) => {
     transition: all 0.2s ease;
 
     &.active {
-        background: #fff;
+        background: var(--discover-switch-active-bg);
         color: var(--primary-color);
-        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+        box-shadow: var(--discover-switch-active-shadow);
     }
 }
 

@@ -35,7 +35,6 @@ html.dark {
         }
 
         &.active {
-            background-color: rgba(255, 105, 180, 0.15);
             color: var(--primary-color);
         }
     }
@@ -452,7 +451,7 @@ html.dark {
 
     .ranking-container {
         .rank-selector {
-            background: $bg-input;
+            background: transparent;
         }
 
         .rank-chip {

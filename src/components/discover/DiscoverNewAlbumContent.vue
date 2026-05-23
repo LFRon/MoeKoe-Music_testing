@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="discover-new-album-content">
         <div class="category-container">
             <div class="sub-categories album-categories">
                 <button v-for="type in newAlbumTypes" :key="type.value || 'recommend'" @click="selectAlbumType(type.value)"
@@ -121,6 +121,24 @@ watch(() => route.query.albumType, async (albumType) => {
 </script>
 
 <style lang="scss" scoped>
+.discover-new-album-content {
+    --discover-sub-bg: #f5f5f5;
+    --discover-sub-text: var(--text-color);
+    --discover-card-bg: #fff;
+    --discover-card-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    --discover-title-text: var(--text-color);
+    --discover-meta-text: #666;
+
+    &:is(.dark .discover-new-album-content) {
+        --discover-sub-bg: #2a2a2a;
+        --discover-sub-text: rgba(255, 255, 255, 0.82);
+        --discover-card-bg: #1d1d1d;
+        --discover-card-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+        --discover-title-text: rgba(255, 255, 255, 0.86);
+        --discover-meta-text: rgba(255, 255, 255, 0.62);
+    }
+}
+
 .category-container {
     margin-bottom: 30px;
 }
@@ -132,7 +150,8 @@ watch(() => route.query.albumType, async (albumType) => {
     margin-bottom: 20px;
 
     button {
-        background-color: #f5f5f5;
+        background-color: var(--discover-sub-bg);
+        color: var(--discover-sub-text);
         border: none;
         padding: 8px 15px;
         border-radius: 15px;
@@ -158,9 +177,9 @@ watch(() => route.query.albumType, async (albumType) => {
 }
 
 .music-card {
-    background-color: #fff;
+    background-color: var(--discover-card-bg);
     border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--discover-card-shadow);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     padding: 10px;
     text-align: center;
@@ -187,11 +206,12 @@ watch(() => route.query.albumType, async (albumType) => {
     h3 {
         font-size: 16px;
         margin: 10px 0 5px;
+        color: var(--discover-title-text);
     }
 
     p {
         font-size: 12px;
-        color: #666;
+        color: var(--discover-meta-text);
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;

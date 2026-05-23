@@ -2,9 +2,9 @@
     <div class="video-player-page">
         <div class="video-container">
             <div class="video-header">
-                <button class="back-btn" @click="() => isElectron ? closeWindow() : goBack()">
-                    <i class="fas" :class="{ 'fa-xmark': isElectron, 'fa-arrow-left': !isElectron }"></i>
-                    {{ isElectron ? '关闭' : '返回' }}
+                <button class="back-btn" @click="handleBackAction">
+                    <i class="fas" :class="{ 'fa-xmark': shouldCloseWindow, 'fa-arrow-left': !shouldCloseWindow }"></i>
+                    {{ shouldCloseWindow ? '关闭' : '返回' }}
                 </button>
                 <h2 class="video-title">{{ videoTitle }}</h2>
             </div>
@@ -47,6 +47,7 @@ const loading = ref(true);
 const error = ref('');
 
 const isElectron = !!window.electron;
+const shouldCloseWindow = isElectron || !!window.opener || window.history.length <= 1;
 
 const mvhash = ref(route.query.hash || '');
 
@@ -102,7 +103,7 @@ const handleVideoLoaded = () => {
     console.log('视频加载完成');
 };
 
-const handleVideoError = (e) => {
+const handleVideoError = () => {
     error.value = '视频播放失败，可能是视频格式不支持或网络问题';
 };
 
@@ -112,6 +113,17 @@ const goBack = () => {
 
 const closeWindow = () => {
     window.close();
+};
+
+const handleBackAction = () => {
+    if (shouldCloseWindow) {
+        closeWindow();
+        if (!window.closed && !window.opener && !isElectron) {
+            router.push('/');
+        }
+        return;
+    }
+    goBack();
 };
 
 onMounted(() => {

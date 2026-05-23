@@ -30,7 +30,7 @@ import { useRouter } from 'vue-router';
 import { get } from '../utils/request';
 import { MoeAuthStore } from '../stores/store';
 import i18n from '@/utils/i18n';
-import { share } from '@/utils/utils';
+import { openMvPlayer, share } from '@/utils/utils';
 
 const router = useRouter();
 const MoeAuth = MoeAuthStore();
@@ -123,32 +123,7 @@ const playMV = async (mvhash) => {
         props.playerControl?.pause?.();
         const title = contextSong.value?.OriSongName || '视频播放';
 
-        const resolved = router.resolve({
-            path: '/video',
-            query: { hash: mvhash, title }
-        });
-        const base = window.location.href.split('#')[0];
-        const href = resolved.href || '';
-        const fullUrl = href.startsWith('#')
-            ? `${base}${href}`
-            : `${base}#${href.startsWith('/') ? href : `/${href}`}`;
-
-        if (window.electronAPI) {
-            await window.electronAPI.openMvWindow(fullUrl);
-        } else {
-            const width = 960;
-            const height = 620;
-            const left = Math.max(0, Math.round((window.screen.width - width) / 2));
-            const top = Math.max(0, Math.round((window.screen.height - height) / 2));
-            const features = `popup=yes,width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=no`;
-
-            const popup = window.open(fullUrl, 'moekoe-mv', features);
-            if (popup) {
-                popup.focus?.();
-            } else {
-                await router.push(resolved);
-            }
-        }
+        await openMvPlayer(router, mvhash, title);
     } catch (error) {
         $message.error('打开视频播放器失败');
     }

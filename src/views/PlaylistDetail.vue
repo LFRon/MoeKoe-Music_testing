@@ -725,11 +725,21 @@ const handleScroll = (event) => {
 };
 
 // 搜索歌曲
+const loadAllRemainingTracks = async () => {
+    while (hasMore.value) {
+        if (isLoadingMore.value) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            continue;
+        }
+        await loadMoreTracks();
+    }
+};
+
 const searchTracks = async () => {
     if (hasMore.value) {
         isSearching.value = true;
         try {
-            await loadAndAppendRemainingTracks();
+            await loadAllRemainingTracks();
         } finally {
             isSearching.value = false;
         }
@@ -1040,7 +1050,7 @@ const sortTracks = async (field) => {
     if (hasMore.value) {
         isSearching.value = true;
         try {
-            await loadAndAppendRemainingTracks();
+            await loadAllRemainingTracks();
         } finally {
             isSearching.value = false;
         }

@@ -343,13 +343,46 @@ onBeforeUnmount(() => {
     flex-direction: column;
     gap: 20px;
     padding: 20px;
+    --ranking-surface: #ffffff;
+    --ranking-surface-soft: #f5f5f5;
+    --ranking-surface-muted: #f6f7fb;
+    --ranking-hover-surface: #f8f9fa;
+    --ranking-chip-hover: #eeeeee;
+    --ranking-text: #333;
+    --ranking-text-secondary: #666;
+    --ranking-text-muted: #999;
+    --ranking-border: #f0f0f0;
+    --ranking-scroll-thumb: #ddd;
+    --ranking-play-bg: rgba(255, 255, 255, 0.9);
+    --ranking-play-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --ranking-card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    --ranking-card-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.12);
+    --ranking-selector-fade: linear-gradient(180deg, rgba(255, 255, 255, 0), #ffffff);
+
+    &:is(.dark .ranking-container) {
+        --ranking-surface: #1d1d1d;
+        --ranking-surface-soft: #2a2a2a;
+        --ranking-surface-muted: #23252b;
+        --ranking-hover-surface: #26282f;
+        --ranking-chip-hover: #32343b;
+        --ranking-text: rgba(255, 255, 255, 0.86);
+        --ranking-text-secondary: rgba(255, 255, 255, 0.62);
+        --ranking-text-muted: rgba(255, 255, 255, 0.42);
+        --ranking-border: #333;
+        --ranking-scroll-thumb: #444;
+        --ranking-play-bg: rgba(32, 34, 40, 0.92);
+        --ranking-play-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
+        --ranking-card-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
+        --ranking-card-shadow-hover: 0 16px 36px rgba(0, 0, 0, 0.32);
+        --ranking-selector-fade: linear-gradient(180deg, rgba(29, 29, 29, 0), #1d1d1d);
+    }
 }
 
 .rank-selector-shell {
     padding: 16px;
-    background: #ffffff;
+    background: var(--ranking-surface);
     border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--ranking-card-shadow);
 }
 
 .rank-selector-wrapper {
@@ -366,26 +399,30 @@ onBeforeUnmount(() => {
     bottom: 0;
     height: 40px;
     pointer-events: none;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0), #ffffff);
+    background: var(--ranking-selector-fade);
 }
 
 .rank-selector {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
+
+    &:is(.dark .rank-selector) {
+        background: transparent !important;
+    }
 }
 
 .rank-chip {
     padding: 8px 16px;
     border-radius: 20px;
-    background: #f5f5f5;
-    color: #666;
+    background: var(--ranking-surface-soft);
+    color: var(--ranking-text-secondary);
     font-size: 14px;
     cursor: pointer;
     transition: all 0.3s ease;
 
     &:hover {
-        background: #eeeeee;
+        background: var(--ranking-chip-hover);
         transform: translateY(-2px);
     }
 
@@ -401,8 +438,8 @@ onBeforeUnmount(() => {
     padding: 10px 14px;
     border: none;
     border-radius: 12px;
-    background: #f6f7fb;
-    color: #666;
+    background: var(--ranking-surface-muted);
+    color: var(--ranking-text-secondary);
     font-size: 13px;
     font-weight: 500;
     display: flex;
@@ -414,7 +451,7 @@ onBeforeUnmount(() => {
 
     &:hover {
         color: var(--primary-color);
-        background: rgba(0, 0, 0, 0.04);
+        background: var(--ranking-hover-surface);
     }
 
     i {
@@ -434,10 +471,10 @@ onBeforeUnmount(() => {
 }
 
 .ranking-item {
-    background: #ffffff;
+    background: var(--ranking-surface);
     border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--ranking-card-shadow);
     transition: all 0.3s ease;
     height: 600px;
     display: flex;
@@ -445,7 +482,7 @@ onBeforeUnmount(() => {
 
     &:hover {
         transform: translateY(-4px);
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        box-shadow: var(--ranking-card-shadow-hover);
     }
 }
 
@@ -489,7 +526,7 @@ onBeforeUnmount(() => {
 
 .rank-update {
     font-size: 13px;
-    color: #666;
+    color: var(--ranking-text-secondary);
 }
 
 .rank-play-btn {
@@ -499,12 +536,12 @@ onBeforeUnmount(() => {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.9);
+    background: var(--ranking-play-bg);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--ranking-play-shadow);
     transition: all 0.3s ease;
 
     &:hover {
@@ -533,12 +570,12 @@ onBeforeUnmount(() => {
     }
 
     &::-webkit-scrollbar-thumb {
-        background: #ddd;
+        background: var(--ranking-scroll-thumb);
         border-radius: 3px;
     }
 
     &::-webkit-scrollbar-track {
-        background: #f5f5f5;
+        background: var(--ranking-surface-soft);
     }
 }
 
@@ -551,7 +588,7 @@ onBeforeUnmount(() => {
     cursor: pointer;
 
     &:hover {
-        background: #f8f9fa;
+        background: var(--ranking-hover-surface);
 
         .hover-play {
             opacity: 1;
@@ -567,7 +604,7 @@ onBeforeUnmount(() => {
 .song-index {
     font-size: 16px;
     font-weight: 500;
-    color: #999;
+    color: var(--ranking-text-muted);
 
     &.top-three {
         font-size: 18px;
@@ -634,7 +671,7 @@ onBeforeUnmount(() => {
 .song-name {
     font-size: 14px;
     font-weight: 500;
-    color: #333;
+    color: var(--ranking-text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -642,7 +679,7 @@ onBeforeUnmount(() => {
 
 .song-author {
     font-size: 13px;
-    color: #666;
+    color: var(--ranking-text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -659,7 +696,7 @@ onBeforeUnmount(() => {
 .album {
     flex: 1;
     font-size: 12px;
-    color: #999;
+    color: var(--ranking-text-muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -669,7 +706,7 @@ onBeforeUnmount(() => {
 
 .duration {
     font-size: 12px;
-    color: #999;
+    color: var(--ranking-text-muted);
     flex-shrink: 0;
     min-width: 45px;
     text-align: right;
@@ -680,7 +717,7 @@ onBeforeUnmount(() => {
     align-items: center;
     justify-content: center;
     padding: 20px;
-    color: #666;
+    color: var(--ranking-text-secondary);
     font-size: 14px;
     gap: 8px;
 }
@@ -688,7 +725,7 @@ onBeforeUnmount(() => {
 .loading-spinner {
     width: 16px;
     height: 16px;
-    border: 2px solid #f3f3f3;
+    border: 2px solid var(--ranking-border);
     border-top: 2px solid var(--primary-color);
     border-radius: 50%;
     animation: spin 1s linear infinite;
@@ -709,9 +746,9 @@ onBeforeUnmount(() => {
     align-items: center;
     justify-content: center;
     padding: 16px;
-    color: #999;
+    color: var(--ranking-text-muted);
     font-size: 13px;
-    border-top: 1px solid #f0f0f0;
+    border-top: 1px solid var(--ranking-border);
     margin-top: 8px;
 }
 
