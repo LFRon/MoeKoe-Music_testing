@@ -10,10 +10,16 @@ export default function useLyricsHandler(t) {
     const lyricsMode = ref('translation'); // 'translation' 翻译模式 或 'romanization' 音译模式
     let currentLineIndex = 0;
     let activeLyricsRequestId = 0;
+    const isLocalHash = (hash) => String(hash || '').startsWith('local_');
 
     // 显示/隐藏歌词
     const toggleLyrics = (hash, currentTime) => {
         showLyrics.value = !showLyrics.value;
+        if (isLocalHash(hash)) {
+            SongTips.value = t('zan-wu-ge-ci');
+            return showLyrics.value;
+        }
+
         SongTips.value = t('huo-qu-ge-ci-zhong');
         // 如果显示歌词，滚动到当前播放行
         if (!lyricsData.value.length && hash) getLyrics(hash);
@@ -31,6 +37,11 @@ export default function useLyricsHandler(t) {
 
     // 获取歌词
     const getLyrics = async (hash) => {
+        if (isLocalHash(hash)) {
+            SongTips.value = t('zan-wu-ge-ci');
+            return false;
+        }
+
         const requestId = ++activeLyricsRequestId;
         try {
             const settings = JSON.parse(localStorage.getItem('settings') || '{}');
@@ -71,11 +82,11 @@ export default function useLyricsHandler(t) {
     const parseLyrics = (text, parseTranslation = true) => {
         let translationLyrics = [];
         let romanizationLyrics = [];
-        const lines = text.split('\n');
+        const lines = text.split(/\r?\n/);
         try {
             const languageLine = lines.find(line => line.match(/\[language:(.*)\]/));
             if (parseTranslation && languageLine) {
-                const languageCode = languageLine.slice(10, -2);
+                const languageCode = languageLine.match(/\[language:([^\]]*)\]/)?.[1];
                 if (languageCode) {
                     try {
                         // 确保 languageCode 是有效的 Base64 编码
@@ -83,7 +94,9 @@ export default function useLyricsHandler(t) {
                         const cleanedCode = languageCode.replace(/[^A-Za-z0-9+/=]/g, '');
                         // 添加缺失的填充字符
                         const paddedCode = cleanedCode.padEnd(cleanedCode.length + (4 - cleanedCode.length % 4) % 4, '=');
-                        const decodedData = decodeURIComponent(escape(atob(paddedCode)));
+                        const decodedData = new TextDecoder().decode(
+                            Uint8Array.from(atob(paddedCode), char => char.charCodeAt(0))
+                        );
                         const languageData = JSON.parse(decodedData);
 
                         // 获取翻译歌词 (type === 1)

@@ -27,19 +27,21 @@
                         >
                             {{ currentSong.qualityLabel }}
                         </button>
-                        <div v-if="qualityMenuOpen && canSwitchQuality" class="quality-menu">
-                            <div v-if="!currentSong?.qualityOptions?.length" class="quality-menu-item disabled">暂无可选音质</div>
-                            <button
-                                v-for="option in currentSong.qualityOptions"
-                                :key="`${option.value}-${option.hash}`"
-                                type="button"
-                                class="quality-menu-item"
-                                :class="{ active: isCurrentQualityOption(option) }"
-                                @click.stop="switchQuality(option)"
-                            >
-                                {{ option.label }}
-                            </button>
-                        </div>
+                        <transition name="player-menu">
+                            <div v-if="qualityMenuOpen && canSwitchQuality" class="player-menu quality-menu">
+                                <div v-if="!currentSong?.qualityOptions?.length" class="player-menu-item disabled">暂无可选音质</div>
+                                <button
+                                    v-for="option in currentSong.qualityOptions"
+                                    :key="`${option.value}-${option.hash}`"
+                                    type="button"
+                                    class="player-menu-item"
+                                    :class="{ active: isCurrentQualityOption(option) }"
+                                    @click.stop="switchQuality(option)"
+                                >
+                                    {{ option.label }}
+                                </button>
+                            </div>
+                        </transition>
                     </div>
                 </div>
                 <div class="artist" @click.stop="searchSong(currentSong.author)">{{ currentSong?.author || "MoeJue" }}</div>
@@ -59,15 +61,17 @@
                 <button class="extra-btn" :title="t('zhuo-mian-ge-ci')" v-if="isElectron()" @click="desktopLyrics"><i
                         class="fas">词</i></button>
                 <div class="playback-speed">
-                    <button class="extra-btn" @click="toggleSpeedMenu" :title="t('bo-fang-su-du')">
+                    <button class="extra-btn speed-btn" @click="toggleSpeedMenu" :title="t('bo-fang-su-du')">
                         <i class="fas fa-tachometer-alt"></i>
                     </button>
-                    <div v-if="showSpeedMenu" class="speed-menu">
-                        <div v-for="speed in playbackSpeeds" :key="speed" class="speed-option"
-                            :class="{ active: currentSpeed === speed }" @click="changePlaybackSpeed(speed)">
-                            {{ speed }}x
+                    <transition name="player-menu">
+                        <div v-if="showSpeedMenu" class="player-menu speed-menu">
+                            <div v-for="speed in playbackSpeeds" :key="speed" class="player-menu-item speed-option"
+                                :class="{ active: currentSpeed === speed }" @click="changePlaybackSpeed(speed)">
+                                {{ speed }}x
+                            </div>
                         </div>
-                    </div>
+                    </transition>
                 </div>
                 <button class="extra-btn" :title="t('wo-xi-huan')" @click="playlistSelect.toLike()"><i
                         class="fas fa-heart"></i></button>
@@ -75,14 +79,34 @@
                         class="fas fa-add"></i></button>
                 <button class="extra-btn" :title="t('fen-xiang-ge-qu')" @click="share(currentSong.name, currentSong.hash)"><i
                         class="fas fa-share"></i></button>
-                <button class="extra-btn" @click="togglePlaybackMode">
-                    <i v-if="currentPlaybackModeIndex != '2'" :class="currentPlaybackMode.icon"
-                        :title="currentPlaybackMode.title"></i>
-                    <span v-else class="loop-icon" :title="currentPlaybackMode.title">
-                        <i class="fas fa-repeat"></i>
-                        <sup>1</sup>
-                    </span>
-                </button>
+                <div class="playback-mode">
+                    <button class="extra-btn" @click="togglePlaybackMode">
+                        <i v-if="currentPlaybackModeIndex != '2'" :class="currentPlaybackMode.icon"
+                            :title="currentPlaybackMode.title"></i>
+                        <span v-else class="loop-icon" :title="currentPlaybackMode.title">
+                            <i class="fas fa-repeat"></i>
+                            <sup>1</sup>
+                        </span>
+                    </button>
+                    <div class="player-menu playback-mode-menu">
+                        <button
+                            v-for="(mode, index) in playbackModes"
+                            :key="mode.title"
+                            type="button"
+                            class="player-menu-item playback-mode-option"
+                            :class="{ active: currentPlaybackModeIndex === index }"
+                            :title="mode.title"
+                            @click.stop="setPlaybackMode(index)"
+                        >
+                            <i v-if="index !== 2" :class="mode.icon"></i>
+                            <span v-else class="loop-icon">
+                                <i class="fas fa-repeat"></i>
+                                <sup>1</sup>
+                            </span>
+                            <span>{{ mode.title }}</span>
+                        </button>
+                    </div>
+                </div>
                 <button class="extra-btn" :title="t('bo-fang-lie-biao')" @click="queueList.openQueue()"><i class="fas fa-list"></i></button>
                 <!-- 音量控制 -->
                 <div class="volume-control" @wheel="handleVolumeScroll">
@@ -103,7 +127,7 @@
     <!-- 全屏歌词界面 -->
     <transition name="slide-up">
         <div v-if="showLyrics" class="lyrics-bg"
-            :style="(lyricsBackground == 'on' ? ({ backgroundImage: `url(${currentSong?.img || 'https://random.MoeJue.cn/randbg.php'})` }) : ({ background: 'var(--secondary-color)' }))">
+            :style="(lyricsBackground == 'on' ? ({ backgroundImage: `url(${currentSong?.img || 'https://random.MoeJue.cn/randbg'})` }) : ({ background: 'var(--secondary-color)' }))">
             <div class="lyrics-screen">
                 <div class="close-btn">
                     <i class="fas fa-chevron-down" @click="toggleLyrics(currentSong.hash, currentTime)"></i>
@@ -164,13 +188,33 @@
                         <button class="control-btn" :title="t('xia-yi-shou')" @click="playSongFromQueue('next')">
                             <i class="fas fa-step-forward"></i>
                         </button>
-                        <button class="control-btn" :title="t('qie-huan-bo-fang-mo-shi')" @click="togglePlaybackMode">
-                            <i v-if="currentPlaybackModeIndex != '2'" :class="currentPlaybackMode.icon" :title="currentPlaybackMode.title"></i>
-                            <span v-else class="loop-icon" :title="currentPlaybackMode.title">
-                                <i class="fas fa-repeat"></i>
-                                <sup>1</sup>
-                            </span>
-                        </button>
+                        <div class="playback-mode">
+                            <button class="control-btn" :title="t('qie-huan-bo-fang-mo-shi')" @click="togglePlaybackMode">
+                                <i v-if="currentPlaybackModeIndex != '2'" :class="currentPlaybackMode.icon" :title="currentPlaybackMode.title"></i>
+                                <span v-else class="loop-icon" :title="currentPlaybackMode.title">
+                                    <i class="fas fa-repeat"></i>
+                                    <sup>1</sup>
+                                </span>
+                            </button>
+                            <div class="player-menu playback-mode-menu">
+                                <button
+                                    v-for="(mode, index) in playbackModes"
+                                    :key="mode.title"
+                                    type="button"
+                                    class="player-menu-item playback-mode-option"
+                                    :class="{ active: currentPlaybackModeIndex === index }"
+                                    :title="mode.title"
+                                    @click.stop="setPlaybackMode(index)"
+                                >
+                                    <i v-if="index !== 2" :class="mode.icon"></i>
+                                    <span v-else class="loop-icon">
+                                        <i class="fas fa-repeat"></i>
+                                        <sup>1</sup>
+                                    </span>
+                                    <span>{{ mode.title }}</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div id="lyrics-container" @wheel="handleLyricsWheel">
@@ -311,7 +355,15 @@ const switchQuality = async (option) => {
 
 // 初始化事件回调
 const onSongEnd = () => {
-    if (currentPlaybackModeIndex.value == 2) return;
+    if (currentPlaybackModeIndex.value == 2) return; // 单曲循环
+    // 顺序播放：最后一首播放完毕后停止
+    if (currentPlaybackModeIndex.value == 3) {
+        const currentIndex = musicQueueStore.queue.findIndex(song => song.hash === currentSong.value.hash);
+        if (currentIndex === musicQueueStore.queue.length - 1) {
+            playing.value = false;
+            return;
+        }
+    }
     playSongFromQueue('next');
 };
 
@@ -429,12 +481,12 @@ const progressBar = useProgressBar(audio, resetLyricsHighlight);
 const { progressWidth, isProgressDragging, showTimeTooltip, tooltipPosition, tooltipTime, climaxPoints, formatTime, getMusicHighlights, onProgressDragStart, updateProgressFromEvent, updateTimeTooltip, hideTimeTooltip } = progressBar;
 
 const playbackMode = usePlaybackMode(t, audio);
-const { currentPlaybackModeIndex, currentPlaybackMode, playedSongsStack, currentStackIndex, togglePlaybackMode } = playbackMode;
+const { playbackModes, currentPlaybackModeIndex, currentPlaybackMode, playedSongsStack, currentStackIndex, togglePlaybackMode, setPlaybackMode } = playbackMode;
 
 const mediaSession = useMediaSession();
 
 const songQueue = useSongQueue(t, musicQueueStore, queueList);
-const { currentSong, NextSong, addSongToQueue, addCloudMusicToQueue, addLocalMusicToQueue, addLocalPlaylistToQueue, addToNext, getPlaylistAllSongs, addPlaylistToQueue, addCloudPlaylistToQueue } = songQueue;
+const { currentSong, NextSong, addSongToQueue, addCloudMusicToQueue, addLocalMusicToQueue, addLocalPlaylistToQueue, addToNext, getPlaylistAllSongs, addPlaylistToQueue, addCloudPlaylistToQueue, restoreLocalSongCover } = songQueue;
 
 // 添加自动切换定时器引用
 let autoSwitchTimer = null;
@@ -491,6 +543,10 @@ let lastLyricsRetryAt = 0;
 const getCurrentLyrics = async () => {
     const hash = currentSong.value.hash;
     if (!hash) return false;
+    if (String(hash).startsWith('local_')) {
+        SongTips.value = t('zan-wu-ge-ci');
+        return false;
+    }
 
     if (pendingLyricsHash === hash && pendingLyricsPromise) {
         return pendingLyricsPromise;
@@ -548,6 +604,16 @@ const toggleCoverMode = () => {
     localStorage.setItem('lyrics-cover-mode', coverMode.value);
 };
 
+const isBlobUrl = (url) => typeof url === 'string' && url.startsWith('blob:');
+
+const isLocalSong = (song) => !!song?.isLocal || String(song?.hash || '').startsWith('local_');
+
+const toPlayerSong = (song) => {
+    if (!isLocalSong(song)) return song;
+    const { file, handle, ...playerSong } = song;
+    return playerSong;
+};
+
 // 播放歌曲
 const playSong = async (song) => {
     clearAutoSwitchTimer();
@@ -563,7 +629,7 @@ const playSong = async (song) => {
             return;
         }
 
-        currentSong.value = structuredClone(song);
+        currentSong.value = structuredClone(toPlayerSong(song));
 
         // 应用响度规格化（如果已启用 Web Audio）
         if (song.loudnessNormalization) {
@@ -626,7 +692,14 @@ const playSong = async (song) => {
         originalLyrics.value = '';
         isLyrics = undefined;
         lastLyricsRetryAt = 0;
-        if(song?.isLocal) return;
+        if(isLocalSong(song)) {
+            const { file, handle, ...savedLocalSong } = currentSong.value;
+            localStorage.setItem('current_song', JSON.stringify({
+                ...savedLocalSong,
+                url: ''
+            }));
+            return;
+        }
         // 保存当前歌曲到本地存储
         localStorage.setItem('current_song', JSON.stringify(currentSong.value));
 
@@ -649,7 +722,7 @@ const togglePlayPause = async () => {
         return;
     } else if (!audio.src) {
         console.log('[PlayerControl] 音频源为空，尝试重新设置');
-        if (currentSong.value.url) {
+        if (currentSong.value.url && !isLocalSong(currentSong.value)) {
             console.log('[PlayerControl] 从当前歌曲获取URL:', currentSong.value.url);
             audio.src = currentSong.value.url;
         } else {
@@ -657,7 +730,17 @@ const togglePlayPause = async () => {
             const songIndex = musicQueueStore.queue.findIndex(song => song.hash === currentSong.value.hash);
             if (songIndex !== -1) {
                 const song = musicQueueStore.queue[songIndex];
-                if (song.url) {
+                if (isLocalSong(song)) {
+                    console.log('[PlayerControl] 本地音乐重新获取播放地址');
+                    const result = await addLocalMusicToQueue({
+                        ...song,
+                        isLocal: true
+                    });
+                    if (result && result.song) {
+                        await playSong(result.song);
+                    }
+                    return;
+                } else if (song.url) {
                     console.log('[PlayerControl] 从队列中的歌曲获取URL:', song.url);
                     currentSong.value.url = song.url;
                     audio.src = song.url;
@@ -665,9 +748,6 @@ const togglePlayPause = async () => {
                     console.log('[PlayerControl] 云音乐没有URL，重新获取');
                     addCloudMusicToQueue(song.hash, song.name, song.author, song.timeLength, song.img);
                     return;
-                }else if(song.isLocal){
-                    console.log('[PlayerControl] 本地音乐没有URL，重新获取');
-                    addLocalMusicToQueue(song);
                 } else {
                     console.log('[PlayerControl] 歌曲没有URL，重新获取');
                     const result = await addSongToQueue(song.hash, song.name, song.img, song.author);
@@ -747,8 +827,19 @@ const playSongFromQueue = async (direction) => {
     } else if (currentPlaybackModeIndex.value === 0) {
         // 随机播放
         targetIndex = handleRandomPlayback(direction, currentIndex);
+    } else if (currentPlaybackModeIndex.value === 3) {
+        // 顺序播放
+        if (direction === 'previous') {
+            targetIndex = currentIndex === 0 ? musicQueueStore.queue.length - 1 : currentIndex - 1;
+        } else {
+            targetIndex = currentIndex + 1;
+            if (targetIndex >= musicQueueStore.queue.length) {
+                playing.value = false;
+                return;
+            }
+        }
     } else {
-        // 顺序播放或单曲循环
+        // 列表循环或单曲循环
         targetIndex = direction === 'previous'
             ? (currentIndex === 0 ? musicQueueStore.queue.length - 1 : currentIndex - 1)
             : (currentIndex + 1) % musicQueueStore.queue.length;
@@ -771,8 +862,11 @@ const playSongFromQueue = async (direction) => {
                 targetSong.img,
                 false // 不重置播放位置，只获取URL
             );
-        } else if (targetSong.isLocal) {
-            result = await addLocalMusicToQueue(targetSong, false);
+        } else if (isLocalSong(targetSong)) {
+            result = await addLocalMusicToQueue({
+                ...targetSong,
+                isLocal: true
+            }, false);
         } else {
             result = await addSongToQueue(
                 targetSong.hash,
@@ -1167,6 +1261,18 @@ const changePlaybackSpeed = (speed) => {
     }
 };
 
+const handleDocumentClick = (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    
+    if (!target.closest('.quality-menu-wrapper')) {
+        qualityMenuOpen.value = false;
+    }
+    if (!target.closest('.playback-speed')) {
+        showSpeedMenu.value = false;
+    }
+};
+
 // 跳转到搜索页面搜索歌曲
 const searchSong = (songName) => {
     // 关闭全屏歌词
@@ -1216,13 +1322,33 @@ onMounted(() => {
     if (current_song) {
         try {
             const savedSong = JSON.parse(current_song);
+            if (isLocalSong(savedSong)) {
+                savedSong.isLocal = true;
+                savedSong.url = '';
+                if (isBlobUrl(savedSong.img)) {
+                    savedSong.img = './assets/images/ico.png';
+                }
+            }
             currentSong.value = savedSong;
+
+            if (isLocalSong(savedSong)) {
+                void restoreLocalSongCover(savedSong).then((cover) => {
+                    if (!cover || currentSong.value.hash !== savedSong.hash) return;
+                    currentSong.value.img = cover;
+                    const { file, handle, ...savedLocalSong } = currentSong.value;
+                    localStorage.setItem('current_song', JSON.stringify({
+                        ...savedLocalSong,
+                        url: ''
+                    }));
+                });
+            }
 
             // 如果有URL，恢复播放源
             if (savedSong.url) {
-                if(savedSong.isLocal) return;
-                console.log('[PlayerControl] 从缓存恢复音频源:', savedSong.url);
-                audio.src = savedSong.url;
+                if (!isLocalSong(savedSong)) {
+                    console.log('[PlayerControl] 从缓存恢复音频源:', savedSong.url);
+                    audio.src = savedSong.url;
+                }
             } else {
                 console.log('[PlayerControl] 缓存的歌曲没有URL');
             }
@@ -1290,6 +1416,7 @@ onMounted(() => {
 
     // 添加事件监听
     document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('click', handleDocumentClick);
 
     // 设置特定于PlayerControl的监听器
     audio.addEventListener('pause', () => {
@@ -1375,6 +1502,7 @@ onUnmounted(() => {
 
     // 清理键盘事件
     document.removeEventListener('keydown', handleKeyDown);
+    document.removeEventListener('click', handleDocumentClick);
 });
 
 // 对外暴露接口
