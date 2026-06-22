@@ -43,10 +43,15 @@ export const onboardingGuideGroups = [
     },
     {
         key: 'home',
-        version: '1',
+        version: '2',
         routeNames: ['Index'],
         triggerSelector: '.recommendations',
         steps: [
+            {
+                selector: '.recommend-title',
+                title: '切换推荐卡片样式',
+                description: '点击“推荐”标题可以在图片卡片和图标卡片之间切换，如果你不喜欢胡桃的话。'
+            },
             {
                 selector: '.recommendations .radio-card',
                 title: 'MoeKoe Radio',
@@ -180,7 +185,7 @@ export const onboardingGuideGroups = [
     },
     {
         key: 'playerLyrics',
-        version: '1',
+        version: '2',
         triggerSelector: '.lyrics-bg .lyrics-screen',
         steps: [
             {
@@ -192,6 +197,11 @@ export const onboardingGuideGroups = [
                 selector: '.lyrics-bg .album-art-container',
                 title: '切换唱片模式',
                 description: '点击左侧封面可以在普通封面和唱片播放器模式之间切换，播放时唱片会跟随状态旋转。'
+            },
+            {
+                selector: '.fullscreen-lyrics-settings .settings-guide-anchor',
+                title: '全屏歌词快捷设置',
+                description: '鼠标移到右侧小箭头上可以滑出设置面板，快速调整歌词背景、字号、高亮方式和对齐方式。'
             },
             {
                 selector: '.lyrics-mode-btn',

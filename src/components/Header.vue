@@ -101,6 +101,9 @@ const platform = ref('');
 const searchMode = ref('quick');
 const showProfile = ref(false);
 const updateDialogRef = ref(null);
+const removeAfterEach = router.afterEach(() => {
+    updateNavigationStatus();
+});
 
 onMounted(() => {
     updateNavigationStatus();
@@ -119,6 +122,7 @@ onMounted(() => {
 
 onUnmounted(() => {
     document.removeEventListener('click', handleClickOutside);
+    removeAfterEach();
 });
 
 const Disclaimer = () => {
@@ -145,10 +149,6 @@ const goForward = () => {
     }
     updateNavigationStatus();
 };
-
-router.afterEach(() => {
-    updateNavigationStatus();
-});
 
 const refreshPage = () => {
     window.location.reload();
@@ -291,9 +291,18 @@ header {
     padding: 15px 0;
     box-shadow: var(--header-shadow);
     position: fixed;
+    left: 0;
+    right: 0;
     width: 100%;
     top: 0px;
     z-index: 9;
+}
+
+header::before {
+    content: '';
+    position: absolute;
+    inset: 0 100px 0 0;
+    -webkit-app-region: drag;
 }
 
 .nav-arrow,
@@ -305,6 +314,8 @@ header {
 }
 
 .navigation {
+    position: relative;
+    z-index: 1;
     display: flex;
     justify-content: space-between;
     align-items: center;

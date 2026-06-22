@@ -1,10 +1,13 @@
 <template>
-    <Header />
-    <main>
+    <Header v-if="navigationMode === 'top'" />
+    <SidebarNavigation v-else />
+    <main :class="{ 'side-navigation-main-content': navigationMode === 'side', collapsed: sidebarCollapsed }">
         <div v-if="!isOnline" class="network-status">
             网络连接已断开
         </div>
-        <router-view :playerControl="playerControl"></router-view>
+        <div class="main-content-shell">
+            <router-view :playerControl="playerControl"></router-view>
+        </div>
     </main>
     <PlayerControl ref="playerControl" />
     <OnboardingGuide />
@@ -13,12 +16,16 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import Header from "@/components/Header.vue";
+import SidebarNavigation from "@/components/SidebarNavigation.vue";
 import PlayerControl from "@/components/PlayerControl.vue";
 import OnboardingGuide from "@/components/OnboardingGuide.vue";
-import { setTheme, applyColorTheme } from '../utils/utils';
+import { setTheme, applyColorTheme, applyCustomFont } from '../utils/utils';
 
 const playerControl = ref(null);
 const isOnline = ref(navigator.onLine);
+const navigationMode = ref('top');
+const sidebarCollapsed = ref(localStorage.getItem('sidebarCollapsed') === '1');
+const playerBarLayout = ref('full');
 
 // 监听网络状态变化
 const handleNetworkChange = (online) => {
@@ -37,12 +44,31 @@ const handleNetworkChange = (online) => {
 
 const handleOnline = () => handleNetworkChange(true);
 const handleOffline = () => handleNetworkChange(false);
+const loadNavigationMode = (settings = JSON.parse(localStorage.getItem('settings')) || {}) => {
+    navigationMode.value = settings.navigationMode === 'side' ? 'side' : 'top';
+    playerBarLayout.value = settings.playerBarLayout === 'content' ? 'content' : 'full';
+    applyPlayerBarLayout();
+};
+const handleSettingsChange = (event) => {
+    loadNavigationMode(event.detail?.settings);
+};
+const handleSidebarCollapseChange = (event) => {
+    sidebarCollapsed.value = event.detail?.collapsed === true;
+    applyPlayerBarLayout();
+};
+const applyPlayerBarLayout = () => {
+    const enabled = navigationMode.value === 'side' && playerBarLayout.value === 'content';
+    document.body.classList.toggle('player-bar-content-layout', enabled);
+    document.documentElement.style.setProperty('--side-navigation-width', sidebarCollapsed.value ? '64px' : '226px');
+};
 
 onMounted(() => {
     const savedConfig = JSON.parse(localStorage.getItem('settings'));
     if (savedConfig) {
         applyColorTheme(savedConfig['themeColor']);
+        applyCustomFont(savedConfig.font || '');
     }
+    loadNavigationMode(savedConfig || {});
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) {
         setTheme(savedTheme);
@@ -51,6 +77,8 @@ onMounted(() => {
     // 添加网络状态监听
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+    window.addEventListener('settings-change', handleSettingsChange);
+    window.addEventListener('sidebar-collapse-change', handleSidebarCollapseChange);
 
     if (Notification.permission !== 'granted') {
         Notification.requestPermission();
@@ -61,6 +89,10 @@ onMounted(() => {
 onUnmounted(() => {
     window.removeEventListener('online', handleOnline);
     window.removeEventListener('offline', handleOffline);
+    window.removeEventListener('settings-change', handleSettingsChange);
+    window.removeEventListener('sidebar-collapse-change', handleSidebarCollapseChange);
+    document.body.classList.remove('player-bar-content-layout');
+    document.documentElement.style.removeProperty('--side-navigation-width');
 });
 </script>
 
@@ -118,11 +150,29 @@ body {
 
 main {
     min-height: calc(100vh - 80px - 188px);
-    max-width: 1200px;
-    margin: 0 auto;
+    width: 100%;
+    margin: 0;
     margin-bottom: 150px;
     padding-top: 80px;
     padding-bottom: 150px;
+    box-sizing: border-box;
+}
+
+.main-content-shell {
+    width: min(1200px, 100%);
+    margin: 0 auto;
+}
+
+main.side-navigation-main-content {
+    --side-main-width: 226px;
+    width: calc(100% - var(--side-main-width));
+    margin-left: var(--side-main-width);
+    margin-right: 0;
+    padding-top: 52px;
+}
+
+main.side-navigation-main-content.collapsed {
+    --side-main-width: 64px;
 }
 
 a {
@@ -141,5 +191,18 @@ a {
     text-align: center;
     padding: 8px;
     z-index: 1000;
+}
+
+body.player-bar-content-layout .side-navigation {
+    bottom: 0;
+}
+
+body:not(.player-bar-content-layout) .side-navigation {
+    z-index: 98;
+}
+
+body.player-bar-content-layout .player-container {
+    left: var(--side-navigation-width);
+    width: calc(100% - var(--side-navigation-width));
 }
 </style>

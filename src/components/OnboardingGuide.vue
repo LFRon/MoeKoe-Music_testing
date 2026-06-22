@@ -51,6 +51,8 @@ const viewportSize = ref({
 let onboardingGuideTimer = null;
 let mutationObserver = null;
 let lastCompletedAt = 0;
+let scrollingToTarget = false;
+let scrollTargetTimer = null;
 
 const currentSteps = computed(() => currentGuide.value?.steps || []);
 const currentStep = computed(() => currentSteps.value[currentIndex.value] || {});
@@ -170,9 +172,53 @@ const updateViewportSize = () => {
     };
 };
 
+const isTargetInViewport = (rect) => {
+    const margin = 16;
+    const visibleTop = Math.max(rect.top, margin);
+    const visibleLeft = Math.max(rect.left, margin);
+    const visibleBottom = Math.min(rect.bottom, viewportSize.value.height - margin);
+    const visibleRight = Math.min(rect.right, viewportSize.value.width - margin);
+    const visibleWidth = Math.max(0, visibleRight - visibleLeft);
+    const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+    if (!visibleWidth || !visibleHeight) return false;
+
+    const viewportWidth = viewportSize.value.width - margin * 2;
+    const viewportHeight = viewportSize.value.height - margin * 2;
+    if (rect.width >= viewportWidth || rect.height >= viewportHeight) return true;
+
+    const visibleArea = visibleWidth * visibleHeight;
+    const targetArea = Math.max(1, rect.width * rect.height);
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const centerVisible = centerX >= margin &&
+        centerX <= viewportSize.value.width - margin &&
+        centerY >= margin &&
+        centerY <= viewportSize.value.height - margin;
+
+    return centerVisible || visibleArea / targetArea >= 0.6;
+};
+
+const scrollTargetIntoView = (target) => {
+    if (scrollingToTarget) return;
+    scrollingToTarget = true;
+    targetRect.value = null;
+    target.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'nearest'
+    });
+
+    if (scrollTargetTimer) clearTimeout(scrollTargetTimer);
+    scrollTargetTimer = setTimeout(() => {
+        scrollingToTarget = false;
+        refreshTarget();
+    }, 500);
+};
+
 const refreshTarget = () => {
     if (!showOnboardingGuide.value) return;
     updateViewportSize();
+    if (scrollingToTarget) return;
     if (isIntroStep.value) {
         targetRect.value = null;
         return;
@@ -188,6 +234,11 @@ const refreshTarget = () => {
     const rect = target.getBoundingClientRect();
     if (!rect.width && !rect.height) {
         skipCurrentStep();
+        return;
+    }
+
+    if (!isTargetInViewport(rect)) {
+        scrollTargetIntoView(target);
         return;
     }
 
@@ -390,6 +441,7 @@ onUnmounted(() => {
     window.removeEventListener(ONBOARDING_GUIDE_EVENT, handleOpenGuideEvent);
     mutationObserver?.disconnect();
     if (onboardingGuideTimer) clearTimeout(onboardingGuideTimer);
+    if (scrollTargetTimer) clearTimeout(scrollTargetTimer);
 });
 </script>
 

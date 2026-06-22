@@ -1,7 +1,7 @@
 {
   "name": "moekoemusic",
-  "version": "1.6.5",
-  "homepage": "https://github.com/iAJue/MoeKoeMusic",
+  "version": "1.6.6",
+  "homepage": "https://music.moekoe.cn/",
   "main": "electron/main.js",
   "scripts": {
     "install-all": "npm install && cd api && npm install",
@@ -31,7 +31,7 @@
   "build": {
     "publish": {
       "provider": "github",
-      "owner": "iAJue",
+      "owner": "MoeKoeMusic",
       "repo": "MoeKoeMusic"
     },
     "compression": "normal",
@@ -88,7 +88,7 @@
           ]
         }
       ],
-      "artifactName": "MoeKoe_Music_Setup_v${version}.${ext}"
+      "artifactName": "MoeKoe_Music_Setup_v${version}-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": false,
@@ -113,7 +113,7 @@
         "zip"
       ],
       "identity": null,
-      "artifactName": "${productName}-${arch}.${ext}",
+      "artifactName": "MoeKoe_Music_v${version}-${arch}.${ext}",
       "protocols": [
         {
           "name": "MoeKoe Music Protocol",
@@ -132,7 +132,7 @@
         "AppImage"
       ],
       "category": "Utility",
-      "artifactName": "${productName}-${arch}.${ext}"
+      "artifactName": "MoeKoe_Music_v${version}-${arch}.${ext}"
     }
   },
   "type": "module",
@@ -144,13 +144,13 @@
   "license": "GPL-2.0-only",
   "description": "MoeKoe Music",
   "devDependencies": {
-    "@types/node": "^25.9.1",
+    "@types/node": "^26.0.0",
     "@vitejs/plugin-vue": "^6.0.7",
-    "@vue/compiler-sfc": "^3.5.35",
+    "@vue/compiler-sfc": "^3.5.38",
     "cross-env": "^10.1.0",
-    "electron": "^42.3.3",
-    "electron-builder": "^26.8.1",
-    "esbuild": "0.28.0",
+    "electron": "^42.4.1",
+    "electron-builder": "^26.15.3",
+    "esbuild": "0.28.1",
     "npm-run-all": "^4.1.5",
     "sass-embedded": "^1.100.0",
     "vite": "^8.0.16",
@@ -163,13 +163,13 @@
     "electron-is-dev": "^3.0.1",
     "electron-log": "^5.4.4",
     "electron-store": "^11.0.2",
-    "electron-updater": "^6.8.3",
-    "music-metadata": "^11.12.3",
+    "electron-updater": "^6.8.9",
+    "music-metadata": "^11.13.0",
     "pinia": "^3.0.4",
     "pinia-plugin-persistedstate": "^4.7.1",
     "tree-kill": "^1.2.2",
-    "vue": "^3.5.35",
-    "vue-i18n": "^11.4.4",
+    "vue": "^3.5.38",
+    "vue-i18n": "^11.4.6",
     "vue-router": "^5.1.0",
     "vue3-virtual-scroller": "^0.2.3",
     "ws": "^8.21.0"

@@ -93,6 +93,33 @@
                         <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
                         <span>当前萌音版本较低，插件最低支持 V{{ extension.minversion }}</span>
                     </p>
+                    <div v-if="extension.nativeHosts?.length" class="native-host-panel">
+                        <div class="native-host-title">
+                            <i class="fas fa-terminal" aria-hidden="true"></i>
+                            <span>本地二进制可执行程序权限</span>
+                        </div>
+                        <div v-for="host in extension.nativeHosts" :key="host.id" class="native-host-row">
+                            <div class="native-host-info">
+                                <strong>{{ host.id }}</strong>
+                                <span>{{ host.path }}</span>
+                            </div>
+                            <div class="native-host-actions">
+                                <span class="market-badge" :class="resolveNativeHostBadge(host).className">
+                                    {{ resolveNativeHostBadge(host).text }}
+                                </span>
+                                <button
+                                    class="extension-btn"
+                                    :class="host.authorized ? 'danger' : 'primary'"
+                                    :disabled="extensionsLoading || nativeHostActionLoading === `${extension.id}:${host.id}` || !host.valid || !host.supported"
+                                    @click="toggleNativeHostAuthorization(extension, host)"
+                                >
+                                    <i v-if="nativeHostActionLoading === `${extension.id}:${host.id}`" class="fas fa-spinner fa-spin"></i>
+                                    <i v-else :class="host.authorized ? 'fas fa-ban' : 'fas fa-shield-alt'"></i>
+                                    {{ host.authorized ? '取消授权' : '授权' }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -140,7 +167,15 @@
                             </div>
                             <div class="market-title-text">
                                 <h4>
-                                    {{ plugin.name }}
+                                    <a
+                                        class="market-title-link"
+                                        :href="plugin.snapshotUrl"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        :title="`查看 ${plugin.name} 的项目地址`"
+                                    >
+                                        {{ plugin.name }}
+                                    </a>
                                     <span v-if="isCurrentAppVersionLowerThanMin(plugin.minversion)" class="market-min-version-inline">
                                         需V{{ plugin.minversion }}+
                                     </span>
@@ -167,9 +202,26 @@
 
                     <div class="market-meta">
                         <span>版本 {{ plugin.version || '未知' }}</span>
-                        <span class="author-meta">作者 <span>{{ plugin.author || '未知' }}</span></span>
-                        <span v-if="plugin.repositoryUrl">
-                            <a :href="plugin.repositoryUrl" target="_blank" rel="noopener noreferrer">项目地址</a>
+                        <span class="author-meta">
+                            作者
+                            <a
+                                :href="plugin.approvedIssueUrl"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                :title="`查看 ${plugin.name} 的上架报告`"
+                            >
+                                {{ plugin.author || '未知' }}
+                            </a>
+                        </span>
+                        <span v-if="resolveMarketPermissions(plugin).length > 0" class="market-permissions">
+                            <span
+                                v-for="permission in resolveMarketPermissions(plugin)"
+                                :key="permission.key"
+                                class="permission-badge"
+                            >
+                                <i :class="permission.icon"></i>
+                                {{ permission.label }}
+                            </span>
                         </span>
                     </div>
 
@@ -225,6 +277,7 @@ const marketSearch = ref('')
 const marketPage = ref(1)
 const marketActionLoading = ref('')
 const currentAppVersion = ref('')
+const nativeHostActionLoading = ref('')
 
 const normalizedInstalledExtensions = computed(() => extensions.value)
 
@@ -364,10 +417,16 @@ const normalizeMarketPlugin = (item, index) => {
         icon: normalizeUrl(item.iconUrl),
         tags: Array.isArray(item.tags) ? item.tags.map(tag => String(tag).trim()).filter(Boolean) : [],
         repositoryUrl: normalizeUrl(repositoryValue),
+        snapshotUrl: normalizeUrl(snapshot.snapshotUrl || item.snapshotUrl || ''),
+        approvedIssueUrl: normalizeUrl(item.approvedIssueUrl || ''),
         downloadUrl,
-        branch: String(snapshot.branch).trim(),
-        commitSha: String(snapshot.commitSha).trim(),
-        minversion: item.minversion
+        minversion: item.minversion,
+        permissions: {
+            networkAccess: item.networkAccess === true,
+            fileAccess: item.fileAccess === true,
+            binaryContent: item.binaryContent === true,
+            storageAccess: item.storageAccess === true
+        }
     }
 
     if (!plugin.name) {
@@ -394,61 +453,6 @@ const normalizeUrl = value => {
     return trimmed
 }
 
-const resolvePluginDownloadUrl = plugin => {
-    const normalized = normalizeUrl(plugin?.downloadUrl)
-    if (!normalized) {
-        return ''
-    }
-
-    if (/\.zip($|\?)/i.test(normalized)) {
-        return normalized
-    }
-
-    try {
-        const url = new URL(normalized)
-        if (url.hostname !== 'github.com') {
-            return normalized
-        }
-
-        const segments = url.pathname.split('/').filter(Boolean)
-        if (segments.length < 2) {
-            return normalized
-        }
-
-        const [owner, repo, type, ...rest] = segments
-        const ref = rest.join('/')
-        const fallbackBranch = plugin?.branch || 'main'
-        const archiveRef = value => {
-            const resolvedRef = String(value || '').trim()
-            if (!resolvedRef) {
-                return ''
-            }
-
-            if (/^[0-9a-f]{7,40}$/i.test(resolvedRef)) {
-                return `https://github.com/${owner}/${repo}/archive/${resolvedRef}.zip`
-            }
-
-            return `https://github.com/${owner}/${repo}/archive/refs/heads/${encodeURIComponent(resolvedRef)}.zip`
-        }
-
-        if (!type) {
-            return archiveRef(plugin?.commitSha || fallbackBranch) || normalized
-        }
-
-        if (type === 'tree') {
-            return archiveRef(ref) || normalized
-        }
-
-        if (type === 'blob') {
-            const rawUrl = normalized.replace('https://github.com/', 'https://raw.githubusercontent.com/').replace('/blob/', '/')
-            return /\.zip($|\?)/i.test(rawUrl) ? rawUrl : normalized
-        }
-    } catch (error) {
-        console.error('Failed to resolve plugin download url:', error)
-    }
-
-    return normalized
-}
 
 const findInstalledExtension = plugin => {
     const pluginId = String(plugin?.id || '').trim().toLowerCase()
@@ -506,6 +510,97 @@ const isCurrentAppVersionLowerThanMin = minVersion => {
     return compareVersions(current, required) < 0
 }
 
+const resolveNativeHostBadge = host => {
+    if (!host.valid) {
+        return { className: 'unknown', text: '声明无效' }
+    }
+    if (!host.supported) {
+        return { className: 'unknown', text: '平台不支持' }
+    }
+    if (host.running) {
+        return { className: 'installed', text: '运行中' }
+    }
+    if (host.authorized) {
+        return { className: 'available', text: '已授权' }
+    }
+    return { className: 'update', text: '待授权' }
+}
+
+const resolveMarketPermissions = plugin => {
+    const permissions = plugin?.permissions || {}
+
+    return [
+        {
+            key: 'networkAccess',
+            label: '联网访问',
+            icon: 'fas fa-globe',
+            enabled: permissions.networkAccess === true
+        },
+        {
+            key: 'fileAccess',
+            label: '文件访问',
+            icon: 'fas fa-folder-open',
+            enabled: permissions.fileAccess === true
+        },
+        {
+            key: 'binaryContent',
+            label: '含二进制',
+            icon: 'fas fa-microchip',
+            enabled: permissions.binaryContent === true
+        },
+        {
+            key: 'storageAccess',
+            label: '存储权限',
+            icon: 'fas fa-database',
+            enabled: permissions.storageAccess === true
+        }
+    ].filter(permission => permission.enabled)
+}
+
+const toggleNativeHostAuthorization = async (extension, host) => {
+    const nextAuthorized = !host.authorized
+    const loadingKey = `${extension.id}:${host.id}`
+
+    if (nextAuthorized) {
+        const confirmed = await showConfirm({
+            message: buildNativeHostAuthorizationMessage(extension, host),
+            messageSize: 'small',
+            confirmText: '同意授权',
+            cancelText: '不同意'
+        })
+        if (!confirmed) {
+            return
+        }
+    }
+
+    nativeHostActionLoading.value = loadingKey
+    try {
+        const result = await window.electronAPI?.setNativeHostAuthorization(extension.id, host.id, nextAuthorized)
+        if (!result?.success) {
+            throw new Error(result?.message || '操作失败')
+        }
+        await refreshExtensions()
+    } catch (error) {
+        showAlert(`本地程序授权失败: ${error?.message || '未知错误'}`)
+    } finally {
+        nativeHostActionLoading.value = ''
+    }
+}
+
+const buildNativeHostAuthorizationMessage = (extension, host) => {
+    return [
+        `插件 ${extension.name} 请求运行本地程序：`,
+        host.path,
+        '',
+        '1. 该程序会由 MoeKoe Music 启动，并可能在后台持续运行。',
+        '2. 该程序属于插件附带的本地二进制内容，具备普通本地程序的系统访问能力。',
+        '3. 如果插件来源不可信，可能带来隐私泄露、文件读写或网络访问风险。',
+        '4. 本地程序运行后可能修改系统状态，造成数据丢失、系统异常，甚至损坏计算机。',
+        '',
+        '请只授权你信任的插件。继续授权表示你理解上述风险，并愿意自行承担该本地程序带来的后果。'
+    ].join('\n')
+}
+
 const resolveMarketState = plugin => {
     const installedExtension = findInstalledExtension(plugin)
 
@@ -553,9 +648,7 @@ const handleMarketInstall = async plugin => {
     const installedExtension = findInstalledExtension(plugin)
     const state = resolveMarketState(plugin)
 
-    const resolvedDownloadUrl = resolvePluginDownloadUrl(plugin)
-
-    if (!resolvedDownloadUrl) {
+    if (!plugin.downloadUrl) {
         showAlert('该插件缺少下载地址，无法安装。')
         return
     }
@@ -571,7 +664,7 @@ const handleMarketInstall = async plugin => {
 
     try {
         const result = await window.electronAPI?.installPluginFromUrl(
-            resolvedDownloadUrl,
+            plugin.downloadUrl,
             installedExtension?.id || '',
             installedExtension?.directory || ''
         )
@@ -753,6 +846,15 @@ $border-dark: #232527;
             color: #fff;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
         }
+        
+        &:is(.dark .tab-btn) {
+            color: #f3f4f6;
+
+            &.active {
+                background: var(--color-primary, #ff69b4);
+                color: #fff;
+            }
+        }
     }
 }
 
@@ -918,6 +1020,15 @@ $border-dark: #232527;
         font-size: 16px;
         color: var(--text-color, #222);
 
+        .market-title-link {
+            color: inherit;
+            text-decoration: none;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+
     }
 
     p {
@@ -928,7 +1039,11 @@ $border-dark: #232527;
 
     &:is(.dark .extension-details, .dark .market-title-text) {
         h4 {
-            color: rgba(255, 255, 255, 0.8);
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        p {
+            color: rgba(255, 255, 255, 0.74);
         }
     }
 }
@@ -979,6 +1094,59 @@ $border-dark: #232527;
 
 .installed-warning {
     margin: 0;
+}
+
+.native-host-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(180, 83, 9, 0.22);
+    background: rgba(180, 83, 9, 0.08);
+}
+
+.native-host-title,
+.native-host-row,
+.native-host-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.native-host-title {
+    color: #92400e;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.native-host-row {
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.native-host-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+
+    strong {
+        color: var(--text-color, #222);
+        font-size: 13px;
+    }
+
+    span {
+        color: $text-muted;
+        font-size: 12px;
+        word-break: break-all;
+    }
+
+    &:is(.dark .native-host-info) {
+        strong {
+            color: rgb(112, 112, 112);
+        }
+    }
 }
 
 .extension-actions,
@@ -1066,6 +1234,7 @@ $border-dark: #232527;
     display: flex;
     gap: 16px;
     flex-wrap: wrap;
+    align-items: center;
 
     span {
         min-width: 0;
@@ -1100,12 +1269,31 @@ $border-dark: #232527;
     flex-wrap: wrap;
 }
 
+.market-permissions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
 .market-tag {
     padding: 4px 10px;
     border-radius: 999px;
     font-size: 12px;
     background: rgba(37, 99, 235, 0.1);
     color: #1d4ed8;
+}
+
+.permission-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    font-size: 11px;
+    line-height: 1.25;
+    background: #fef3c7;
+    color: #92400e;
 }
 
 .market-pagination {

@@ -87,7 +87,7 @@
                 class="track-list" key-field="hash">
                 <template #default="{ item, index }">
                     <div class="li" :key="item.hash"
-                        :class="{ 'cover-view': listMode === 'grid', 'selected': selectedTracks.includes(index) }"
+                        :class="{ 'cover-view': listMode === 'grid', 'selected': batchSelectionMode && selectedTracks.includes(index) }"
                         @click="batchSelectionMode ? selectTrack(index, $event) : playSong(item.hash, item.name, item.author, item.timelen, item.cover)">
 
                         <!-- 复选框或序号 -->
@@ -622,7 +622,7 @@ $shadow-light: 0 2px 10px rgba(0, 0, 0, 0.1);
 
 .primary-btn,
 .upload-btn {
-    background-color: #ff69b4;
+    background-color: $primary;
     color: $white;
     border: none;
     padding: 10px 20px;

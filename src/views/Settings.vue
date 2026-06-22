@@ -3,7 +3,7 @@
         <div class="settings-sidebar">
             <div v-for="(section, sectionIndex) in settingSections" :key="sectionIndex" class="sidebar-item"
                 :class="{ active: activeTab === sectionIndex }" @click="activeTab = sectionIndex">
-                <i :class="getSectionIcon(section.title)"></i>
+                <i :class="section.icon"></i>
                 <span>{{ section.title }}</span>
             </div>
         </div>
@@ -14,10 +14,10 @@
                 <h3>{{ section.title }}</h3>
                 <ExtensionManager v-if="section.title === t('cha-jian')" />
                 <div v-else class="settings-cards">
-                    <div v-for="(item, itemIndex) in section.items" :key="itemIndex" class="setting-card"
+                    <div v-for="(item, itemIndex) in getVisibleItems(section)" :key="itemIndex" class="setting-card"
                         @click="item.action ? item.action(item.helpLink) : openSelection(item.key, item.helpLink)">
                         <div class="setting-card-header">
-                            <i :class="getItemIcon(item.key)"></i>
+                            <i :class="item.itemIcon || 'fas fa-sliders-h'"></i>
                             <span>{{ item.label }}</span>
                             <span v-if="item.showRefreshHint && showRefreshHint[item.key]" class="refresh-hint">
                                 {{ item.refreshHintText }}
@@ -43,15 +43,15 @@
             </div>
         </div>
 
-        <div v-if="isSelectionOpen" class="modal">
+        <div v-if="isSelectionOpen" class="modal" @click.self="closeSelection">
             <div class="modal-content">
                 <a v-if="currentHelpLink" class="help-link" @click="openHelpLink" :title="$t('bang-zhu')"
                     :aria-label="$t('bang-zhu')">
                     <i class="fas fa-question-circle"></i>
                 </a>
-                <h3>{{ selectionTypeMap[selectionType].title }}</h3>
+                <h3>{{ getSettingItem(selectionType)?.selectionTitle }}</h3>
                 <ul v-if="selectionType !== 'font' && selectionType !== 'audioOutputDevice'">
-                    <li v-for="option in selectionTypeMap[selectionType].options" :key="option"
+                    <li v-for="option in getSettingItem(selectionType)?.options || []" :key="option.value"
                         @click="selectOption(option)">
                         {{ option.displayText }}
                     </li>
@@ -66,18 +66,14 @@
                     </li>
                 </ul>
 
-                <div v-if="selectionType === 'font'" class="api-settings-container" @focusout="handleFontFocusOut">
-                    <div class="api-setting-item">
-                        <label>{{ $t('zi-ti-url-di-zhi') }}</label>
-                        <input type="text" v-model="fontUrlInput" class="api-input"
-                            :placeholder="$t('qing-shu-ru-zi-ti-url-di-zhi')" />
-                    </div>
-                    <div class="api-setting-item">
-                        <label>{{ $t('zi-ti-ming-cheng') }}</label>
-                        <input type="text" v-model="fontFamilyInput" class="api-input"
-                            :placeholder="$t('qing-shu-ru-zi-ti-ming-cheng')" />
-                    </div>
-                </div>
+                <ul v-else-if="selectionType === 'font'" class="font-list">
+                    <li v-if="fontOptionsLoading">{{ $t('jia-zai-zhong') }}</li>
+                    <li v-else-if="fontOptions.length === 0">{{ $t('mo-ren-zi-ti') }}</li>
+                    <li v-else v-for="option in fontOptions" :key="option.value" :style="{ fontFamily: option.value }"
+                        @click="selectFontOption(option)">
+                        {{ option.displayText }}
+                    </li>
+                </ul>
 
                 <div v-if="selectionType === 'highDpi'" class="scale-slider-container">
                     <div class="scale-slider-label">{{ $t('suo-fang-yin-zi') }}: {{ dpiScale }} <span
@@ -148,7 +144,7 @@
         </div>
 
         <!-- 快捷键设置弹窗 -->
-        <div v-if="showShortcutModal" class="shortcut-modal">
+        <div v-if="showShortcutModal" class="shortcut-modal" @click.self="closeShortcutSettings">
             <div class="shortcut-modal-content">
                 <h3>{{ $t('kuai-jie-jian-she-zhi') }}</h3>
                 <div class="shortcut-list">
@@ -178,9 +174,9 @@ import { ref, onMounted, getCurrentInstance, onUnmounted, reactive } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { MoeAuthStore } from '../stores/store';
 import ExtensionManager from '@/components/ExtensionManager.vue';
-import { requestMicrophonePermission } from '../utils/utils';
+import { applyCustomFont, requestMicrophonePermission } from '../utils/utils';
 import { DEFAULT_API_BASE_URL, validateApiBaseUrl, testApiBaseUrl as testApiBaseUrlRequest } from '@/utils/apiBaseUrl';
-import { ELECTRON_FEATURES, REFRESH_HINT_TYPES, SETTINGS_SAVE_IGNORE_KEYS, createRefreshHintState, useSettingsConfig } from '@/config/settings';
+import { useSettingsConfig } from '@/config/settings';
 import { ONBOARDING_GUIDE_EVENT } from '@/config/onboardingGuide';
 
 const MoeAuth = MoeAuthStore();
@@ -192,25 +188,40 @@ const activeTab = ref(0);
 const defaultApiBaseUrl = DEFAULT_API_BASE_URL;
 
 const {
-    selectedSettings,
     settingSections,
-    selectionTypeMap,
-    shortcutConfigs,
-    getSectionIcon,
-    getItemIcon
+    shortcutConfigs
 } = useSettingsConfig(t, {
     openShortcutSettings: () => openShortcutSettings(),
     installPWA: () => installPWA(),
     openOnboardingGuide: () => openOnboardingGuide()
 });
 
+const createSelectedSettings = (sections) => {
+    const selectedSettings = {};
+
+    sections.forEach(section => {
+        section.items.forEach(item => {
+            if (!Object.prototype.hasOwnProperty.call(item, 'defaultValue')) return;
+            const option = item.options?.find(option => option.value === item.defaultValue);
+            selectedSettings[item.key] = {
+                displayText: item.defaultDisplayText ?? option?.displayText ?? '',
+                value: item.defaultValue
+            };
+        });
+    });
+
+    return selectedSettings;
+};
+
+const selectedSettings = ref(createSelectedSettings(settingSections.value));
+
 const isSelectionOpen = ref(false);
 const currentHelpLink = ref('');
 const selectionType = ref('');
-const fontUrlInput = ref('');
-const fontFamilyInput = ref('');
+const fontOptions = ref([]);
+const fontOptionsLoading = ref(false);
 
-const showRefreshHint = ref(createRefreshHintState());
+const showRefreshHint = ref({});
 
 const audioOutputDeviceOptions = ref([]);
 const audioOutputDevicesLoading = ref(false);
@@ -269,19 +280,40 @@ const loadAudioOutputDevices = async () => {
     }
 };
 
+const loadLocalFonts = async () => {
+    fontOptionsLoading.value = true;
+
+    try {
+        if (!window.queryLocalFonts) {
+            fontOptions.value = [];
+            return;
+        }
+
+        const fonts = await window.queryLocalFonts();
+        const families = [...new Set(fonts.map(font => font.family).filter(Boolean))].sort((a, b) =>
+            a.localeCompare(b)
+        );
+        fontOptions.value = [
+            { displayText: t('mo-ren-zi-ti'), value: '' },
+            ...families.map(family => ({ displayText: family, value: family }))
+        ];
+    } catch {
+        fontOptions.value = [];
+    } finally {
+        fontOptionsLoading.value = false;
+    }
+};
+
 const openSelection = (type, helpLink) => {
     isSelectionOpen.value = true;
     selectionType.value = type;
-    currentHelpLink.value = helpLink || selectionTypeMap[type]?.helpLink || '';
+    currentHelpLink.value = helpLink || getSettingItem(type)?.helpLink || '';
 
     if (type === 'highDpi') {
         dpiScale.value = parseFloat(selectedSettings.value.dpiScale?.value || '1.0');
     }
 
-    if (type === 'font') {
-        fontUrlInput.value = selectedSettings.value.fontUrl?.value || '';
-        fontFamilyInput.value = selectedSettings.value.font?.value || '';
-    }
+    if (type === 'font') void loadLocalFonts();
 
     if (type === 'proxy') {
         proxyForm.url = selectedSettings.value.proxyUrl?.value || '';
@@ -308,122 +340,143 @@ const openHelpLink = () => {
     }
 };
 
+const getSettingItem = (key) => {
+    for (const section of settingSections.value) {
+        const item = section.items.find(item => item.key === key);
+        if (item) return item;
+    }
+    return null;
+};
+
+const getVisibleItems = (section) => section.items.filter(item => !item.hidden && !getUnavailableSettingText(item));
+
+const markRefreshHint = (key) => {
+    if (getSettingItem(key)?.showRefreshHint) {
+        showRefreshHint.value[key] = true;
+    }
+};
+
+const shouldKeepSelectionOpen = (key) => {
+    return settingSections.value.some(section => section.items.some(item =>
+        item.keepOpen && item.key === key
+    ));
+};
+
+const getUnavailableSettingText = (item) => {
+    const available = item?.available?.toLowerCase();
+    if (!available) return '';
+    const currentPlatform = isElectron() ? window.electron.platform : 'web';
+    if (available === currentPlatform || available === 'client' && isElectron()) return '';
+    return item.unavailableText || t('fei-ke-hu-duan-huan-jing-wu-fa-qi-yong');
+};
+
+const selectActions = {
+    applyThemeColor: (option) => proxy.$applyColorTheme(option.value),
+    applyTheme: (option) => proxy.$setTheme(option.value),
+    applyLanguage: (option) => {
+        proxy.$i18n.locale = option.value;
+        document.documentElement.lang = option.value;
+    },
+    checkQualityAuth: () => {
+        if (!MoeAuth.isAuthenticated) {
+            window.$modal.alert(t('gao-pin-zhi-yin-le-xu-yao-deng-lu-hou-cai-neng-bo-fango'));
+        }
+    },
+    saveDpiScale: () => {
+        selectedSettings.value.dpiScale = {
+            value: dpiScale.value.toString(),
+            displayText: dpiScale.value.toString()
+        };
+    },
+    toggleDesktopLyrics: (option) => {
+        const action = option.value === 'on' ? 'display-lyrics' : 'close-lyrics';
+        window.electron.ipcRenderer.send('desktop-lyrics-action', action);
+    },
+    dispatchLoudnessNormalization: (option) => {
+        window.dispatchEvent(new CustomEvent('loudness-normalization-change', {
+            detail: { enabled: option.value === 'on' }
+        }));
+    },
+    updateAudioOutputWatch: async (option) => {
+        if (option.value === 'on') {
+            const granted = await requestMicrophonePermission();
+            if (!granted) {
+                selectedSettings.value.pauseOnAudioOutputChange = {
+                    displayText: t('guan-bi'),
+                    value: 'off'
+                };
+                window.dispatchEvent(new CustomEvent('audio-output-device-watch-change', {
+                    detail: { enabled: false }
+                }));
+                window.$modal.alert('音频权限申请失败，无法启用该功能');
+                return;
+            }
+        }
+
+        window.dispatchEvent(new CustomEvent('audio-output-device-watch-change', {
+            detail: { enabled: option.value === 'on' }
+        }));
+    },
+    resetApiBaseUrl: (option) => {
+        if (option.value === 'default') {
+            selectedSettings.value.apiBaseUrl = { displayText: '', value: '' };
+        }
+    },
+    dispatchAudioOutputDevice: (option) => {
+        window.dispatchEvent(new CustomEvent('audio-output-device-change', {
+            detail: { deviceId: option.value }
+        }));
+    },
+    handleLogAction: async (option) => {
+        let result;
+        switch (option.value) {
+            case 'open-path':
+                result = await window.electronAPI.openLogPath();
+                break;
+            case 'export-log':
+                result = await window.electronAPI.exportLog();
+                break;
+            default:
+                break;
+        }
+        if (result?.error) {
+            console.error(`日志操作 ${option.value} 失败:`, result.error);
+            window.$modal.alert(`日志操作失败，详细信息请查看控制台`);
+        }
+        if (option.value === 'export-log' && result?.filePath) {
+            await window.$modal.alert(`日志(已脱敏)已导出到:\n${result.filePath}`);
+        }
+    }
+};
+
+const runSelectAction = async (item, option) => {
+    if (!item?.selectAction) return;
+    await selectActions[item.selectAction]?.(option);
+};
+
 const selectOption = async (option) => {
-    if (!isElectron() && ELECTRON_FEATURES.includes(selectionType.value)) {
-        window.$modal.alert(t('fei-ke-hu-duan-huan-jing-wu-fa-qi-yong'));
-        return;
-    }
-    if (selectionType.value == 'touchBar' && window.electron.platform != 'darwin') {
-        window.$modal.alert(t('fei-mac-bu-zhi-chi-touchbar'));
-        return;
-    }
-    if (selectionType.value == 'statusBarLyrics' && window.electron.platform != 'darwin') {
-        window.$modal.alert(t('zhuang-tai-lan-ge-ci-jin-zhi-chi-mac'));
+    const settingItem = getSettingItem(selectionType.value);
+    const unavailableText = getUnavailableSettingText(settingItem);
+    if (unavailableText) {
+        window.$modal.alert(unavailableText);
         return;
     }
     selectedSettings.value[selectionType.value] = option;
-    const actions = {
-        'themeColor': () => proxy.$applyColorTheme(option.value),
-        'theme': () => proxy.$setTheme(option.value),
-        'language': () => {
-            proxy.$i18n.locale = option.value;
-            document.documentElement.lang = option.value;
-        },
-        'quality': () => {
-            if (!MoeAuth.isAuthenticated) {
-                window.$modal.alert(t('gao-pin-zhi-yin-le-xu-yao-deng-lu-hou-cai-neng-bo-fango'));
-                return;
-            }
-        },
-        'highDpi': () => {
-            selectedSettings.value.dpiScale = {
-                value: dpiScale.value.toString(),
-                displayText: dpiScale.value.toString()
-            };
-        },
-        'desktopLyrics': () => {
-            const action = option.value === 'on' ? 'display-lyrics' : 'close-lyrics';
-            window.electron.ipcRenderer.send('desktop-lyrics-action', action);
-        },
-        'loudnessNormalization': () => {
-            // 触发响度规格化开关变更事件
-            window.dispatchEvent(new CustomEvent('loudness-normalization-change', {
-                detail: { enabled: option.value === 'on' }
-            }));
-        },
-        'pauseOnAudioOutputChange': async () => {
-            if (option.value === 'on') {
-                const granted = await requestMicrophonePermission();
-                if (!granted) {
-                    selectedSettings.value.pauseOnAudioOutputChange = {
-                        displayText: t('guan-bi'),
-                        value: 'off'
-                    };
-                    window.dispatchEvent(new CustomEvent('audio-output-device-watch-change', {
-                        detail: { enabled: false }
-                    }));
-                    window.$modal.alert('音频权限申请失败，无法启用该功能');
-                    return;
-                }
-            }
-
-            window.dispatchEvent(new CustomEvent('audio-output-device-watch-change', {
-                detail: { enabled: option.value === 'on' }
-            }));
-        },
-        'apiBaseUrlMode': () => {
-            if (option.value === 'default') {
-                selectedSettings.value.apiBaseUrl = { displayText: '', value: '' };
-            }
-        },
-        'audioOutputDevice': async () => {
-            window.dispatchEvent(new CustomEvent('audio-output-device-change', {
-                detail: { deviceId: option.value }
-            }));
-        },
-        log: async () => {
-            let result;
-            switch (option.value) {
-                case 'open-path':
-                    result = await window.electronAPI.openLogPath();
-                    break;
-                case 'export-log':
-                    result = await window.electronAPI.exportLog();
-                    break;
-                default:
-                    break;
-            }
-            if (result?.error) {
-                console.error(`日志操作 ${option.value} 失败:`, result.error);
-                window.$modal.alert(`日志操作失败，详细信息请查看控制台`);
-            }
-            if (option.value === 'export-log' && result?.filePath) {
-                await window.$modal.alert(`日志(已脱敏)已导出到:\n${result.filePath}`);
-            }
-        }
-    };
-    await actions[selectionType.value]?.();
+    await runSelectAction(settingItem, option);
     saveSettings();
-    if (!['apiMode', 'font', 'fontUrl', 'proxy', 'apiBaseUrlMode'].includes(selectionType.value)) closeSelection();
-    if (REFRESH_HINT_TYPES.includes(selectionType.value)) {
-        showRefreshHint.value[selectionType.value] = true;
-    }
+    if (!shouldKeepSelectionOpen(selectionType.value)) closeSelection();
+    markRefreshHint(selectionType.value);
 };
 
-const updateFontSetting = async (key) => {
-    const prevType = selectionType.value;
-    const value = key === 'font' ? (fontFamilyInput.value || '') : (fontUrlInput.value || '');
-    const displayText = key === 'font' ? (value || t('mo-ren-zi-ti')) : (value || t('mo-ren-zi-ti'));
-    selectionType.value = key;
-    await selectOption({ displayText, value });
-    selectionType.value = prevType;
-};
-
-const handleFontFocusOut = async (e) => {
-    const container = e.currentTarget;
-    if (container && e.relatedTarget && container.contains(e.relatedTarget)) return;
-    await updateFontSetting('fontUrl');
-    await updateFontSetting('font');
+const selectFontOption = (option) => {
+    selectedSettings.value.font = {
+        displayText: option.displayText,
+        value: option.value
+    };
+    applyCustomFont(option.value);
+    saveSettings();
+    closeSelection();
+    markRefreshHint('font');
 };
 
 const isElectron = () => {
@@ -431,10 +484,13 @@ const isElectron = () => {
 };
 const saveSettings = () => {
     const settingsToSave = Object.fromEntries(
-        Object.entries(selectedSettings.value).map(([key, setting]) => !SETTINGS_SAVE_IGNORE_KEYS.includes(key) && [key, setting.value] || [])
+        Object.entries(selectedSettings.value).map(([key, setting]) => [key, setting.value])
     );
     settingsToSave.shortcuts = shortcuts.value;
     localStorage.setItem('settings', JSON.stringify(settingsToSave));
+    window.dispatchEvent(new CustomEvent('settings-change', {
+        detail: { settings: settingsToSave }
+    }));
     isElectron() && window.electron.ipcRenderer.send('save-settings', JSON.parse(JSON.stringify(settingsToSave)));
 };
 
@@ -453,8 +509,9 @@ onMounted(() => {
         for (const key in savedSettings) {
             if (key === 'shortcuts') continue;
             if (key === 'audioOutputDevice') continue;
+            const settingItem = getSettingItem(key);
             if (key === 'quality') {
-                const option = selectionTypeMap[key].options.find(option => option.value === savedSettings[key]) || selectionTypeMap[key].options[0];
+                const option = settingItem.options.find(option => option.value === savedSettings[key]) || settingItem.options[0];
                 selectedSettings.value[key] = { ...option };
                 continue;
             }
@@ -471,6 +528,19 @@ onMounted(() => {
                 selectedSettings.value[key] = { displayText: '', value: value };
                 continue;
             }
+            if (key === 'dpiScale') {
+                const value = savedSettings[key] || '1.0';
+                selectedSettings.value[key] = { displayText: value, value: value };
+                continue;
+            }
+            if (key === 'font') {
+                const value = savedSettings[key] || '';
+                selectedSettings.value[key] = {
+                    displayText: value || t('mo-ren-zi-ti'),
+                    value: value
+                };
+                continue;
+            }
             if (key === 'proxyUrl') {
                 const value = savedSettings[key];
                 selectedSettings.value[key] = {
@@ -479,28 +549,20 @@ onMounted(() => {
                 };
                 continue;
             }
-            if (selectionTypeMap[key] && selectionTypeMap[key].options) {
-                if (key === 'font') {
-                    const value = savedSettings[key];
-                    selectedSettings.value[key] = {
-                        displayText: value || t('mo-ren-zi-ti'),
-                        value: value
-                    };
-                } else {
-                    // Always get displayText from current translation, not from localStorage
-                    const option = selectionTypeMap[key].options.find(
-                        (opt) => opt.value === savedSettings[key]
-                    );
-                    const displayText = option?.displayText || '🌏 ' + t('zi-dong');
-                    selectedSettings.value[key] = { displayText, value: savedSettings[key] };
-                }
+            if (settingItem?.options) {
+                // Always get displayText from current translation, not from localStorage
+                const option = settingItem.options.find(
+                    (opt) => opt.value === savedSettings[key]
+                );
+                const displayText = option?.displayText || '🌏 ' + t('zi-dong');
+                selectedSettings.value[key] = { displayText, value: savedSettings[key] };
             }
         }
     }
     if (savedSettings?.shortcuts) {
         shortcuts.value = savedSettings.shortcuts;
     } else {
-        shortcuts.value = Object.entries(shortcutConfigs.value).reduce((acc, [key, config]) => {
+        shortcuts.value = Object.entries(shortcutConfigs).reduce((acc, [key, config]) => {
             acc[key] = config.defaultValue;
             return acc;
         }, {});
@@ -574,7 +636,7 @@ const saveApiBaseUrl = () => {
         selectedSettings.value.apiBaseUrl = { displayText: '', value: value };
     }
     saveSettings();
-    showRefreshHint.value.apiBaseUrlMode = true;
+    markRefreshHint('apiBaseUrlMode');
     closeSelection();
 };
 
@@ -1030,7 +1092,7 @@ $shadow-medium: rgba(0, 0, 0, 0.18);
     align-items: center;
     justify-content: center;
     animation: fadeIn 0.3s ease-in-out;
-    z-index: 9;
+    z-index: 999;
 }
 
 .modal-content {
@@ -1043,20 +1105,28 @@ $shadow-medium: rgba(0, 0, 0, 0.18);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     animation: slideIn 0.3s ease-in-out;
     position: relative;
-    max-height: 80%;
-    overflow-y: auto;
+    max-height: 80vh;
+    overflow: hidden;
     overscroll-behavior: contain;
+    display: flex;
+    flex-direction: column;
 
     h3 {
+        flex: 0 0 auto;
         font-size: 20px;
         margin-bottom: 20px;
         color: #333;
     }
 
     ul {
+        flex: 1 1 auto;
+        min-height: 0;
+        max-height: 46vh;
+        overflow-y: auto;
         list-style: none;
-        padding: 0;
+        padding: 0 4px 0 0;
         margin: 0;
+        overscroll-behavior: contain;
     }
 
     li {
@@ -1073,6 +1143,7 @@ $shadow-medium: rgba(0, 0, 0, 0.18);
     }
 
     button {
+        flex: 0 0 auto;
         margin-top: 20px;
         padding: 10px 20px;
         background-color: $primary;
@@ -1086,6 +1157,11 @@ $shadow-medium: rgba(0, 0, 0, 0.18);
         &:hover {
             background-color: $primary;
         }
+    }
+
+    > button {
+        align-self: center;
+        min-width: 96px;
     }
 }
 
@@ -1321,7 +1397,8 @@ $shadow-medium: rgba(0, 0, 0, 0.18);
     color: $text-muted;
 }
 
-.api-settings-container {
+.api-settings-container,
+.proxy-settings-container {
     display: flex;
     flex-direction: column;
     align-items: center;
