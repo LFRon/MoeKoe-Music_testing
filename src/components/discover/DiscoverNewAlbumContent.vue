@@ -9,7 +9,7 @@
             </div>
         </div>
 
-        <CommonSkeleton v-if="isLoading" variant="card-grid" :count="10" />
+        <CommonSkeleton v-if="isLoading" variant="card-grid" :count="12" />
 
         <div v-else class="music-grid">
             <div class="music-card" v-for="card in cardItems" :key="card.key">
@@ -26,10 +26,11 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import CommonSkeleton from '../CommonSkeleton.vue';
 import { get } from '../../utils/request';
+import { useActivatedWatch } from '../../composables/useActivatedWatch';
 
 const route = useRoute();
 const router = useRouter();
@@ -114,7 +115,7 @@ const selectAlbumType = (type) => {
     });
 };
 
-watch(() => route.query.albumType, async (albumType) => {
+useActivatedWatch(() => route.query.albumType, async (albumType) => {
     selectedAlbumType.value = normalizeAlbumType(albumType);
     await fetchNewAlbums();
 }, { immediate: true });

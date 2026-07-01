@@ -2,6 +2,7 @@
 import axios from 'axios';
 import { MoeAuthStore } from '../stores/store';
 import { getApiBaseUrl } from './apiBaseUrl';
+import { handleRiskResponse } from './riskVerify';
 
 // 创建一个 axios 实例
 const httpClient = axios.create({
@@ -49,10 +50,36 @@ httpClient.interceptors.request.use(
 
 // 响应拦截器
 httpClient.interceptors.response.use(
-    response => {
+    async response => {
+        if (response.config.__rawResponse) {
+            return response;
+        }
+
+        const riskResult = await handleRiskResponse(response, (retryConfig) =>
+            httpClient.request({ ...retryConfig, __rawResponse: true }),
+            (url, params) => httpClient.get(url, { params, __skipRisk: true }),
+        );
+        if (riskResult.handled) {
+            return riskResult.data;
+        }
+
         return response.data;
     },
-    error => {
+    async error => {
+        if (error.config?.__rawResponse) {
+            return Promise.reject(error);
+        }
+
+        if (error.response) {
+            const riskResult = await handleRiskResponse(error.response, (retryConfig) =>
+                httpClient.request({ ...retryConfig, __rawResponse: true }),
+                (url, params) => httpClient.get(url, { params, __skipRisk: true }),
+            );
+            if (riskResult.handled) {
+                return riskResult.data;
+            }
+        }
+
         if (error.response) {
             console.error(`http error status:${error.response.status}`,error.response.data);
             if (error.response?.data?.data) {

@@ -134,10 +134,18 @@ export function createWindow() {
 
 let lyricsWindow;
 
+const persistLyricsWindowBounds = () => {
+    if (!lyricsWindow || lyricsWindow.isDestroyed()) return;
+    const { x, y, width, height } = lyricsWindow.getBounds();
+    store.set('lyricsWindowPosition', { x, y });
+    store.set('lyricsWindowSize', { width, height });
+};
+
 export function createLyricsWindow() {
     const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
     const windowWidth = Math.floor(screenWidth * 0.7);
-    const windowHeight = 200;
+    const windowHeight = 128;
+    const legacyWindowHeight = 200;
 
     const savedLyricsPosition = store.get('lyricsWindowPosition') || {};
     const savedLyricsSize = store.get('lyricsWindowSize') || {
@@ -149,6 +157,7 @@ export function createLyricsWindow() {
     let y = savedLyricsPosition.y;
     let width = savedLyricsSize.width || windowWidth;
     let height = savedLyricsSize.height || windowHeight;
+    if (height === legacyWindowHeight) height = windowHeight;
 
     // 限制窗口尺寸不超过屏幕
     width = Math.min(width, screenWidth);
@@ -171,7 +180,9 @@ export function createLyricsWindow() {
         x: x,
         y: y,
         minWidth: 800,
-        minHeight: 200,
+        minHeight: windowHeight,
+        maxWidth: screenWidth,
+        maxHeight: screenHeight,
         alwaysOnTop: true,
         frame: false,
         transparent: true,
@@ -190,10 +201,8 @@ export function createLyricsWindow() {
         }
     });
 
-    lyricsWindow.on('resize', () => {
-        const [width, height] = lyricsWindow.getSize();
-        store.set('lyricsWindowSize', { width, height });
-    });
+    lyricsWindow.on('resize', persistLyricsWindowBounds);
+    lyricsWindow.on('move', persistLyricsWindowBounds);
     mainWindow.lyricsWindow = lyricsWindow;
     lyricsWindow.on('closed', () => {
         mainWindow.lyricsWindow = null;
@@ -273,19 +282,20 @@ export function createTray(mainWindow, title = '') {
 
     const contextMenu = Menu.buildFromTemplate([
         {
-            label: t('project-home'),
-            icon: getIconPath('home.png', 'menu'),
+            label: t('show-hide'),
+            accelerator: 'CmdOrCtrl+Shift+S',
+            icon: getIconPath('show.png', 'menu'),
             click: () => {
-                shell.openExternal('https://Music.MoeKoe.cn');
+                if (mainWindow) {
+                    if (mainWindow.isVisible()) {
+                        mainWindow.hide();
+                    } else {
+                        mainWindow.show();
+                    }
+                }
             }
         },
-        {
-            label: t('report-bug'),
-            icon: getIconPath('bug.png', 'menu'),
-            click: () => {
-                shell.openExternal('https://github.com/iAJue/MoeKoeMusic/issues');
-            }
-        },
+        { type: 'separator' },
         {
             label: t('prev-track'),
             icon: getIconPath('prev.png', 'menu'),
@@ -310,6 +320,21 @@ export function createTray(mainWindow, title = '') {
                 mainWindow.webContents.send('play-next-track');
             }
         },
+        { type: 'separator' },
+        {
+            label: t('project-home'),
+            icon: getIconPath('home.png', 'menu'),
+            click: () => {
+                shell.openExternal('https://Music.MoeKoe.cn');
+            }
+        },
+        {
+            label: t('report-bug'),
+            icon: getIconPath('bug.png', 'menu'),
+            click: () => {
+                shell.openExternal('https://github.com/iAJue/MoeKoeMusic/issues');
+            }
+        },
         {
             label: t('check-updates'),
             icon: getIconPath('update.png', 'menu'),
@@ -326,20 +351,7 @@ export function createTray(mainWindow, title = '') {
                 app.quit();
             }
         },
-        {
-            label: t('show-hide'),
-            accelerator: 'CmdOrCtrl+Shift+S',
-            icon: getIconPath('show.png', 'menu'),
-            click: () => {
-                if (mainWindow) {
-                    if (mainWindow.isVisible()) {
-                        mainWindow.hide();
-                    } else {
-                        mainWindow.show();
-                    }
-                }
-            }
-        },
+        { type: 'separator' },
         {
             label: t('quit'),
             accelerator: 'CmdOrCtrl+Q',

@@ -18,7 +18,7 @@
             </div>
         </div>
 
-        <CommonSkeleton v-if="isLoading" variant="card-grid" :count="10" />
+        <CommonSkeleton v-if="isLoading" variant="card-grid" :count="12" />
 
         <div v-else class="music-grid">
             <div class="music-card" v-for="card in cardItems" :key="card.key">
@@ -39,6 +39,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router';
 import CommonSkeleton from '../CommonSkeleton.vue';
 import { get } from '../../utils/request';
+import { useActivatedWatch } from '../../composables/useActivatedWatch';
 
 const route = useRoute();
 const router = useRouter();
@@ -156,7 +157,7 @@ const updateMainCategoryIndicator = async () => {
     };
 };
 
-watch(() => [route.query.main, route.query.sub], async () => {
+useActivatedWatch(() => [route.query.main, route.query.sub], async () => {
     await ensurePlaylistData();
 }, { immediate: true });
 

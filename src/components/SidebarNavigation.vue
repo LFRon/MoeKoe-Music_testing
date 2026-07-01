@@ -1,17 +1,20 @@
 <template>
     <div class="side-top-actions" :class="{ collapsed: isCollapsed }">
         <div class="side-action-buttons">
-            <button class="side-action-button" @click="toggleCollapse">
+            <button class="side-action-button" title="折叠/展开" @click="toggleCollapse">
                 <i :class="isCollapsed ? 'fas fa-indent' : 'fas fa-outdent'"></i>
             </button>
-            <button class="side-action-button" @click="goBack" :disabled="!canGoBack">
+            <button class="side-action-button" title="后退" @click="goBack" :disabled="!canGoBack">
                 <i class="fas fa-chevron-left"></i>
             </button>
-            <button class="side-action-button" @click="goForward" :disabled="!canGoForward">
+            <button class="side-action-button" title="前进" @click="goForward" :disabled="!canGoForward">
                 <i class="fas fa-chevron-right"></i>
             </button>
-            <button class="side-action-button" @click="refreshPage">
+            <button class="side-action-button" title="刷新页面" @click="refreshPage">
                 <i class="fas fa-redo"></i>
+            </button>
+            <button class="side-action-button side-recognize-button" title="听歌识曲" @click="router.push('/recognize')">
+                <i class="fas fa-microphone"></i>
             </button>
         </div>
         <div class="side-top-search">
@@ -91,6 +94,10 @@
                     <i class="fas fa-compact-disc"></i>
                     <span>本地音乐</span>
                 </router-link>
+                <router-link to="/recognize" class="side-link" title="听歌识曲">
+                    <i class="fas fa-microphone"></i>
+                    <span>听歌识曲</span>
+                </router-link>
             </div>
 
             <div v-if="MoeAuth.isAuthenticated" class="side-playlist-area">
@@ -133,16 +140,9 @@
 
     <div v-if="isDisclaimerVisible" class="modal-overlay" @click="Disclaimer">
         <div class="modal-content" @click.stop>
-            <img class="modal-banner" src="/assets/images/banners.png" alt="Banner">
+            <img class="modal-banner" :src="DISCLAIMER_BANNER_SRC" alt="Banner">
             <h2>{{ $t('mian-ze-sheng-ming') }}</h2>
-            <p>{{ $t('0-ben-cheng-xu-shi-ku-gou-di-san-fang-ke-hu-duan-bing-fei-ku-gou-guan-fang-xu-yao-geng-wan-shan-de-gong-neng-qing-xia-zai-guan-fang-ke-hu-duan-ti-yan') }}</p>
-            <p>{{ $t('1-ben-xiang-mu-jin-gong-xue-xi-shi-yong-qing-zun-zhong-ban-quan-qing-wu-li-yong-ci-xiang-mu-cong-shi-shang-ye-hang-wei-ji-fei-fa-yong-tu') }}</p>
-            <p>{{ $t('2-shi-yong-ben-xiang-mu-de-guo-cheng-zhong-ke-neng-hui-chan-sheng-ban-quan-shu-ju-dui-yu-zhe-xie-ban-quan-shu-ju-ben-xiang-mu-bu-yong-you-ta-men-de-suo-you-quan-wei-le-bi-mian-qin-quan-shi-yong-zhe-wu-bi-zai-24-xiao-shi-nei-qing-chu-shi-yong-ben-xiang-mu-de-guo-cheng-zhong-suo-chan-sheng-de-ban-quan-shu-ju') }}</p>
-            <p>{{ $t('3-you-yu-shi-yong-ben-xiang-mu-chan-sheng-de-bao-kuo-you-yu-ben-xie-yi-huo-you-yu-shi-yong-huo-wu-fa-shi-yong-ben-xiang-mu-er-yin-qi-de-ren-he-xing-zhi-de-ren-he-zhi-jie-jian-jie-te-shu-ou-ran-huo-jie-guo-xing-sun-hai-bao-kuo-dan-bu-xian-yu-yin-shang-yu-sun-shi-ting-gong-ji-suan-ji-gu-zhang-huo-gu-zhang-yin-qi-de-sun-hai-pei-chang-huo-ren-he-ji-suo-you-qi-ta-shang-ye-sun-hai-huo-sun-shi-you-shi-yong-zhe-fu-ze') }}</p>
-            <p>{{ $t('4-jin-zhi-zai-wei-fan-dang-di-fa-lv-fa-gui-de-qing-kuang-xia-shi-yong-ben-xiang-mu-dui-yu-shi-yong-zhe-zai-ming-zhi-huo-bu-zhi-dang-di-fa-lv-fa-gui-bu-yun-xu-de-qing-kuang-xia-shi-yong-ben-xiang-mu-suo-zao-cheng-de-ren-he-wei-fa-wei-gui-hang-wei-you-shi-yong-zhe-cheng-dan-ben-xiang-mu-bu-cheng-dan-you-ci-zao-cheng-de-ren-he-zhi-jie-jian-jie-te-shu-ou-ran-huo-jie-guo-xing-ze-ren') }}</p>
-            <p>{{ $t('5-yin-le-ping-tai-bu-yi-qing-zun-zhong-ban-quan-zhi-chi-zheng-ban') }}</p>
-            <p>{{ $t('6-ben-xiang-mu-jin-yong-yu-dui-ji-shu-ke-hang-xing-de-tan-suo-ji-yan-jiu-bu-jie-shou-ren-he-shang-ye-bao-kuo-dan-bu-xian-yu-guang-gao-deng-he-zuo-ji-juan-zeng') }}</p>
-            <p>{{ $t('7-ru-guo-guan-fang-yin-le-ping-tai-jue-de-ben-xiang-mu-bu-tuo-ke-lian-xi-ben-xiang-mu-geng-gai-huo-yi-chu') }}</p>
+            <p v-for="key in ABOUT_DISCLAIMER_KEYS" :key="key">{{ $t(key) }}</p>
             <button @click="Disclaimer">{{ $t('guan-bi-an-niu') }}</button>
             <div class="version-number">© MoeKoe Music <span v-if="appVersion">V{{ appVersion }} - {{ platform }}</span></div>
         </div>
@@ -158,6 +158,7 @@ import { useI18n } from 'vue-i18n';
 import { get } from '../utils/request';
 import { MoeAuthStore } from '../stores/store';
 import AppUpdateDialog from './AppUpdateDialog.vue';
+import { ABOUT_DISCLAIMER_KEYS, DISCLAIMER_BANNER_SRC } from '../config/disclaimer';
 
 const MoeAuth = MoeAuthStore();
 const router = useRouter();
@@ -472,6 +473,11 @@ watch(() => MoeAuth.isAuthenticated, (isAuthenticated) => {
     }
 }
 
+.side-recognize-button:hover {
+    background: var(--side-hover);
+    color: var(--color-primary);
+}
+
 .side-action-button {
     display: inline-flex;
     align-items: center;
@@ -520,7 +526,11 @@ watch(() => MoeAuth.isAuthenticated, (isAuthenticated) => {
         gap: 6px;
         padding: 0 8px;
         border-color: var(--border-color);
-        background: var(--background-color);
+    }
+
+    &:is(.dark .side-top-search:hover),
+    &:is(.dark .side-top-search:focus-within) {
+        border-color: #505050;
     }
 
     input {
@@ -825,6 +835,10 @@ watch(() => MoeAuth.isAuthenticated, (isAuthenticated) => {
     background: #fff;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
 
+    &:is(.dark .side-profile-menu) {
+        background: #2a2a2a;
+    }   
+
     ul {
         list-style: none;
         margin: 0;
@@ -841,6 +855,14 @@ watch(() => MoeAuth.isAuthenticated, (isAuthenticated) => {
 
         &:hover {
             background: var(--secondary-color);
+        }
+
+        &:is(.dark li a) {
+            color: #e1e1e1;
+
+            &:hover {
+                background: #222222;
+            }
         }
     }
 }

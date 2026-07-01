@@ -587,10 +587,6 @@ html.dark {
         }
     }
 
-    .modal {
-        background-color: $bg-card;
-    }
-
     .modal .btn,
     .modal .close-btn-modal,
     .modal-content .close-btn-modal {
@@ -648,6 +644,16 @@ html.dark {
     }
 
     .detail-page {
+        .detail-sliver-header,
+        .track-list-header,
+        .track-list-header-row {
+            background-color: $bg-dark !important;
+        }
+
+        .collapsed-play-btn {
+            color: var(--primary-color) !important;
+        }
+
         .folder-history-menu {
             background-color: $bg-card !important;
             border-color: $border-color !important;

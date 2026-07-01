@@ -5,7 +5,7 @@
             <img :src="`./assets/images/home/mama.png`" class="mama" @click="addAllSongsToQueue">
             {{ $t('mei-ri-tui-jian') }}
         </h2>
-        <CommonSkeleton v-if="isLoading" variant="compact-grid" :count="16" />
+        <CommonSkeleton v-if="isLoading" variant="compact-grid" :count="20" />
         <div v-else class="song-list">
             <div class="song-item" v-for="(song, index) in songs" :key="index"
                 @click="playSong(song['hash'], song.ori_audio_name, $getCover(song.sizable_cover, 480), song.author_name)"
@@ -39,13 +39,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUpdated } from "vue";
+import { ref, onMounted } from "vue";
 import { get } from '../utils/request';
 import ContextMenu from '../components/ContextMenu.vue';
 import CommonSkeleton from '../components/CommonSkeleton.vue';
 import HomeRecommendations from '../components/home/HomeRecommendations.vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getCover } from '../utils/utils';
+import { useActivatedWatch } from '../composables/useActivatedWatch';
 
 const router = useRouter();
 const route = useRoute();
@@ -75,25 +76,40 @@ onMounted(() => {
     playlist();
 });
 
-onUpdated(async () => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    if (!window.electron) {
-        if (route.query.hash) {
-            privilegeSong(route.query.hash).then(res => {
-                if (res.status == 1) {
-                    const songInfo = res.data[0];
-                    playSong(songInfo.hash, songInfo.albumname, getCover(songInfo.info.image, 480), songInfo.singername)
-                    router.push('/');
-                }
-            })
-        } else if (route.query.listid) {
-            router.push({
-                path: '/PlaylistDetail',
-                query: { global_collection_id: route.query.listid }
-            });
-        }
+const handleShareRoute = async (onCleanup) => {
+    if (window.electron) return;
+
+    let cancelled = false;
+    await new Promise(resolve => {
+        const timer = setTimeout(resolve, 1000);
+        onCleanup(() => {
+            cancelled = true;
+            clearTimeout(timer);
+        });
+    });
+
+    if (cancelled) return;
+
+    if (route.query.hash) {
+        privilegeSong(route.query.hash).then(res => {
+            if (cancelled) return;
+            if (res.status == 1) {
+                const songInfo = res.data[0];
+                playSong(songInfo.hash, songInfo.albumname, getCover(songInfo.info.image, 480), songInfo.singername)
+                router.push('/');
+            }
+        })
+    } else if (route.query.listid) {
+        router.push({
+            path: '/PlaylistDetail',
+            query: { global_collection_id: route.query.listid }
+        });
     }
-})
+};
+
+useActivatedWatch(() => [route.query.hash, route.query.listid], (_value, _oldValue, onCleanup) => {
+    handleShareRoute(onCleanup);
+}, { immediate: true });
 
 const recommend = async () => {
     const response = await get('/everyday/recommend');

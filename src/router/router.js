@@ -13,6 +13,7 @@ import Ranking from '@/views/Ranking.vue';
 import CloudDrive from '@/views/CloudDrive.vue';
 import LocalMusic from '@/views/LocalMusic.vue';
 import VideoPlayer from '@/views/VideoPlayer.vue';
+import Recognize from '@/views/Recognize.vue';
 import { MoeAuthStore } from '@/stores/store';
 
 
@@ -33,6 +34,7 @@ const routes = [
             { path: '/ranking', name: 'Ranking', component: Ranking },
             { path: '/CloudDrive', name: 'CloudDrive', component: CloudDrive },
             { path: '/LocalMusic', name: 'LocalMusic', component: LocalMusic },
+            { path: '/recognize', name: 'Recognize', component: Recognize },
         ],
     },
     { path: '/lyrics', name: 'Lyrics', component: Lyrics },
@@ -41,34 +43,7 @@ const routes = [
 
 const router = createRouter({
     history: createWebHashHistory(),
-    routes,
-    scrollBehavior(to, from, savedPosition) {
-        if (savedPosition) {
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                    resolve({
-                        ...savedPosition,
-                        behavior: 'smooth'
-                    });
-                }, 100);
-            });
-        }
-        if (to.hash) {
-            return {
-                el: to.hash,
-                behavior: 'smooth',
-                top: 80,
-            };
-        }
-        if (to.path === from.path && JSON.stringify(to.params) === JSON.stringify(from.params)) {
-            return false;
-        }
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve({ top: 0, behavior: 'smooth' });
-            }, 50);
-        });
-    }
+    routes
 });
 
 // 全局导航守卫
