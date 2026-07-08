@@ -15,6 +15,9 @@
             <div class="album-art" @click="toggleLyrics(currentSong.hash, currentTime)">
                 <img v-if="currentSong.img" :src="currentSong.img" alt="Album Art" />
                 <i v-else class="fas fa-music"></i>
+                <span class="album-art-hover-indicator" aria-hidden="true">
+                    <i class="fas fa-angle-double-up"></i>
+                </span>
             </div>
             <div class="song-info" @click="toggleLyrics(currentSong.hash, currentTime)">
                 <div class="song-title-row">
@@ -230,8 +233,8 @@
                 <div id="lyrics-container" @wheel="handleLyricsWheel">
                     <template v-if="lyricsData.length > 0">
                         <div v-if="lyricsDisplayMode === 'single'" id="lyrics" class="single-lyrics" :class="{ 'line-highlight-mode': lyricsHighlightMode === 'line' }"
-                            :style="{ fontSize: lyricsFontSize }">
-                            <transition name="single-lyric-fade">
+                            :style="{ fontSize: lyricsFontSize, fontFamily: lyricsFontFamily }">
+                            <transition name="single-lyric-fade" appear>
                                 <div class="line-group" v-if="currentSingleLyricsLine" :key="singleLyricsLineIndex">
                                     <div class="line" @click="handleLyricsClick(singleLyricsLineIndex)" :class="{ click: lyricsFlag, 'line-highlight': isCurrentLyricsLine(singleLyricsLineIndex), [lyricsAlign]: true }">
                                         <span v-for="(charData, charIndex) in currentSingleLyricsLine.characters" :key="charIndex" class="char"
@@ -245,8 +248,8 @@
                             </transition>
                         </div>
                         <div v-else id="lyrics" :class="{ 'line-highlight-mode': lyricsHighlightMode === 'line' }"
-                            :style="{ fontSize: lyricsFontSize, transform: `translateY(${scrollAmount ? scrollAmount + 'px' : '50%'})` }">
-                            <div class="line-group" v-for="(lineData, lineIndex) in lyricsData" :key="lineIndex">
+                            :style="{ fontSize: lyricsFontSize, fontFamily: lyricsFontFamily, transform: `translateY(${scrollAmount ? scrollAmount + 'px' : '50%'})` }">
+                            <div class="line-group" :class="{ 'current-line-group': currentLyricsLineIndex === lineIndex }" v-for="(lineData, lineIndex) in lyricsData" :key="lineIndex">
                                 <div class="line" @click="handleLyricsClick(lineIndex)" :class="{ click: lyricsFlag, 'line-highlight': isCurrentLyricsLine(lineIndex), [lyricsAlign]: true }">
                                     <span v-for="(charData, charIndex) in lineData.characters" :key="charIndex" class="char"
                                         :class="{ highlight: lyricsHighlightMode === 'char' && charData.highlighted }">
@@ -258,7 +261,7 @@
                             </div>
                         </div>
                     </template>
-                    <div v-else class="no-lyrics">{{ SongTips }}</div>
+                    <div v-else class="no-lyrics" :style="{ fontFamily: lyricsFontFamily }">{{ SongTips }}</div>
                 </div>
             </div>
         </div>
@@ -309,6 +312,14 @@ const fullscreenLyricsDefaultSettings = {
 };
 const fullscreenLyricsSettings = ref({ ...fullscreenLyricsDefaultSettings });
 const lyricsFontSize = computed(() => fullscreenLyricsSettings.value.fontSize);
+const desktopLyricsFont = ref('');
+const fontFamilyFallback = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif";
+const escapeFontFamily = (fontFamily) => String(fontFamily).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+const lyricsFontFamily = computed(() => {
+    return desktopLyricsFont.value
+        ? `"${escapeFontFamily(desktopLyricsFont.value)}", ${fontFamilyFallback}`
+        : fontFamilyFallback;
+});
 const lyricsAlign = computed(() => fullscreenLyricsSettings.value.align);
 const lyricsBackground = computed(() => fullscreenLyricsSettings.value.background);
 const lyricsHighlightMode = computed(() => fullscreenLyricsSettings.value.highlightMode || 'char');
@@ -1493,6 +1504,14 @@ const handleDocumentClick = (event) => {
     }
 };
 
+const syncDesktopLyricsFont = (settings = JSON.parse(localStorage.getItem('settings') || '{}')) => {
+    desktopLyricsFont.value = settings?.desktopLyricsFont || '';
+};
+
+const handleSettingsChange = (event) => {
+    syncDesktopLyricsFont(event.detail?.settings);
+};
+
 // 跳转到搜索页面搜索歌曲
 const searchSong = (songName) => {
     // 关闭全屏歌词
@@ -1514,6 +1533,7 @@ onMounted(() => {
     audioController.initAudio();
 
     const savedSettings = JSON.parse(localStorage.getItem('settings') || '{}');
+    syncDesktopLyricsFont(savedSettings);
     setAudioOutputDeviceWatcherEnabled(savedSettings.pauseOnAudioOutputChange === 'on');
     void applyAudioOutputDevice(savedSettings.audioOutputDevice);
 
@@ -1630,6 +1650,7 @@ onMounted(() => {
     // 添加事件监听
     document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('click', handleDocumentClick);
+    window.addEventListener('settings-change', handleSettingsChange);
 
     // 设置特定于PlayerControl的监听器
     audio.addEventListener('pause', () => {
@@ -1717,6 +1738,7 @@ onUnmounted(() => {
     // 清理键盘事件
     document.removeEventListener('keydown', handleKeyDown);
     document.removeEventListener('click', handleDocumentClick);
+    window.removeEventListener('settings-change', handleSettingsChange);
 });
 
 // 对外暴露接口
