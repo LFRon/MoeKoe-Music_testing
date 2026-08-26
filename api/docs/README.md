@@ -161,6 +161,10 @@
 132. [`歌曲详情 - 歌曲成绩单`](#歌曲详情-歌曲成绩单)
 133. [`歌曲详情 - 歌曲成绩单详情`](#歌曲详情---歌曲成绩单详情)
 134. [`听歌识曲`](#听歌识曲)
+135. [`获取已购单曲`](#获取已购单曲)
+136. [`获取已购专辑`](#获取已购专辑)
+137. [`上传音乐到云盘`](#上传音乐到云盘)
+138. [`获取听歌等级信息`](#获取听歌等级信息)
 
 ### 安装
 
@@ -268,6 +272,10 @@ $ set HOST=127.0.0.1 && npm run dev
 !> 文档可能会有缓存 , 如果文档版本和 github 上的版本不一致,请清除缓存再查看
 
 #### 更新记录
+
+26-08-14：`获取社区音效` 接口支持 `sort` 参数排序
+
+26-08-01：添加 `上传音乐到云盘`、`删除用户云盘音乐` 接口
 
 26-05-20：更新曲谱相关接口
 
@@ -387,9 +395,9 @@ $ set HOST=127.0.0.1 && npm run dev
 
 **调用例子：** `/login?username=xxx&password=yyy`
 
-#### 3. 开放接口登录(目前仅支持微信登录)
+#### 3. 微信开放接口登录
 
-说明: 该接口为第三方平台登录，目前仅支持微信登录
+说明: 该接口仅用于微信登录，接收微信扫码成功后生成的 `code`。微信与 QQ 的授权参数不通用，QQ 登录请使用 [`/login/qq`](#_4-qq-授权登录)。
 
 **必选参数：**
 
@@ -399,7 +407,23 @@ $ set HOST=127.0.0.1 && npm run dev
 
 **调用例子：** `/login/openplat?code=xxx`
 
-#### 4. 二维码登录
+#### 4. QQ 授权登录
+
+说明: 该接口仅用于 QQ 登录，接收 QQ 开放平台授权返回的 `openid` 与 `access_token`，并通过酷狗 `login_by_openplat` 换取酷狗登录态。QQ 与微信的授权参数不通用，不能把微信 `code` 传给该接口，也不能把 QQ 参数传给 `/login/openplat`。
+
+**必选参数：**
+
+`openid`: QQ 授权返回的 openid
+
+`access_token`: QQ 授权返回的 access_token
+
+**接口地址：** `/login/qq`
+
+**调用例子：** `/login/qq?openid=xxx&access_token=yyy`
+
+> QQ 登录的 `openid` 与 `access_token` 需通过 QQ 开放平台授权获取（`openmobile.qq.com/oauth2.0/m_authorize`，client_id 按平台自动选择：概念版 `101706348`、标准版 `205141`）。`third_appid` 会根据 `platform` 环境变量自动选择。
+
+#### 5. 二维码登录
 
 说明: 二维码登录涉及到 3 个接口,调用务必带上时间戳,防止缓存
 
@@ -438,9 +462,9 @@ $ set HOST=127.0.0.1 && npm run dev
 
 **调用例子：** `/login/qr/check?key=xxx`
 
-#### 5. 微信登录
+#### 6. 微信扫码登录
 
-说明：微信登录涉及到 2 个接口,调用务必带上时间戳,防止缓存
+说明：微信扫码登录涉及到 2 个接口,调用务必带上时间戳,防止缓存。该流程使用微信的 `uuid` / `wx_code`，不适用于 QQ 扫码登录。
 
 ##### 1. 二维码生成接口
 
@@ -450,10 +474,10 @@ $ set HOST=127.0.0.1 && npm run dev
 
 **调用例子：** `/login/wx/create`
 
-##### 2.二维码检测扫码状态接口
+##### 2. 微信二维码检测扫码状态接口
 
-说明：轮询此接口可获取二维码扫码状态, 408 为等待扫描，404 为已经扫描，403 为拒绝登录，405 为登录成功，402 为已过期(405 状态下登陆完成口会返回 wx_code,
-用于开放登陆 [`/login/openplat`](#_3-开放接口登录目前仅支持微信登录)), 注：该接口有一定延时，不可访问是可以直接到
+说明：轮询微信接口可获取二维码扫码状态, 408 为等待扫描，404 为已经扫描，403 为拒绝登录，405 为登录成功，402 为已过期(405 状态下登陆完成口会返回 wx_code,
+用于开放登陆 [`/login/openplat`](#_3-微信开放接口登录)), 注：该接口有一定延时，不可访问是可以直接到
 https://long.open.weixin.qq.com/connect/l/qrconnect?f=json&uuid=xxx 该接口直接请求
 
 **必选参数：**
@@ -467,6 +491,71 @@ https://long.open.weixin.qq.com/connect/l/qrconnect?f=json&uuid=xxx 该接口直
 **接口地址：** `/login/wx/check`
 
 **调用例子：** `/login/wx/check?timestamp=1691256061923&uuid=xxxxxxxxx`
+
+#### 7. QQ 扫码登录
+
+说明：QQ 扫码登录涉及 2 个接口，同样是“生成二维码 → 轮询扫码状态 → 换取酷狗登录态”的流程，但 QQ 使用 `qrsig` / `ptqrtoken` / `openid` / `access_token`，与微信的 `uuid` / `code` 不通用，也不会请求 `long.open.weixin.qq.com`。
+
+##### 1. 二维码生成接口
+
+说明：调用此接口可生成 QQ 扫码登录二维码，返回二维码图片 base64、qrsig、ptqrtoken 等会话信息
+
+**接口地址：** `/login/qq/qr/create`
+
+**调用例子：** `/login/qq/qr/create`
+
+返回参数说明：
+
+- `qrcode`: 二维码图片 base64（可直接用 `<img src="data:image/png;base64,xxx">` 展示）
+- `qrsig`: 二维码会话标识
+- `ptqrtoken`: qrsig 的 hash33 值
+- `pt_login_sig`: QQ 登录签名
+- `pt_openlogin_data`: xlogin 完整参数（含 h5sig），轮询扫码状态时需要
+- `xlogin_url`: xlogin 接口完整链接（作为轮询请求的 Referer）
+- `cookie`: 会话 Cookie
+
+##### 2. QQ 二维码检测扫码状态接口
+
+说明：轮询 QQ `ptqrlogin` 接口可获取二维码扫码状态，扫码成功后会自动完成酷狗账号登录并返回 token
+
+**必选参数：**
+
+`qrsig`: 由第一个接口生成
+
+`ptqrtoken`: 由第一个接口生成
+
+`pt_login_sig`: 由第一个接口生成
+
+`pt_openlogin_data`: 由第一个接口生成，需原样传递，否则扫码成功后可能无法直接获取 `openid` / `access_token`
+
+`xlogin_url`: 由第一个接口生成（作为轮询请求的 Referer）
+
+`cookie`: 由第一个接口生成，需原样传递（包含 QQ 扫码会话 Cookie，如 `qrsig`）
+
+**可选参数：**
+
+`timestamp`: 建议放在 URL query 中传递（包括 POST 请求），否则由于 2 分钟 URL 缓存会导致延迟
+
+**接口地址：** `/login/qq/qr/check`
+
+**调用例子：** 将 `/login/qq/qr/create` 返回的会话字段通过 GET query 原样传入；`pt_openlogin_data`、`xlogin_url`、`cookie` 需 URL 编码：
+
+```text
+/login/qq/qr/check?timestamp=1691256061923&qrsig=xxx&ptqrtoken=xxx&pt_login_sig=xxx&pt_openlogin_data=xxx&xlogin_url=xxx&cookie=pt_login_sig%3Dxxx%3B%20qrsig%3Dxxx
+```
+
+返回状态说明：
+
+- `wait`: 等待扫码
+- `expired`: 二维码已失效，需重新调用 create 生成
+- `status: 1`: 登录成功，返回酷狗 token（通过 `/login/qq` 相同流程的 login_by_openplat 换取）
+
+> QQ 扫码登录的 `client_id` 按平台自动选择：概念版 `101706348`、标准版 `205141`。
+>
+> 流程说明（与酷狗 App 内 QQ 扫码登录一致）：
+> 1. `m_authorize`（style=qr）→ `xlogin`（获取 pt_login_sig cookie 及 h5sig）→ `ptqrshow`（二维码）
+> 2. 轮询 `ptqrlogin`，需携带 `pt_openlogin_data`（xlogin 完整参数）、`login_sig`、`qrsig` cookie
+> 3. 扫码成功后直接返回 proxy.htm URL（含 openid + access_token），调用 `login_by_openplat` 换取酷狗 token
 
 ### 刷新登录
 
@@ -579,6 +668,79 @@ https://long.open.weixin.qq.com/connect/l/qrconnect?f=json&uuid=xxx 该接口直
 **接口地址：** `/user/cloud/url`
 
 **调用例子：** `/user/cloud/url`
+
+### 删除用户云盘音乐
+
+说明：登录后调用此接口可以删除用户云盘中的音乐（需要登录）
+
+**必选参数：**
+
+`fileid`: 云盘文件 ID（列表接口返回的 `kv_id`），多个可用逗号分隔；也可使用 `fileids` 传数组
+
+**可选参数：**
+
+`clientver`: 覆盖客户端版本号，默认使用当前平台配置
+
+`appid`: 覆盖 appid，默认使用当前平台配置
+
+`kv_id`: `fileid` 别名
+
+`album_audio_id`: 专辑音频 ID（列表接口返回的 `album_audio_id`），多个可用逗号分隔；也可使用 `album_audio_ids` 传数组
+
+**接口地址：** `/user/cloud/del`
+
+**调用例子：** `/user/cloud/del?fileid=1&album_audio_id=123`
+
+### 云盘上传前曲库匹配
+
+说明：登录后调用此接口可以根据文件 hash 匹配曲库信息，用于上传前获取 `hash_std`、`audio_id`、`album_audio_id`
+
+**必选参数：**
+
+`hash`: 文件 hash（即文件 MD5），多个可用逗号分隔；也可通过请求体传入文件二进制数据自动计算
+
+**可选参数：**
+
+`album_audio_id`: 专辑音频 ID，已有时可辅助匹配，多个可用逗号分隔；也可使用 `album_audio_ids` 传数组
+
+`clientver`: 覆盖客户端版本号，默认使用当前平台配置
+
+`appid`: 覆盖 appid，默认使用当前平台配置
+
+**接口地址：** `/user/cloud/match`
+
+**调用例子：** `/user/cloud/match?hash=e1fe087ba28766b8c95239487a0e46dc`
+
+### 上传音乐到云盘
+
+说明：登录后调用此接口可以将音乐文件上传到用户云盘，需通过请求体传入文件二进制数据（`Content-Type: application/octet-stream`）  
+默认会先根据文件 hash 调用曲库匹配接口，并将匹配到的 `hash_std`、`audio_id`、`album_audio_id` 写入云盘；手动传入这些参数时会优先使用手动值
+
+**必选参数：**
+
+无
+
+**可选参数：**
+
+`filename`: 文件 hash（即文件 MD5），默认自动计算
+
+`extendname`: 文件扩展名，默认为 `mp3`（自动去掉点号）
+
+`name`: 云盘音乐显示名称，默认格式为 `歌手名 - MD5.扩展名`
+
+`author_name`: 歌手名
+
+`hash_std`: 曲库标准 hash，默认自动匹配
+
+`audio_id`: 音频 id，默认为 0
+
+`album_audio_id`: 专辑音频 id，默认为 0
+
+`auto_match`: 是否自动匹配曲库，默认 `1`；传 `0`、`false` 或 `no` 可关闭
+
+**接口地址：** `/user/cloud/upload`
+
+**调用例子：** `/user/cloud/upload`
 
 ### 获取用户收藏的视频
 
@@ -1026,6 +1188,22 @@ fileids: 歌单中歌曲的 fileid，可多个,用逗号隔开
 **接口地址：** `/playlist/effect`
 
 **调用例子：** `/playlist/effect`
+
+### 获取社区音效
+
+说明 : 调用此接口 , 可获取社区音效列表
+
+**可选参数：**
+
+`sort` : 排序方式, 不传默认为 2。实测取值含义: 3 为最热, 4 为最新
+
+`page` : 页数
+
+`pagesize` : 每页页数, 默认为 30
+
+**接口地址：** `/get/model`
+
+**调用例子：** `/get/model?sort=4`
 
 ### 获取歌单详情
 
@@ -2464,6 +2642,94 @@ const res = await fetch('/audio/match', {
   headers: { 'Content-Type': 'application/octet-stream' },
   body: pcmArrayBuffer,
 });
+```
+
+### 获取已购单曲
+
+说明：登录后调用此接口，可以获取用户已购买的单曲列表，返回歌曲详情及音频信息（需要登录）
+
+**可选参数：**
+
+`page`：页数
+
+`pagesize`：每页页数，默认为 50
+
+**接口地址：** `/user/purchased/songs`
+
+**调用例子：** `/user/purchased/songs`
+
+### 获取已购专辑
+
+说明：登录后调用此接口，可以获取用户已购买的专辑列表（需要登录）
+
+**可选参数：**
+
+`page`：页数
+
+`pagesize`：每页页数，默认为 15
+
+**接口地址：** `/user/purchased/albums`
+
+**调用例子：** `/user/purchased/albums`
+
+### 获取听歌等级信息
+
+说明：获取并上报用户听歌等级信息（听歌时长），登录后调用。支持两种调用方式：
+
+- **查询**（默认）：返回服务器当前累计听歌时长、等级与积分
+- **上报**：传入 `d_sec`（本地累计听歌秒数）与 `diff_sec`（本次新增秒数），同步本地累计时长
+
+**双协议支持**：
+
+- `platform=lite`（概念版）走 **v2 协议**（`userinfo.user.kugou.com/v2/get_grade_info`），上报按 `diff_sec` 累加记账
+- 标准版（不配置 `platform`）走 **v4 协议**（`userinfoservice.kugou.com/v4/get_grade_info`，pk/params 加密结构），**可查询**；但标准版听歌时长由服务端真实播放统计维护，**上报增量不会记账**
+- 可用 `protocol=v2|v4` 参数强制指定协议
+
+**必选参数（登录态）：**
+
+`cookie`：登录凭证，需包含 `token`、`userid`，建议同时包含 `mid`、`dfid`
+
+**可选参数：**
+
+`uuid`：设备 UUID，默认为 `-`
+
+`type`：类型，默认为 `1`（仅 v2 生效；v4 固定为 `0`）
+
+**上报参数：**
+
+`d_sec`：本地累计听歌秒数（须大于等于服务器当前值）
+
+`diff_sec`：本次新增秒数，请按正常听歌节奏调用
+
+`y_type`：年份类型，默认为 `0`
+
+`m_type`：音乐类型，默认为 `0`
+
+**接口地址：** `/user/grade/info`
+
+**调用例子：**
+
+查询：`/user/grade/info?cookie=token%3Dxxx%3Buserid%3D123`
+
+上报：`/user/grade/info?cookie=token%3Dxxx%3Buserid%3D123&d_sec=123456&diff_sec=600&uuid=xxx`
+
+**返回示例：**
+
+```json
+{
+  "status": 1,
+  "error_code": 0,
+  "data": {
+    "d_sec": 125755,
+    "duration": 2095,
+    "p_grade": 3,
+    "p_current_point": 3809,
+    "p_grade_point": 3000,
+    "p_next_grade": 4,
+    "p_next_grade_point": 6000,
+    "servertime": "2026-08-05 23:10:40"
+  }
+}
 ```
 
 ## License

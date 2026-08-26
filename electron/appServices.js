@@ -56,7 +56,7 @@ export function createWindow() {
         show: savedConfig?.startMinimized === 'on' ? false : true,
         frame: useNativeTitleBar,
         titleBarStyle: useNativeTitleBar ? 'default' : 'hiddenInset',
-        autoHideMenuBar: true,
+        autoHideMenuBar: false, 
         webPreferences: {
             preload: path.join(__dirname, 'preload.cjs'),
             contextIsolation: true,
@@ -64,11 +64,16 @@ export function createWindow() {
             sandbox: false,
             webSecurity: false, // 禁用 CORS、同源策略
             allowRunningInsecureContent: true, // 允许混合内容
+            // 默认开启节流；用户在设置中开启该选项时禁用，以修复后台/最小化时 Web Audio 音效失效
+            backgroundThrottling: savedConfig?.backgroundThrottling !== 'on',
             zoomFactor: 1.0
         },
         icon: getIconPath('icon.ico')
     });
     bindExternalLinkHandler(mainWindow);
+
+    // 隐藏菜单栏但保留默认菜单
+    mainWindow.setMenuBarVisibility(false);
 
     if (store.get('maximize')) {
         mainWindow.maximize();
@@ -784,6 +789,7 @@ export function setThumbarButtons(mainWindow, isPlaying = false) {
 // 处理自定义协议相关
 let hash = "";
 let listid = "";
+let teamcode;
 let protocolMainWindow = null;
 
 // 注册自定义协议
@@ -840,6 +846,7 @@ function handleUrl(url) {
     // 提取所有参数并更新全局变量
     hash = urlObj.searchParams.get("hash") || "";
     listid = urlObj.searchParams.get("listid") || "";
+    teamcode = urlObj.searchParams.get('code') || '';
 
     // 根据路径和参数决定发送什么数据到渲染进程
     if (protocolMainWindow && protocolMainWindow.webContents) {
@@ -847,6 +854,7 @@ function handleUrl(url) {
         protocolMainWindow.webContents.send('url-params', {
             hash,
             listid,
+            teamcode,
             urlPath: urlObj.pathname.substring(1) // 去掉前导斜杠
         });
     }
@@ -858,15 +866,17 @@ export function sendHashAfterLoad(mainWindow) {
         protocolMainWindow = mainWindow;
     }
 
-    if ((hash || listid) && protocolMainWindow) {
+    if ((hash || listid || teamcode) && protocolMainWindow) {
         protocolMainWindow.webContents.on('did-finish-load', () => {
             setTimeout(() => {
                 protocolMainWindow.webContents.send('url-params', {
                     hash,
                     listid,
-                    urlPath: 'share'
+                    teamcode,
+                    urlPath: teamcode? 'join': 'share'
                 });
             }, 1000);
         });
     }
 }
+

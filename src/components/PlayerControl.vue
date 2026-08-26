@@ -114,9 +114,12 @@
                 <!-- 音量控制 -->
                 <div class="volume-control" @wheel="handleVolumeScroll">
                     <i :class="isMuted ? 'fas fa-volume-mute' : 'fas fa-volume-up'" @click="toggleMute"></i>
-                    <div class="volume-slider" @mousedown="onDragStart">
-                        <div class="volume-progress" :style="{ width: volume + '%' }"></div>
-                        <input type="range" min="0" max="100" v-model="volume" @input="changeVolume" />
+                    <div class="volume-slider-wrap" :class="{ 'show-volume-value': isDragging }">
+                        <div class="volume-value" :style="volumeValueStyle">{{ volumePercentText }}</div>
+                        <div class="volume-slider" @mousedown="onDragStart">
+                            <div class="volume-progress" :style="{ width: volume + '%' }"></div>
+                            <input type="range" min="0" max="100" v-model="volume" @input="changeVolume" />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -232,7 +235,7 @@
                 </div>
                 <div id="lyrics-container" @wheel="handleLyricsWheel">
                     <template v-if="lyricsData.length > 0">
-                        <div v-if="lyricsDisplayMode === 'single'" id="lyrics" class="single-lyrics" :class="{ 'line-highlight-mode': lyricsHighlightMode === 'line' }"
+                        <div v-if="lyricsDisplayMode === 'single'" id="lyrics" class="single-lyrics" :class="{ 'line-highlight-mode': lyricsHighlightMode === 'line', 'lyrics-align-left': lyricsAlign === 'left' }"
                             :style="{ fontSize: lyricsFontSize, fontFamily: lyricsFontFamily }">
                             <transition name="single-lyric-fade" appear>
                                 <div class="line-group" v-if="currentSingleLyricsLine" :key="singleLyricsLineIndex">
@@ -247,7 +250,7 @@
                                 </div>
                             </transition>
                         </div>
-                        <div v-else id="lyrics" :class="{ 'line-highlight-mode': lyricsHighlightMode === 'line' }"
+                        <div v-else id="lyrics" :class="{ 'line-highlight-mode': lyricsHighlightMode === 'line', 'lyrics-align-left': lyricsAlign === 'left' }"
                             :style="{ fontSize: lyricsFontSize, fontFamily: lyricsFontFamily, transform: `translateY(${scrollAmount ? scrollAmount + 'px' : '50%'})` }">
                             <div class="line-group" :class="{ 'current-line-group': currentLyricsLineIndex === lineIndex }" v-for="(lineData, lineIndex) in lyricsData" :key="lineIndex">
                                 <div class="line" @click="handleLyricsClick(lineIndex)" :class="{ click: lyricsFlag, 'line-highlight': isCurrentLyricsLine(lineIndex), [lyricsAlign]: true }">
@@ -282,6 +285,7 @@ import FullscreenLyricsSettings from './FullscreenLyricsSettings.vue';
 import { useRouter } from 'vue-router';
 import { getCover, getAudioOutputDeviceSignature, share } from '../utils/utils';
 import { get } from '../utils/request';
+import { createTeamEventPopup, actions as teamEventActions } from '@/utils/teamEvent';
 
 // 从统一入口导入所有模块
 import {
@@ -291,7 +295,8 @@ import {
     usePlaybackMode,
     useMediaSession,
     useSongQueue,
-    useHelpers
+    useHelpers,
+    setAudioOutputDevice
 } from './player';
 
 // 基础设置
@@ -521,7 +526,19 @@ const updateCurrentTime = throttle(() => {
 
 // 初始化各个模块
 const audioController = useAudioController({ onSongEnd, updateCurrentTime });
-const { playing, isMuted, volume, changeVolume, audio, playbackRate, setPlaybackRate, applyLoudnessNormalization, ensureAudioContextRunning, toggleLoudnessNormalization, loudnessNormalizationEnabled, currentLoudnessGain, webAudioInitialized } = audioController;
+const { playing, isMuted, volume, changeVolume, audio, playbackRate, setPlaybackRate, applyLoudnessNormalization, ensureAudioContextRunning, toggleLoudnessNormalization, loudnessNormalizationEnabled, currentLoudnessGain, webAudioInitialized, amplitudeToSlider } = audioController;
+const volumePercentText = computed(() => `${Math.round(volume.value)}%`);
+const volumeValueStyle = computed(() => {
+    const percent = Math.round(volume.value);
+    const offset = percent < 16 ? 0 : percent > 84 ? -100 : -50;
+    const arrowOffset = percent < 16 ? '10px' : percent > 84 ? 'calc(100% - 10px)' : '50%';
+
+    return {
+        left: `${percent}%`,
+        '--volume-value-offset': `${offset}%`,
+        '--volume-arrow-offset': arrowOffset
+    };
+});
 
 const lyricsHandler = useLyricsHandler(t);
 const { lyricsData, originalLyrics, showLyrics, scrollAmount, SongTips, lyricsMode, toggleLyrics, getLyrics, highlightCurrentChar, resetLyricsHighlight, getCurrentLineText, scrollToCurrentLine, toggleLyricsMode } = lyricsHandler;
@@ -568,7 +585,7 @@ const getCurrentLineIndex = (currentTime) => {
 };
 
 const progressBar = useProgressBar(audio, resetLyricsHighlight);
-const { progressWidth, isProgressDragging, showTimeTooltip, tooltipPosition, tooltipTime, climaxPoints, formatTime, getMusicHighlights, onProgressDragStart, updateProgressFromEvent, updateTimeTooltip, hideTimeTooltip } = progressBar;
+const { progressWidth, isProgressDragging, showTimeTooltip, tooltipPosition, tooltipTime, climaxPoints, formatTime, getMusicHighlights, clearMusicHighlights, onProgressDragStart, updateProgressFromEvent, updateTimeTooltip, hideTimeTooltip } = progressBar;
 
 const playbackMode = usePlaybackMode(t, audio);
 const { playbackModes, currentPlaybackModeIndex, currentPlaybackMode, playedSongsStack, currentStackIndex, togglePlaybackMode, setPlaybackMode } = playbackMode;
@@ -577,6 +594,21 @@ const mediaSession = useMediaSession();
 
 const songQueue = useSongQueue(t, musicQueueStore, queueList);
 const { currentSong, NextSong, addSongToQueue, addCloudMusicToQueue, addLocalMusicToQueue, addLocalPlaylistToQueue, addToNext, getPlaylistAllSongs, addPlaylistToQueue, addCloudPlaylistToQueue, restoreLocalSongCover } = songQueue;
+
+const resetTrackTimeline = () => {
+    currentTime.value = 0;
+    progressWidth.value = 0;
+    clearMusicHighlights();
+    resetLyricsHighlight(0);
+    localStorage.setItem('player_progress', '0');
+};
+
+watch(
+    () => currentSong.value?.hash || '',
+    (hash, previousHash) => {
+        if (previousHash && hash !== previousHash) resetTrackTimeline();
+    }
+);
 
 let lyricsBackgroundCarouselTimer = null;
 let lyricsCoverImagesRequestId = 0;
@@ -851,6 +883,8 @@ const playSong = async (song) => {
             return;
         }
 
+        resetTrackTimeline();
+
         currentSong.value = structuredClone(toPlayerSong(song));
 
         // 应用响度规格化（如果已启用 Web Audio）
@@ -920,15 +954,18 @@ const playSong = async (song) => {
                 ...savedLocalSong,
                 url: ''
             }));
+            window.electron?.ipcRenderer?.send('current-song-updated');
             return;
         }
         // 保存当前歌曲到本地存储
         localStorage.setItem('current_song', JSON.stringify(currentSong.value));
+        window.electron?.ipcRenderer?.send('current-song-updated');
 
         getVip();
         // 获取歌词
         getCurrentLyrics();
-        getMusicHighlights(currentSong.value.hash);
+        const highlightHash = currentSong.value.hash;
+        getMusicHighlights(highlightHash, () => currentSong.value?.hash === highlightHash);
     } catch (error) {
         console.error('[PlayerControl] 播放音乐时发生错误:', error);
         playing.value = false;
@@ -936,12 +973,14 @@ const playSong = async (song) => {
     }
 };
 
-// 切换播放/暂停
-const togglePlayPause = async () => {
+// 恢复播放（不创建新 Audio，复用现有 src / 队列 URL 的恢复逻辑）
+const resumePlayback = async () => {
+    if (!audio.paused) return true;
+
     if (!currentSong.value.hash) {
         console.log('[PlayerControl] 没有当前歌曲，尝试播放队列中的下一首');
         playSongFromQueue('next');
-        return;
+        return false;
     } else if (!audio.src) {
         console.log('[PlayerControl] 音频源为空，尝试重新设置');
         if (currentSong.value.url && !isLocalSong(currentSong.value)) {
@@ -960,8 +999,9 @@ const togglePlayPause = async () => {
                     });
                     if (result && result.song) {
                         await playSong(result.song);
+                        return true;
                     }
-                    return;
+                    return false;
                 } else if (song.url) {
                     console.log('[PlayerControl] 从队列中的歌曲获取URL:', song.url);
                     currentSong.value.url = song.url;
@@ -969,47 +1009,55 @@ const togglePlayPause = async () => {
                 } else if (song.isCloud) {
                     console.log('[PlayerControl] 云音乐没有URL，重新获取');
                     addCloudMusicToQueue(song.hash, song.name, song.author, song.timeLength, song.img);
-                    return;
+                    return false;
                 } else {
                     console.log('[PlayerControl] 歌曲没有URL，重新获取');
                     const result = await addSongToQueue(song.hash, song.name, song.img, song.author);
                     if (result && result.song) {
                         playSong(result.song);
+                        return true;
                     }
-                    return;
+                    return false;
                 }
             } else {
                 console.log('[PlayerControl] 歌曲不在队列中，播放下一首');
                 playSongFromQueue('next');
-                return;
+                return false;
             }
         }
     }
 
-    if (playing.value) {
-        console.log('[PlayerControl] 暂停播放');
-        audio.pause();
-        playing.value = false;
-    } else {
+    try {
+        mediaSession.changeMediaSession(currentSong.value);
+        // 更新SMTC位置状态
+        if (audio.duration) {
+            mediaSession.updatePositionState(audio.currentTime, audio.duration, currentSpeed.value);
+        }
+    } catch(smtcErr) {
+        console.warn('[PlayerControl] 更新 SMTC 信息失败:', smtcErr);
+    }
+
+    try {
+        // 响度规格化开启时 AudioContext 可能处于 suspended，恢复播放前先确保其运行
+        await ensureAudioContextRunning();
+        await audio.play();
+        playing.value = true;
+        return true;
+    } catch (retryError) {
+        console.error('[PlayerControl] 播放失败:', retryError);
+        window.$modal.alert(t('bo-fang-shi-bai'));
+        return false;
+    }
+};
+
+// 切换播放/暂停（状态以 audio.paused 为准）
+const togglePlayPause = async () => {
+    if (audio.paused) {
         console.log('[PlayerControl] 开始播放');
-
-        try {
-            mediaSession.changeMediaSession(currentSong.value);
-            // 更新SMTC位置状态
-            if (audio.duration) {
-                mediaSession.updatePositionState(audio.currentTime, audio.duration, currentSpeed.value);
-            }
-        } catch(smtcErr) {
-            console.warn('[PlayerControl] 更新 SMTC 信息失败:', smtcErr);
-        }
-
-        try {
-            await audio.play();
-            playing.value = true;
-        } catch (retryError) {
-            console.error('[PlayerControl] 播放失败:', retryError);
-            window.$modal.alert(t('bo-fang-shi-bai'));
-        }
+        await resumePlayback();
+    } else {
+        console.log('[PlayerControl] 暂停播放');
+        pausePlayback();
     }
 };
 
@@ -1264,6 +1312,21 @@ const handleLyricsWheel = (event) => {
     restoreLyricsScroll();
 };
 
+// 窗口尺寸变化后重新居中当前歌词行（scrollAmount 基于旧容器高度计算，需重算）
+let lyricsResizeTimer = null;
+const handleWindowResize = () => {
+    if (lyricsResizeTimer) clearTimeout(lyricsResizeTimer);
+    lyricsResizeTimer = setTimeout(() => {
+        lyricsResizeTimer = null;
+        if (!showLyrics.value || lyricsFlag.value || lyricsDisplayMode.value !== 'scroll') return;
+        const lyricsContainer = document.getElementById('lyrics-container');
+        const lineIndex = getCurrentLineIndex(audio.currentTime);
+        const lineElement = document.querySelectorAll('.line-group')[lineIndex];
+        if (!lyricsContainer || !lineElement) return;
+        scrollAmount.value = -lineElement.offsetTop + (lyricsContainer.offsetHeight / 2) - (lineElement.offsetHeight / 2) - 32;
+    }, 150);
+};
+
 const handleLyricsClick = (lineIndex) => {
     // if (!lyricsFlag.value) return;
     console.log('[PlayerControl] 点击歌词:', lineIndex);
@@ -1354,7 +1417,7 @@ const setupMediaShortcuts = () => {
     window.electron.ipcRenderer.on('toggle-mute', toggleMute);
     window.electron.ipcRenderer.on('toggle-like', () => playlistSelect.value.toLike());
     window.electron.ipcRenderer.on('toggle-mode', togglePlaybackMode);
-    window.electron.ipcRenderer.on('url-params', (_event, data) => {
+    window.electron.ipcRenderer.on('url-params', async (_event, data) => {
         console.log('[PlayerControl] 接收到URL参数:', data);
 
         // 处理歌曲哈希参数
@@ -1373,6 +1436,10 @@ const setupMediaShortcuts = () => {
                 path: '/PlaylistDetail',
                 query: { global_collection_id: data.listid }
             });
+        } else if(data.teamcode) {
+            console.log('[PlayerControl] 从URL启动打开组队活动并加入队伍:', data.teamcode);
+            await createTeamEventPopup();
+            await teamEventActions.joinTeam(data.teamcode);
         }
     });
 };
@@ -1382,7 +1449,7 @@ const toggleMute = () => {
     isMuted.value = !isMuted.value;
     audio.muted = isMuted.value;
     if (isMuted.value) volume.value = 0;
-    else volume.value = audio.volume * 100;
+    else volume.value = amplitudeToSlider(audio.volume);
     localStorage.setItem('player_volume', volume.value);
     console.log('[PlayerControl] 切换静音:', isMuted.value, '音量:', volume.value, '实际audio.volume:', audio.volume);
 };
@@ -1460,21 +1527,19 @@ const setAudioOutputDeviceWatcherEnabled = (enabled) => {
 let audioOutputDeviceWatchChangeHandler = null;
 
 const applyAudioOutputDevice = async (deviceId) => {
-    if (typeof audio?.setSinkId !== 'function') {
+    const result = await setAudioOutputDevice(audio, deviceId);
+    if (result.ok) return true;
+
+    if (result.reason === 'UNSUPPORTED') {
         console.warn('[PlayerControl] 当前环境不支持切换音频输出设备（setSinkId不可用）');
-        return false;
+    } else if (result.requested !== 'default') {
+        console.error('[PlayerControl] 切换音频输出设备失败:', result.error);
+        window.$modal.alert('切换音频输出设备失败,请刷新页面后重试');
+    } else {
+        console.warn('[PlayerControl] 切回默认音频输出设备失败:', result.error);
     }
 
-    const sinkId = deviceId || 'default';
-    try {
-        await audio.setSinkId(sinkId);
-        console.log('[PlayerControl] 已切换音频输出设备:', sinkId);
-        return true;
-    } catch (error) {
-        console.warn('[PlayerControl] 切换音频输出设备失败:', error);
-        window.$modal.alert('切换音频输出设备失败,请刷新页面后重试');
-        return false;
-    }
+    return false;
 };
 
 // 切换速度菜单
@@ -1604,7 +1669,8 @@ onMounted(() => {
 
     // 设置媒体会话
     mediaSession.initMediaSession({
-        togglePlayPause,
+        play: resumePlayback,
+        pause: pausePlayback,
         playPrevious: () => playSongFromQueue('previous'),
         playNext: () => playSongFromQueue('next'),
         seekBackward: (seekOffset) => {
@@ -1653,6 +1719,7 @@ onMounted(() => {
     document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('click', handleDocumentClick);
     window.addEventListener('settings-change', handleSettingsChange);
+    window.addEventListener('resize', handleWindowResize);
 
     // 设置特定于PlayerControl的监听器
     audio.addEventListener('pause', () => {
@@ -1741,6 +1808,11 @@ onUnmounted(() => {
     document.removeEventListener('keydown', handleKeyDown);
     document.removeEventListener('click', handleDocumentClick);
     window.removeEventListener('settings-change', handleSettingsChange);
+    window.removeEventListener('resize', handleWindowResize);
+    if (lyricsResizeTimer) {
+        clearTimeout(lyricsResizeTimer);
+        lyricsResizeTimer = null;
+    }
 });
 
 // 对外暴露接口
