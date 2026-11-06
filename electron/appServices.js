@@ -1,23 +1,40 @@
 import { app, ipcMain, BrowserWindow, screen, Tray, Menu, TouchBar, globalShortcut, dialog, shell, nativeImage } from 'electron';
 import path from 'path';
-import { spawn } from 'child_process';
 import log from 'electron-log';
-import Store from 'electron-store';
 import { fileURLToPath } from 'url';
 import isDev from 'electron-is-dev';
-import fs from 'fs';
 import { exec } from 'child_process';
 import { checkForUpdates } from './services/updater.js';
 import { Notification } from 'electron';
 import { t } from './language/i18n.js';
 import { bindExternalLinkHandler } from './services/externalLinkHandler.js';
 import customTrayMenuService from './services/customTrayMenuService.js';
+import { useStore } from './util/store.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const store = new Store();
+const store = useStore();
 const { TouchBarLabel, TouchBarButton, TouchBarGroup, TouchBarSpacer } = TouchBar;
 let mainWindow = null;
-let apiProcess = null;
 let tray = null;
+
+// macOS:根据应用窗口可见性同步 Dock 图标
+// 开启「关闭窗口后隐藏 Dock 图标」后,所有应用窗口都不可见时隐藏 Dock 图标(应用退到托盘继续运行),
+// 任意应用窗口再次显示时自动恢复;桌面歌词悬浮窗不计入应用窗口
+export function syncDockIcon() {
+    if (process.platform !== 'darwin' || !app.dock) return;
+    if (store.get('settings')?.hideDockIcon !== 'on') {
+        // 开关关闭时确保 Dock 图标可见(处理关闭开关时窗口全部隐藏的情况)
+        app.dock.show();
+        return;
+    }
+    const hasVisibleWindow = BrowserWindow.getAllWindows().some(
+        (win) => !win.isDestroyed() && win !== lyricsWindow && win.isVisible()
+    );
+    if (hasVisibleWindow) {
+        app.dock.show();
+    } else {
+        app.dock.hide();
+    }
+}
 
 // 创建主窗口
 export function createWindow() {
@@ -56,7 +73,9 @@ export function createWindow() {
         show: savedConfig?.startMinimized === 'on' ? false : true,
         frame: useNativeTitleBar,
         titleBarStyle: useNativeTitleBar ? 'default' : 'hiddenInset',
-        autoHideMenuBar: false, 
+        autoHideMenuBar: false,
+        // startMinimized 时窗口从不 show，默认的 paintWhenInitiallyHidden: true 会令隐藏窗口持续渲染，GPU 进程空转耗电；off 时保持 true 不影响 ready-to-show 语义
+        paintWhenInitiallyHidden: savedConfig?.startMinimized === 'on' ? false : true,
         webPreferences: {
             preload: path.join(__dirname, 'preload.cjs'),
             contextIsolation: true,
@@ -100,12 +119,6 @@ export function createWindow() {
         console.error('Failed to load:', errorCode, errorDescription);
     });
 
-    mainWindow.once('ready-to-show', () => {
-        if (savedConfig?.startMinimized === 'on') {
-            mainWindow.hide();
-        }
-    });
-
     mainWindow.webContents.on('did-finish-load', () => {
         console.log('Page Loaded Successfully');
         mainWindow.webContents.insertCSS('::-webkit-scrollbar { display: none; }');
@@ -127,6 +140,10 @@ export function createWindow() {
         }
     });
 
+    // macOS:窗口显示/隐藏时同步 Dock 图标(托盘、快捷键、activate 等所有唤起路径都会触发 show)
+    mainWindow.on('show', syncDockIcon);
+    mainWindow.on('hide', syncDockIcon);
+
     if (process.platform === 'win32') {
         setThumbarButtons(mainWindow);
     }
@@ -134,6 +151,9 @@ export function createWindow() {
     if (savedConfig?.desktopLyrics === 'on') {
         createLyricsWindow();
     }
+
+    // 启动即隐藏(启动时最小化)的场景下初始同步一次 Dock 图标
+    syncDockIcon();
     return mainWindow;
 }
 
@@ -233,7 +253,7 @@ export function createLyricsWindow() {
 
 export function createMvWindow() {
     const { screenWidth, screenHeight } = screen.getPrimaryDisplay().workAreaSize;
-    return new BrowserWindow({
+    const mvWindow = new BrowserWindow({
         width: Math.min(screenWidth * 0.8, 1280),
         height: Math.min(screenHeight * 0.8, 720),
         frame: false,
@@ -254,6 +274,11 @@ export function createMvWindow() {
         },
         icon: getIconPath('icon.ico')
     });
+    // macOS:MV 窗口显示/关闭时同步 Dock 图标
+    mvWindow.on('show', syncDockIcon);
+    mvWindow.on('hide', syncDockIcon);
+    mvWindow.on('closed', syncDockIcon);
+    return mvWindow;
 }
 
 const getIconPath = (iconName, subPath = '') => path.join(
@@ -490,92 +515,6 @@ export function createTouchBar(mainWindow) {
     });
 
     return touchBar;
-}
-
-// 启动 API 服务器
-export function startApiServer() {
-    return new Promise((resolve, reject) => {
-        let apiPath = '';
-        if (isDev) {
-            return resolve();
-            // apiPath = path.join(__dirname, '../api/app_api');
-        } else {
-            switch (process.platform) {
-                case 'win32':
-                    apiPath = path.join(process.resourcesPath, '../api', 'app_win.exe');
-                    break;
-                case 'darwin':
-                    apiPath = path.join(process.resourcesPath, '../api', 'app_macos');
-                    break;
-                case 'linux':
-                    apiPath = path.join(process.resourcesPath, '../api', 'app_linux');
-                    break;
-                default:
-                    reject(new Error(`Unsupported platform: ${process.platform}`));
-                    return;
-            }
-        }
-
-        log.info(`API路径: ${apiPath}`);
-
-        if (!fs.existsSync(apiPath)) {
-            const error = new Error(`API可执行文件未找到：${apiPath}`);
-            log.error(error.message);
-            reject(error);
-            return;
-        }
-
-        // 启动 API 服务器进程
-        const savedConfig = store.get('settings') || {};
-        const proxy = savedConfig?.proxy;
-        const proxyUrl = savedConfig?.proxyUrl;
-        const dataSource = savedConfig?.dataSource || 'concept';
-
-        const Args = [];
-        if (dataSource === 'concept') {
-            Args.push('--platform=lite');
-            log.info('API data source: concept (lite mode)');
-        }
-        if (proxy === 'on' && proxyUrl) {
-            const proxyAddress = String(proxyUrl).trim();
-            if (proxyAddress) {
-                Args.push(`--proxy=${proxyAddress}`);
-                log.info(`API proxy enabled: ${proxyAddress}`);
-            }
-        }
-        Args.push('--port=6521');
-        apiProcess = spawn(apiPath, Args, { windowsHide: true });
-
-        apiProcess.stdout.on('data', (data) => {
-            log.info(`API输出: ${data}`);
-            if (data.toString().includes('running')) {
-                console.log('API服务器已启动');
-                resolve();
-            }
-        });
-
-        apiProcess.stderr.on('data', (data) => {
-            log.error(`API 错误: ${data}`);
-            reject(data);
-        });
-
-        apiProcess.on('close', (code) => {
-            log.info(`API 关闭，退出码: ${code}`);
-        });
-
-        apiProcess.on('error', (error) => {
-            log.error('启动 API 失败:', error);
-            reject(error);
-        });
-    });
-}
-
-// 停止 API 服务器
-export function stopApiServer() {
-    if (apiProcess) {
-        process.kill(apiProcess.pid, 'SIGKILL');
-        apiProcess = null;
-    }
 }
 
 // 注册快捷键

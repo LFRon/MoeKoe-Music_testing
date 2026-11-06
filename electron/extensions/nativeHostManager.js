@@ -3,9 +3,10 @@ import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import Store from 'electron-store';
 import log from 'electron-log';
 import treeKill from 'tree-kill';
+import { parsePermissions } from './utils.js';
+import { useStore } from '../util/store.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const NATIVE_HOST_PERMISSION = 'moekoe:nativeHost';
@@ -13,11 +14,8 @@ const SUPPORTED_PLATFORMS = ['win32', 'darwin', 'linux'];
 const MAX_MESSAGE_BYTES = 64 * 1024;
 const SHUTDOWN_TIMEOUT = 1500;
 
-// 自定义权限不建议直接放进 Chrome 标准 permissions，否则扩展加载器可能认为是未知权限。
-// 因此这里同时兼容 manifest.permissions 和 MoeKoe 专用的 manifest.moekoe_permissions。
 function hasNativeHostPermission(manifest) {
-    return (Array.isArray(manifest?.permissions) && manifest.permissions.includes(NATIVE_HOST_PERMISSION)) ||
-        (Array.isArray(manifest?.moekoe_permissions) && manifest.moekoe_permissions.includes(NATIVE_HOST_PERMISSION));
+    return parsePermissions(manifest).moekoe.includes(NATIVE_HOST_PERMISSION);
 }
 
 function fsExists(filePath) {
@@ -51,7 +49,7 @@ function isRelativePluginPath(filePath) {
 class NativeHostManager {
     constructor() {
         // electron-store 会写入当前用户的应用配置目录，用来持久化用户授权选择。
-        this.store = new Store();
+        this.store = useStore();
         // extensionId -> 插件运行时信息。extensionId 来自 Electron/Chromium 加载后的扩展 ID。
         this.extensions = new Map();
         // `${extensionId}:${hostId}` -> 子进程信息。

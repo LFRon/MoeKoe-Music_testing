@@ -15,7 +15,7 @@
                 <ExtensionManager v-if="section.title === t('cha-jian')" />
                 <div v-else class="settings-cards">
                     <div v-for="(item, itemIndex) in getVisibleItems(section)" :key="itemIndex" class="setting-card"
-                        :class="{ 'setting-card--toggle': isToggleItem(item) }" @click="handleCardClick(item)">
+                        :class="{ 'setting-card--toggle': isToggleItem(item) }" @click.stop="handleCardClick(item)">
                         <div class="setting-card-header">
                             <div class="setting-card-title">
                                 <i :class="item.itemIcon || 'fas fa-sliders-h'"></i>
@@ -63,21 +63,24 @@
         <teleport to="body">
         <div v-if="isSelectionOpen" class="modal" @click.self="closeSelection">
             <div class="modal-content">
-                <a v-if="currentHelpLink" class="help-link" @click="openHelpLink" :title="$t('bang-zhu')"
+                <button class="ghost-button close-button" :title="t('guan-bi-an-niu')" :aria-label="t('guan-bi-an-niu')" @click="closeSelection">
+                    <i class="fas fa-x"></i>
+                </button>
+                <a v-if="currentHelpLink" class="help-link" @click="openHelpLink()" :title="$t('bang-zhu')"
                     :aria-label="$t('bang-zhu')">
                     <i class="fas fa-question-circle"></i>
                 </a>
                 <h3>{{ getSettingItem(selectionType)?.selectionTitle }}</h3>
                 <input v-if="isFontSelection()" class="font-search" placeholder="搜索字体..."
                     v-model="fontSearch" />
-                <ul v-if="!isFontSelection() && selectionType !== 'audioOutputDevice'">
+                <ul v-else-if="!isToggleItem(getSettingItem(selectionType)) && isPreventOpenSelectionItem(getSettingItem(selectionType))">
                     <li v-for="option in getSettingItem(selectionType)?.options || []" :key="option.value"
                         @click="selectOption(option)">
                         {{ option.displayText }}
                     </li>
                 </ul>
 
-                <ul v-else-if="selectionType === 'audioOutputDevice'">
+                <ul v-if="selectionType === 'audioOutputDevice'">
                     <li v-if="audioOutputDevicesLoading">正在获取设备列表...</li>
                     <li v-else-if="audioOutputDeviceOptions.length === 0">未检测到音频输出设备</li>
                     <li v-else v-for="option in audioOutputDeviceOptions" :key="option.value"
@@ -86,7 +89,7 @@
                     </li>
                 </ul>
 
-                <ul v-else-if="isFontSelection()" class="font-list">
+                <ul v-if="isFontSelection()" class="font-list">
                     <li v-if="fontOptionsLoading">{{ $t('jia-zai-zhong') }}</li>
                     <li v-else-if="fontOptions.length === 0">{{ $t('mo-ren-zi-ti') }}</li>
                     <template v-else v-for="option in fontOptions" :key="option.value">
@@ -116,18 +119,75 @@
                     </div>
                 </div>
 
-                <div v-if="selectionType === 'apiMode' && selectedSettings.apiMode.value === 'on'"
+                <div v-if="selectionType === 'apiMode'"
                     class="api-settings-container">
                     <div class="api-setting-item">
-                        <label>{{ $t('api-di-zhi') }}</label>
-                        <input type="text" :value="defaultApiBaseUrl" readonly class="api-input" />
+                        <label>{{ t('kai-qi') }}/{{ t('guan-bi') }}</label>
+                        <div class="switch-panel">
+                            <button v-for="option in getSettingItem(selectionType)?.options || []" :key="option.value"
+                                :class="{ active: selectedSettings[selectionType].value === option.value }"
+                                @click="selectOption(option)">
+                                {{ option.displayText }}
+                            </button>
+                        </div>
+                    </div>
+                    <div v-if="false" class="api-setting-item">
+                        <label>{{ $t('jian-ting-zhu-ji') }}</label>
+                        <input type="text" placeholder="127.0.0.1" class="api-input" v-model="apiModeForm.host" />
                     </div>
                     <div class="api-setting-item">
-                        <label>{{ $t('websocket-di-zhi') }}</label>
-                        <input type="text" value="ws://127.0.0.1:6520" readonly class="api-input" />
+                        <label>{{ $t('jian-ting-duan-kou') }}</label>
+                        <input type="number" placeholder="6520" min="1" max="65535" class="api-input" v-model="apiModeForm.port" />
                     </div>
-                    <div class="api-hint">
-                        {{ $t('mo-ren-api-ti-shi') }}
+                    <div class="api-setting-item">
+                        <label>{{ $t('websocket-jian-ting-lu-jing') }}</label>
+                        <input type="text" spellcheck="false" placeholder="/moekoe" class="api-input" v-model="apiModeForm.wsPath" />
+                    </div>
+                    <div class="api-setting-item row">
+                        <label>{{ $t('allow-lan-request') }}</label>
+                        <button type="button" class="setting-switch" :class="{ active: apiModeForm.host === '0.0.0.0' }"
+                                :aria-checked="apiModeForm.host === '0.0.0.0'" role="switch"
+                                @click.stop="toggleLanApiMode">
+                             <span class="setting-switch-thumb"></span>
+                        </button>
+                    </div>
+                    <div class="api-setting-item">
+                        <label>
+                            {{ $t('websocket-api-url-preview') }}
+                            <span class="btns">
+                                <a :title="t('fu-zhi')" :aria-label="t('fu-zhi')" class="copy-button" @click="copy(apiModeUrlPreview.ws, $event.target)">
+                                    <i class="fas fa-clipboard"></i>
+                                </a>
+                                <a class="help-link normal" @click="openHelpLink('https://music.moekoe.cn/websocket-api.html')" :title="$t('bang-zhu')"
+                                    :aria-label="$t('bang-zhu')">
+                                    <i class="fas fa-question-circle"></i>
+                                </a>
+                            </span>
+                        </label>
+                        <input type="url" spellcheck="false" readonly class="api-input" :value="apiModeUrlPreview.ws" />
+                    </div>
+                    <div class="api-setting-item">
+                        <label>
+                            {{ $t('web-api-url-preview') }}
+                            <span class="btns">
+                                <a :title="t('fu-zhi')" :aria-label="t('fu-zhi')" class="copy-button" @click="copy(apiModeUrlPreview.http, $event.target)">
+                                    <i class="fas fa-clipboard"></i>
+                                </a>
+                                <a class="help-link normal" @click="openHelpLink('https://music.moekoe.cn/api-docs.html')" :title="$t('bang-zhu')"
+                                    :aria-label="$t('bang-zhu')">
+                                    <i class="fas fa-question-circle"></i>
+                                </a>
+                            </span>
+                        </label>
+                        <input type="url" spellcheck="false" readonly class="api-input" :value="apiModeUrlPreview.http" />
+                    </div>
+                    <div v-if="false" class="api-hint">
+                        {{ $t('zhong-qi-hou-sheng-xiao') }}
+                    </div>
+                    <div class="proxy-actions">
+                        <button class="primary" @click="saveApiModeUrl">
+                            {{ $t('bao-cun-she-zhi-an-niu') }}
+                        </button>
                     </div>
                 </div>
                 <div v-if="selectionType === 'apiBaseUrlMode' && selectedSettings.apiBaseUrlMode.value === 'custom'"
@@ -166,7 +226,6 @@
                         {{ proxyForm.testResult }}
                     </div>
                 </div>
-                <button @click="closeSelection">{{ $t('guan-bi-an-niu') }}</button>
             </div>
         </div>
         </teleport>
@@ -200,7 +259,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, getCurrentInstance, onUnmounted, reactive } from 'vue';
+import { ref, onMounted, getCurrentInstance, onUnmounted, reactive, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { MoeAuthStore } from '../stores/store';
 import ExtensionManager from '@/components/ExtensionManager.vue';
@@ -208,6 +267,7 @@ import { applyCustomFont, requestMicrophonePermission } from '../utils/utils';
 import { DEFAULT_API_BASE_URL, validateApiBaseUrl, testApiBaseUrl as testApiBaseUrlRequest } from '@/utils/apiBaseUrl';
 import { useSettingsConfig } from '@/config/settings';
 import { ONBOARDING_GUIDE_EVENT } from '@/config/onboardingGuide';
+import defaultSettings from '@/../electron/defaultSettings.json';
 
 const MoeAuth = MoeAuthStore();
 const { t } = useI18n();
@@ -216,6 +276,20 @@ const appVersion = ref('');
 const platform = ref('');
 const activeTab = ref(0);
 const defaultApiBaseUrl = DEFAULT_API_BASE_URL;
+
+/** @param {HTMLButtonElement | null | undefined} target */
+const copy = async (content, target = null) => {
+    if(target) target.disabled = true;
+    try {
+        await navigator.clipboard.writeText(content);
+        $message.success('复制成功');
+    } catch(e) {
+        $message.error('复制失败：', e.message);
+    }
+    if(target) setTimeout(() => {
+        target.disabled = false;
+    }, 1500);
+}
 
 const {
     settingSections,
@@ -381,8 +455,8 @@ const openSelection = (type, helpLink) => {
     }
 };
 
-const openHelpLink = () => {
-    const url = currentHelpLink.value;
+const openHelpLink = (url) => {
+    url = url || currentHelpLink.value;
     if (!url) return;
     if (isElectron()) {
         window.electron.ipcRenderer.send('open-url', url);
@@ -407,6 +481,15 @@ const isToggleItem = (item) => {
     return values.includes('on') && values.includes('off');
 };
 
+const isPreventOpenSelectionItem = (item) =>
+    (typeof item.noSelection === 'undefined' || item.noSelection === true);
+
+const isDisabledItem = (item) => {
+    const value = selectedSettings.value?.[item.key].value;
+    return value? value === 'off': false;
+}
+
+
 const isToggleEnabled = (item) => selectedSettings.value[item.key]?.value === 'on';
 
 const handleCardClick = (item) => {
@@ -415,7 +498,9 @@ const handleCardClick = (item) => {
         return;
     }
 
-    if (isToggleItem(item)) {
+    if (isToggleItem(item) && isPreventOpenSelectionItem(item)) {
+        return;
+    } else if(isToggleItem(item) && isDisabledItem(item)) {
         return;
     }
 
@@ -530,6 +615,7 @@ const toggleSetting = async (item) => {
     const currentValue = selectedSettings.value[item.key]?.value;
     const nextOption = item.options.find(option => option.value === (currentValue === 'on' ? 'off' : 'on'));
     if (!nextOption) return;
+    if(!isPreventOpenSelectionItem(item) && nextOption.value === 'on') openSelection(item.key, item.helpLink);
 
     selectedSettings.value[item.key] = { ...nextOption };
     await runSelectAction(item, nextOption);
@@ -566,10 +652,10 @@ const selectFontOption = (option) => {
 const isElectron = () => {
     return typeof window !== 'undefined' && typeof window.electron !== 'undefined';
 };
-const saveSettings = () => {
-    const settingsToSave = Object.fromEntries(
+const saveSettings = (additional = {}) => {
+    const settingsToSave = Object.assign({}, Object.fromEntries(
         Object.entries(selectedSettings.value).map(([key, setting]) => [key, setting.value])
-    );
+    ), additional);
     settingsToSave.shortcuts = shortcuts.value;
     localStorage.setItem('settings', JSON.stringify(settingsToSave));
     window.dispatchEvent(new CustomEvent('settings-change', {
@@ -583,7 +669,8 @@ const closeSelection = () => {
 };
 
 onMounted(() => {
-    const savedSettings = JSON.parse(localStorage.getItem('settings'));
+    /** @type {typeof defaultSettings} */
+    const savedSettings = JSON.parse(localStorage.getItem('settings') || 'null') || defaultSettings;
 
     if (savedSettings) {
         if (savedSettings.apiBaseUrlMode === undefined) {
@@ -599,8 +686,13 @@ onMounted(() => {
                 selectedSettings.value[key] = { ...option };
                 continue;
             }
+            if(key === 'apiModeConfig') {
+                apiModeForm.host = savedSettings[key].host;
+                apiModeForm.port = savedSettings[key].port;
+                apiModeForm.wsPath = savedSettings[key].wsPath;
+            }
             if (key === 'apiBaseUrlMode') {
-                const value = savedSettings[key] || 'default';
+                const value = savedSettings[key];
                 selectedSettings.value[key] = {
                     displayText: value === 'custom' ? '自定义' : '默认',
                     value: value
@@ -608,17 +700,17 @@ onMounted(() => {
                 continue;
             }
             if (key === 'apiBaseUrl') {
-                const value = savedSettings[key] || '';
+                const value = savedSettings[key];
                 selectedSettings.value[key] = { displayText: '', value: value };
                 continue;
             }
             if (key === 'dpiScale') {
-                const value = savedSettings[key] || '1.0';
+                const value = savedSettings[key];
                 selectedSettings.value[key] = { displayText: value, value: value };
                 continue;
             }
             if (isFontSelection(key)) {
-                const value = savedSettings[key] || '';
+                const value = savedSettings[key];
                 selectedSettings.value[key] = {
                     displayText: value || t('mo-ren-zi-ti'),
                     value: value
@@ -668,7 +760,47 @@ const showShortcutModal = ref(false);
 const recordingKey = ref('');
 const shortcuts = ref({});
 const proxyForm = reactive({ url: '', testing: false, testResult: '', testStatus: '' });
+const apiModeForm = reactive({ host: '127.0.0.1', port: 6520, wsPath: '/moekoe' });
+const apiModeUrlPreview = reactive({
+    http: computed(() => `http://127.0.0.1:${apiModeForm.port}`),
+    ws: computed(() => `ws://127.0.0.1:${apiModeForm.port}${apiModeForm.wsPath}`)
+});
 const apiBaseUrlForm = reactive({ url: '', testing: false, testResult: '', testStatus: '' });
+
+const toggleLanApiMode = () => {
+    const hosts = {
+        allow: '0.0.0.0',
+        deny: '127.0.0.1'
+    };
+    if(apiModeForm.host === hosts.allow) apiModeForm.host = hosts.deny;
+    else apiModeForm.host = hosts.allow;
+}
+
+const validateApiModeForm = () => {
+    const result = {
+        error: false,
+        msg: ''
+    }
+    if(apiModeForm.port <= 0 || apiModeForm.port >= 65535)
+        result.error = true, result.msg = '非法的端口 (仅限 1 ~ 65535)';
+    return result;
+}
+
+const saveApiModeUrl = () => {
+    if(!apiModeForm.port || !apiModeForm.wsPath) return;
+
+    const validation = validateApiModeForm();
+    if(validation.error) {
+        $modal.error(validation.msg);
+        return;
+    }
+
+    saveSettings({
+        apiModeConfig: apiModeForm
+    });
+    markRefreshHint('apiMode');
+    closeSelection();
+}
 
 const testApiBaseUrl = async () => {
     const validation = validateApiBaseUrl(apiBaseUrlForm.url);
@@ -1043,6 +1175,7 @@ const installPWA = async () => {
 <style lang="scss" scoped>
 $primary: var(--color-primary);
 $primary-light: var(--color-primary-light);
+$secondary: var(--primary-color);
 $text-muted: #666;
 $border-light: #eaeaea;
 $shadow-light: rgba(0, 0, 0, 0.15);
@@ -1235,6 +1368,7 @@ $shadow-medium: rgba(0, 0, 0, 0.18);
     padding: 0;
     transition: background-color 0.2s ease;
     flex: 0 0 auto;
+    box-shadow: 1px 1px 1px var(--color-box-shadow);
 
     &.active {
         background: $primary;
@@ -1293,6 +1427,10 @@ $shadow-medium: rgba(0, 0, 0, 0.18);
     display: flex;
     flex-direction: column;
 
+    &:has(>.api-settings-container) {
+        max-height: 70vh;
+    }
+
     h3 {
         flex: 0 0 auto;
         font-size: 20px;
@@ -1333,11 +1471,11 @@ $shadow-medium: rgba(0, 0, 0, 0.18);
         }
     }
 
-    button {
+    button:not(.setting-switch) {
         flex: 0 0 auto;
         margin-top: 20px;
         padding: 10px 20px;
-        background-color: $primary;
+        background-color: $secondary;
         color: white;
         border: none;
         border-radius: 8px;
@@ -1348,11 +1486,53 @@ $shadow-medium: rgba(0, 0, 0, 0.18);
         &:hover {
             background-color: $primary;
         }
+
+        &.ghost-button {
+            margin: 0;
+            padding: 0;
+            border: none;
+            min-width: auto;
+            background-color: transparent;
+
+            &:hover {
+                opacity: 0.6;
+            }
+        }
+
+        &.close-button {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            font-size: 18px;
+            color: var(--text-color);
+        }
     }
 
     > button {
         align-self: center;
         min-width: 96px;
+    }
+
+    .switch-panel {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+
+        >button {
+            margin-top: 0;
+            color: var(--text-color);
+            background-color: var(--secondary-color);
+            transition-property: color, background-color;
+
+            &:hover {
+                color: #fff;
+            }
+
+            &.active {
+                color: #fff;
+                background-color: $primary;
+            }
+        }
     }
 }
 
@@ -1364,6 +1544,11 @@ $shadow-medium: rgba(0, 0, 0, 0.18);
     cursor: pointer;
     text-decoration: none;
     font-size: 18px;
+
+    &.normal {
+        position: static;
+        display: inline;
+    }
 
     &:hover {
         opacity: 0.85;
@@ -1601,10 +1786,32 @@ $shadow-medium: rgba(0, 0, 0, 0.18);
         margin-bottom: 10px;
         width: 100%;
 
+        &.row {
+            margin-top: 8px;
+            flex-direction: row;
+            justify-content: space-between;
+        }
+
         label {
             font-size: 14px;
             color: #333;
             margin-bottom: 5px;
+
+            .btns {
+                display: inline-flex;
+                align-items: center;
+                margin-left: 4px;
+                gap: 6px;
+
+                .copy-button {
+                    display: inline;
+                    font-size: 16px;
+
+                    &:hover {
+                        opacity: 0.8;
+                    }
+                }
+            }
         }
 
         .api-input {
@@ -1615,6 +1822,12 @@ $shadow-medium: rgba(0, 0, 0, 0.18);
             padding: 5px;
             padding-left: 10px;
             box-sizing: border-box;
+
+            &:read-only {
+                color: $text-muted;
+                border-color: $text-muted;
+                outline-color: $primary-light;
+            }
         }
     }
 
@@ -1623,32 +1836,32 @@ $shadow-medium: rgba(0, 0, 0, 0.18);
         color: #999;
         text-align: center;
     }
-}
 
-.proxy-actions {
-    display: flex;
-    gap: 12px;
-    width: 100%;
+    .proxy-actions {
+        display: flex;
+        gap: 12px;
+        width: 100%;
 
-    button {
-        flex: 1;
-        min-width: 0;
-        padding: 8px 0;
-        border-radius: 6px;
-    }
-}
-
-.proxy-test-result {
-    font-size: 13px;
-    line-height: 18px;
-    margin-top: 5px;
-
-    &.success {
-        color: #4caf50;
+        button {
+            flex: 1;
+            min-width: 0;
+            padding: 8px 0;
+            border-radius: 6px;
+        }
     }
 
-    &.error {
-        color: #e53935;
+    .proxy-test-result {
+        font-size: 13px;
+        line-height: 18px;
+        margin-top: 5px;
+
+        &.success {
+            color: #4caf50;
+        }
+
+        &.error {
+            color: #e53935;
+        }
     }
 }
 </style>

@@ -188,6 +188,8 @@
   "jin-yong-gpu-jia-su-zhong-qi-sheng-xiao": "Disable GPU Acceleration",
   "jie-mian": "Interface",
   "guan-bi-shi-minimize-to-tray": "Minimize to Tray on Close",
+  "guan-bi-chuang-kou-hou-yin-cang-dock-tu-biao": "Hide Dock icon after closing windows",
+  "yin-cang-dock-tu-biao-jin-zhi-chi-macos": "Hiding the Dock icon is only available on macOS",
   "mi-gan-cheng": "Orange",
   "zhu-ce": "No Account?",
   "xin-zeng-zhang-hao-qing-xian-zai-guan-fang-ke-hu-duan-zhong-deng-lu-yi-ci": "New Account? Log in to Official App First",
@@ -320,5 +322,14 @@
   "fen-xiang-ge-qu": "Share",
   "qie-huan-dao-yin-yi": "Switch to Romanization",
   "qie-huan-dao-fan-yi": "Switch to Translation",
-  "wei-zhi-cuo-wu": "Unknown error"
+  "wei-zhi-cuo-wu": "Unknown error",
+  "jian-ting-zhu-ji": "Listening host",
+  "websocket-jian-ting-lu-jing": "WebSocket Listening path",
+  "jian-ting-duan-kou": "Listening port",
+  "allow-lan-request": "Allow connections from LAN",
+  "websocket-api-url-preview": "WebSocket API Endpoint Preview",
+  "web-api-url-preview": "Web API Endpoint Preview",
+  "zi-dong-jue-ding": "Auto Decide",
+  "shi-zhong-kai-qi": "Always Enable",
+  "fu-zhi": "Copy"
 }

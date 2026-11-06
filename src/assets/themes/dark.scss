@@ -69,8 +69,16 @@ html.dark {
         }
     }
 
+    .setting-switch.active {
+        background-color: var(--primary-color);
+    }
+
     .refresh-hint {
         color: #ff6b6b;
+    }
+
+    .help-link {
+        color: var(--primary-color);
     }
 
     .modal-content {
@@ -91,14 +99,21 @@ html.dark {
             }
         }
 
-        button {
-            background-color: $bg-input !important;
+        button:not(.active), label {
             color: $text-primary !important;
+        }
+
+        button:not(.setting-switch, .close-button, :is(.switch-panel>button.active)) {
+            background-color: $bg-input !important;
             border: 1px solid #373434 !important;
 
             &:hover {
                 background-color: $bg-hover !important;
             }
+        }
+
+        .switch-panel>button.active {
+            background-color: var(--primary-color);
         }
     }
 
@@ -132,6 +147,29 @@ html.dark {
             .loaded {
                 background-color: #666 !important;
             }
+        }
+    }
+
+    .player-menu {
+        background-color: $bg-card;
+        border: none;
+
+        &::after {
+            border-top-color: $bg-card;
+        }
+    }
+
+    .player-menu-item {
+        color: $text-primary;
+
+        &:hover:not(.disabled) {
+            background-color: $bg-hover;
+        }
+
+        &.active,
+        &.active:hover {
+            background-color: var(--primary-color);
+            color: #fff;
         }
     }
 

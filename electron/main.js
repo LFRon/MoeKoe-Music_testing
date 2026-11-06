@@ -1,10 +1,10 @@
 import { app, ipcMain, globalShortcut, dialog, Notification, shell, session, powerSaveBlocker, nativeImage, screen } from 'electron';
 import {
-    createWindow, createTray, createTouchBar, startApiServer,
-    stopApiServer, registerShortcut,
+    createWindow, createTray, createTouchBar, registerShortcut,
     playStartupSound, createLyricsWindow, setThumbarButtons,
-    registerProtocolHandler, sendHashAfterLoad, getTray, createMvWindow
+    registerProtocolHandler, sendHashAfterLoad, getTray, createMvWindow, syncDockIcon
 } from './appServices.js';
+import './util/kugouapi/init.js';
 import { initializeExtensions, cleanupExtensions } from './extensions/extensions.js';
 import { setupAutoUpdater, startUpdateDownload } from './services/updater.js';
 import apiService from './services/apiService.js';
@@ -12,15 +12,19 @@ import statusBarLyricsService from './services/statusBarLyricsService.js';
 import customTrayMenuService from './services/customTrayMenuService.js';
 import { setupDesktopShortcutIcon } from './services/desktopShortcutIcon.js';
 import { openLogPath, exportLog } from './services/logHelper.js';
-import Store from 'electron-store';
+import { registerKuGouApiHandler } from './services/kugouApiService.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { t } from './language/i18n.js';
+import { getExtensionsFromPermissions } from './extensions/utils.js';
+import { useStore, getSettings } from './util/store.js';
 
 let mainWindow = null;
 let blockerId = null;
-const store = new Store();
+const store = useStore();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const settings = getSettings();
 
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
@@ -41,76 +45,69 @@ if (!gotTheLock) {
     });
 }
 
-app.on('ready', () => {
-    startApiServer().then(() => {
-        try {
-            mainWindow = createWindow();
-            createTray(mainWindow);
-            customTrayMenuService.init(() => mainWindow, getTray);
+app.on('ready', async () => {
+    try {
+        // 必须先 await 扩展加载，再创建窗口
+        // 扩展只会向其  注册完成之后  新建的页面注入 content_scripts。
+        // 若窗口先创建，页面已开始加载，则会漏注入插件，只能手动刷新恢复。
+        await initializeExtensions();
 
-            // 初始化状态栏歌词服务
-            statusBarLyricsService.init(mainWindow, store, getTray, createTray);
+        registerKuGouApiHandler();
+        mainWindow = createWindow();
+        createTray(mainWindow);
+        customTrayMenuService.init(() => mainWindow, getTray);
 
-            if (process.platform === "darwin" && store.get('settings')?.touchBar == 'on') createTouchBar(mainWindow);
-            playStartupSound();
-            registerShortcut();
-            setupAutoUpdater(mainWindow);
-            apiService.init(mainWindow);
-            registerProtocolHandler(mainWindow);
-            sendHashAfterLoad(mainWindow);
-            void initializeExtensions();
-            setupDesktopShortcutIcon();
-        } catch (error) {
-            console.log('初始化应用时发生错误:', error);
-            createTray(null);
-            dialog.showMessageBox({
-                type: 'error',
-                title: t('error'),
-                message: t('init-error'),
-                buttons: [t('ok')]
-            }).then(result => {
-                if (result.response === 0) {
-                    app.isQuitting = true;
-                    app.quit();
-                }
-            });
-        }
-    }).catch((error) => {
-        console.log('API 服务启动失败:', error);
+        // 初始化状态栏歌词服务
+        statusBarLyricsService.init(mainWindow, store, getTray, createTray);
+
+        if (process.platform === "darwin" && settings.touchBar == 'on') createTouchBar(mainWindow);
+        playStartupSound();
+        registerShortcut();
+        setupAutoUpdater(mainWindow);
+        apiService.init(mainWindow);
+        registerProtocolHandler(mainWindow);
+        sendHashAfterLoad(mainWindow);
+        setupDesktopShortcutIcon();
+    } catch (error) {
+        console.log('初始化应用时发生错误:', error);
         createTray(null);
         dialog.showMessageBox({
             type: 'error',
             title: t('error'),
-            message: t('api-error'),
+            message: t('init-error'),
             buttons: [t('ok')]
         }).then(result => {
             if (result.response === 0) {
                 app.isQuitting = true;
                 app.quit();
             }
-            return;
         });
-    });
+    }
 });
 
-const settings = store.get('settings');
-if (settings?.gpuAcceleration === 'on') {
+if (settings.gpuAcceleration === 'on') {
     app.disableHardwareAcceleration();
     app.commandLine.appendSwitch('enable-transparent-visuals');
     app.commandLine.appendSwitch('disable-gpu-compositing');
 }
 
-if (settings?.preventAppSuspension === 'on') {
+if (settings.preventAppSuspension === 'on') {
     blockerId = powerSaveBlocker.start('prevent-display-sleep');
 }
 
-if (settings?.highDpi === 'on') {
+if (settings.highDpi === 'on') {
     app.commandLine.appendSwitch('high-dpi-support', '1');
-    app.commandLine.appendSwitch('force-device-scale-factor', settings?.dpiScale || '1');
+    app.commandLine.appendSwitch('force-device-scale-factor', settings.dpiScale);
 }
 
-if (settings?.apiMode === 'on') {
-    apiService.start();
+if(settings.apiMode === 'auto') {
+    const apiModeExtensions = getExtensionsFromPermissions('moekoe', 'moekoe:apiMode');
+    if(apiModeExtensions.length >= 1) {
+        console.log(`detected ${apiModeExtensions.length} extension(s) need 'moekoe:apiMode' permission, automatically starting api service...`);
+        apiService.start(settings.apiModeConfig);
+    }
+} else if (settings.apiMode === 'on') {
+    apiService.start(settings.apiModeConfig);
 }
 
 // 即将退出
@@ -127,8 +124,6 @@ app.on('before-quit', () => {
     setImmediate(() => {
         statusBarLyricsService.cleanup();
         customTrayMenuService.cleanup();
-
-        stopApiServer();
         apiService.stop();
         cleanupExtensions();
         app.exit(0);
@@ -168,7 +163,7 @@ ipcMain.on('disclaimer-response', (event, accepted) => {
 ipcMain.on('window-control', (event, action) => {
     switch (action) {
         case 'close':
-            if (store.get('settings')?.minimizeToTray === 'off') {
+            if (settings.minimizeToTray === 'off') {
                 app.isQuitting = true;
                 app.quit();
             } else {
@@ -193,14 +188,16 @@ ipcMain.on('window-control', (event, action) => {
 app.on('will-quit', () => {
     globalShortcut.unregisterAll();
 });
-ipcMain.on('save-settings', (event, settings) => {
-    store.set('settings', settings);
-    if (['on', 'off'].includes(settings?.autoStart)) {
+ipcMain.on('save-settings', (event, newSettings) => {
+    store.set('settings', newSettings);
+    if (['on', 'off'].includes(newSettings.autoStart)) {
         app.setLoginItemSettings({
-            openAtLogin: settings?.autoStart === 'on',
+            openAtLogin: newSettings.autoStart === 'on',
             path: app.getPath('exe'),
         });
     }
+    // 关闭「隐藏 Dock 图标」开关时立即恢复 Dock 图标(即时生效,无需重启)
+    syncDockIcon();
 });
 ipcMain.on('clear-settings', (event) => {
     store.clear();
@@ -261,7 +258,6 @@ ipcMain.on('desktop-lyrics-action', (event, action) => {
 });
 
 const syncDesktopLyricsSetting = (value) => {
-    const settings = store.get('settings') || {};
     store.set('settings', {
         ...settings,
         desktopLyrics: value
@@ -362,4 +358,16 @@ ipcMain.handle('export-log', async (e) => {
 
 ipcMain.handle('start-update-download', async () => {
     return await startUpdateDownload();
+});
+
+ipcMain.handle('get-api-service-endpoint', () => {
+    if(settings.apiMode === 'off') return null;
+    const config = settings.apiModeConfig;
+    if(config.wsPath && !config.wsPath.startsWith('/'))
+        config.wsPath = `/${config.wsPath}`;
+
+    return {
+        http: `http://127.0.0.1:${config.port}`,
+        ws: `ws://127.0.0.1:${config.port}${config.wsPath}`
+    }
 });

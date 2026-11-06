@@ -30,8 +30,8 @@ api/.serena/*
 *.sln
 *.sw?
 dev-dist/*
-pnpm-lock.yaml
-pnpm-workspace.yaml
+bun.lock
+package-lock.json
 vite.config.js*
 
 plugins/extensions/*
